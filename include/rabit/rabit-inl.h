@@ -7,6 +7,7 @@
 #ifndef RABIT_RABIT_INL_H
 #define RABIT_RABIT_INL_H
 // use engine for implementation
+#include <cstdint>
 #include "./io.h"
 #include "./utils.h"
 #include "../rabit.h"
@@ -30,7 +31,7 @@ inline DataType GetType<int>(void) {
   return kInt;
 }
 template<>
-inline DataType GetType<unsigned>(void) {
+inline DataType GetType<unsigned int>(void) {
   return kUInt;
 }
 template<>
@@ -48,6 +49,14 @@ inline DataType GetType<float>(void) {
 template<>
 inline DataType GetType<double>(void) {
   return kDouble;
+}
+template<>
+inline DataType GetType<long long>(void) {
+	return kLongLong;
+}
+template<>
+inline DataType GetType<unsigned long long>(void) {
+	return kULongLong;
 }
 }  // namespace mpi
 }  // namespace engine
