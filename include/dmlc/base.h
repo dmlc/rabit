@@ -41,7 +41,7 @@
  * \brief Wheter to print stack trace for fatal error,
  * enabled on linux when using gcc.
  */
-#if (!defined(DMLC_LOG_STACK_TRACE) && defined(__GNUC__) && !defined(__MINGW32__))
+#if (!defined(DMLC_LOG_STACK_TRACE) && defined(__GNUC__) && !defined(__MINGW32__) && !defined(__CYGWIN__))
 #define DMLC_LOG_STACK_TRACE 1
 #endif
 
@@ -162,6 +162,9 @@
 #define fopen64 std::fopen
 #endif
 #if (defined __MINGW32__) && !(defined __MINGW64__)
+#define fopen64 std::fopen
+#endif
+#if defined(__CYGWIN__)
 #define fopen64 std::fopen
 #endif
 #ifdef _MSC_VER
