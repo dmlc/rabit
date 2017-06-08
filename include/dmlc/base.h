@@ -41,7 +41,8 @@
  * \brief Wheter to print stack trace for fatal error,
  * enabled on linux when using gcc.
  */
-#if (!defined(DMLC_LOG_STACK_TRACE) && defined(__GNUC__) && !defined(__MINGW32__) && !defined(__CYGWIN__))
+#if (!defined(DMLC_LOG_STACK_TRACE) && defined(__GNUC__) && !defined(__MINGW32__) \
+    && !defined(__CYGWIN__))
 #define DMLC_LOG_STACK_TRACE 1
 #endif
 
