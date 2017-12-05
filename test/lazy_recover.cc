@@ -89,7 +89,9 @@ int main(int argc, char *argv[]) {
     return 0;
   }
   int n = atoi(argv[1]);
-  rabit::Init(argc, argv);
+  if (!rabit::Init(argc, argv)) {
+      return -1;
+  }
   int rank = rabit::GetRank();
   int nproc = rabit::GetWorldSize();
   std::string name = rabit::GetProcessorName();

@@ -2,7 +2,9 @@
 using namespace rabit;
 const int N = 3;
 int main(int argc, char *argv[]) {
-  rabit::Init(argc, argv);
+  if (!rabit::Init(argc, argv)) {
+    return -1;
+  }
   std::string s;
   if (rabit::GetRank() == 0) s = "hello world";
   printf("@node[%d] before-broadcast: s=\"%s\"\n",

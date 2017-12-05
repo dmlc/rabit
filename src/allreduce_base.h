@@ -13,6 +13,7 @@
 #define RABIT_ALLREDUCE_BASE_H_
 
 #include <vector>
+#include <utility>
 #include <string>
 #include <algorithm>
 #include "../include/rabit/internal/utils.h"
@@ -38,7 +39,7 @@ class AllreduceBase : public IEngine {
   AllreduceBase(void);
   virtual ~AllreduceBase(void) {}
   // initialize the manager
-  virtual void Init(int argc, char* argv[]);
+  virtual bool Init(int argc, char* argv[]);
   // shutdown the engine
   virtual void Shutdown(void);
   /*!
@@ -363,13 +364,13 @@ class AllreduceBase : public IEngine {
    * \brief initialize connection to the tracker
    * \return a socket that initializes the connection
    */
-  utils::TCPSocket ConnectTracker(void) const;
+  std::pair<utils::TCPSocket, bool> ConnectTracker(const bool dieOnError = true) const;
   /*!
    * \brief connect to the tracker to fix the the missing links
    *   this function is also used when the engine start up
    * \param cmd possible command to sent to tracker
    */
-  void ReConnectLinks(const char *cmd = "start");
+  bool ReConnectLinks(const char *cmd = "start", bool dieOnError = true);
   /*!
    * \brief perform in-place allreduce, on sendrecvbuf, this function can fail, and will return the cause of failure
    *
@@ -521,6 +522,8 @@ class AllreduceBase : public IEngine {
   int world_size;
   // connect retry time
   int connect_retry;
+  // die with exit(-1) if we fail init
+  bool die_on_init;
 };
 }  // namespace engine
 }  // namespace rabit

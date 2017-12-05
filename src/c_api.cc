@@ -162,8 +162,8 @@ struct WriteWrapper : public Serializable {
 }  // namespace c_api
 }  // namespace rabit
 
-void RabitInit(int argc, char *argv[]) {
-  rabit::Init(argc, argv);
+bool RabitInit(int argc, char *argv[]) {
+  return rabit::Init(argc, argv);
 }
 
 void RabitFinalize() {

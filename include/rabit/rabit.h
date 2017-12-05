@@ -73,8 +73,9 @@ struct BitOR;
  * \brief initializes rabit, call this once at the beginning of your program
  * \param argc number of arguments in argv
  * \param argv the array of input arguments
+ * \return true on successfull init. May also exit(-1).
  */
-inline void Init(int argc, char *argv[]);
+inline bool Init(int argc, char *argv[]);
 /*!
  * \brief finalizes the rabit engine, call this function after you finished with all the jobs
  */

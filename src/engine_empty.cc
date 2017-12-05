@@ -77,7 +77,8 @@ class EmptyEngine : public IEngine {
 EmptyEngine manager;
 
 /*! \brief intiialize the synchronization module */
-void Init(int argc, char *argv[]) {
+bool Init(int argc, char *argv[]) {
+  return true;
 }
 /*! \brief finalize syncrhonization module */
 void Finalize(void) {

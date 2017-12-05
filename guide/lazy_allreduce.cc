@@ -11,7 +11,9 @@ using namespace rabit;
 const int N = 3;
 int main(int argc, char *argv[]) {
   int a[N] = {0};
-  rabit::Init(argc, argv);
+  if (!rabit::Init(argc, argv)) {
+    return -1;
+  }
   // lazy preparation function
   auto prepare = [&]() {
     printf("@node[%d] run prepare function\n", rabit::GetRank());

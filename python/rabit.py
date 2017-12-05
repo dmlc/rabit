@@ -103,7 +103,8 @@ def init(args=None, lib='standard', lib_dll=None):
     _loadlib(lib, lib_dll)
     arr = (ctypes.c_char_p * len(args))()
     arr[:] = args
-    _LIB.RabitInit(len(args), arr)
+    if not _LIB.RabitInit(len(args), arr):
+      raise Error("Failed to initialize rabit")
 
 def finalize():
     """Finalize the rabit engine.

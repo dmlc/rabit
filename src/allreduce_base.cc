@@ -27,6 +27,7 @@ AllreduceBase::AllreduceBase(void) {
   connect_retry = 5;
   hadoop_mode = 0;
   version_number = 0;
+  die_on_init = true;
   // 32 K items
   reduce_ring_mincount = 32 << 10;
   // tracker URL
@@ -51,7 +52,7 @@ AllreduceBase::AllreduceBase(void) {
 }
 
 // initialization function
-void AllreduceBase::Init(int argc, char* argv[]) {
+bool AllreduceBase::Init(int argc, char* argv[]) {
   // setup from enviroment variables
   // handler to get variables from env
   for (size_t i = 0; i < env_vars.size(); ++i) {
@@ -116,7 +117,7 @@ void AllreduceBase::Init(int argc, char* argv[]) {
   utils::Assert(all_links.size() == 0, "can only call Init once");
   this->host_uri = utils::SockAddr::GetHostName();
   // get information from tracker
-  this->ReConnectLinks();
+  return this->ReConnectLinks("start", die_on_init);
 }
 
 void AllreduceBase::Shutdown(void) {
@@ -128,7 +129,8 @@ void AllreduceBase::Shutdown(void) {
 
   if (tracker_uri == "NULL") return;
   // notify tracker rank i have shutdown
-  utils::TCPSocket tracker = this->ConnectTracker();
+  std::pair<utils::TCPSocket, bool> pair = this->ConnectTracker();
+  utils::TCPSocket tracker = std::get<0>(pair);
   tracker.SendStr(std::string("shutdown"));
   tracker.Close();
   utils::TCPSocket::Finalize();
@@ -137,7 +139,8 @@ void AllreduceBase::TrackerPrint(const std::string &msg) {
   if (tracker_uri == "NULL") {
     utils::Printf("%s", msg.c_str()); return;
   }
-  utils::TCPSocket tracker = this->ConnectTracker();
+  std::pair<utils::TCPSocket, bool> pair = this->ConnectTracker();
+  utils::TCPSocket tracker = std::get<0>(pair);
   tracker.SendStr(std::string("print"));
   tracker.SendStr(msg);
   tracker.Close();
@@ -188,12 +191,13 @@ void AllreduceBase::SetParam(const char *name, const char *val) {
   if (!strcmp(name, "DMLC_WORKER_CONNECT_RETRY")) {
     connect_retry = atoi(val);
   }
+  if (!strcmp(name, "rabit_die_on_init")) die_on_init = !strcmp(val, "1");
 }
 /*!
  * \brief initialize connection to the tracker
  * \return a socket that initializes the connection
  */
-utils::TCPSocket AllreduceBase::ConnectTracker(void) const {
+std::pair<utils::TCPSocket, bool> AllreduceBase::ConnectTracker(const bool dieOnError) const {
   int magic = kMagic;
   // get information from tracker
   utils::TCPSocket tracker;
@@ -204,7 +208,11 @@ utils::TCPSocket AllreduceBase::ConnectTracker(void) const {
     if (!tracker.Connect(utils::SockAddr(tracker_uri.c_str(), tracker_port))) {
       if (++retry >= connect_retry) {
         fprintf(stderr, "connect to (failed): [%s]\n", tracker_uri.c_str());
-        utils::Socket::Error("Connect");
+        if (dieOnError) {
+          utils::Socket::Error("Connect");
+        } else {
+          return std::make_pair(tracker, false);
+        }
       } else {
         fprintf(stderr, "retry connect to ip(retry time %d): [%s]\n", retry, tracker_uri.c_str());
         #ifdef _MSC_VER
@@ -229,18 +237,22 @@ utils::TCPSocket AllreduceBase::ConnectTracker(void) const {
   Assert(tracker.SendAll(&world_size, sizeof(world_size)) == sizeof(world_size),
          "ReConnectLink failure 3");
   tracker.SendStr(task_id);
-  return tracker;
+  return std::make_pair(tracker, true);
 }
 /*!
  * \brief connect to the tracker to fix the the missing links
  *   this function is also used when the engine start up
  */
-void AllreduceBase::ReConnectLinks(const char *cmd) {
+bool AllreduceBase::ReConnectLinks(const char *cmd, bool dieOnError) {
   // single node mode
   if (tracker_uri == "NULL") {
-    rank = 0; world_size = 1; return;
+    rank = 0; world_size = 1; return true;
   }
-  utils::TCPSocket tracker = this->ConnectTracker();
+  std::pair<utils::TCPSocket, bool> pair = this->ConnectTracker(dieOnError);
+  if (!std::get<1>(pair)) {
+    return false;
+  }
+  utils::TCPSocket tracker = std::get<0>(pair);
   tracker.SendStr(std::string(cmd));
 
   // the rank of previous link, next link in ring
@@ -382,6 +394,7 @@ void AllreduceBase::ReConnectLinks(const char *cmd) {
          "cannot find prev ring in the link");
   Assert(next_rank == -1 || ring_next != NULL,
          "cannot find next ring in the link");
+  return true;
 }
 /*!
  * \brief perform in-place allreduce, on sendrecvbuf, this function can fail, and will return the cause of failure

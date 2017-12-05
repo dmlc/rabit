@@ -86,8 +86,9 @@ class MPIEngine : public IEngine {
 MPIEngine manager;
 
 /*! \brief intiialize the synchronization module */
-void Init(int argc, char *argv[]) {
+bool Init(int argc, char *argv[]) {
   MPI::Init(argc, argv);
+  return true;
 }
 /*! \brief finalize syncrhonization module */
 void Finalize(void) {

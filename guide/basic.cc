@@ -16,7 +16,9 @@ int main(int argc, char *argv[]) {
     N = atoi(argv[1]);
   }
   std::vector<int> a(N);
-  rabit::Init(argc, argv);
+  if (!rabit::Init(argc, argv)) {
+    return -1;
+  }
   for (int i = 0; i < N; ++i) {
     a[i] = rabit::GetRank() + i;
   }

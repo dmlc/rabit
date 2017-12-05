@@ -25,7 +25,9 @@ using namespace rabit;
 const int N = 3;
 int main(int argc, char *argv[]) {
   int a[N];
-  rabit::Init(argc, argv);
+  if (!rabit::Init(argc, argv)) {
+    return -1;
+  }
   for (int i = 0; i < N; ++i) {
     a[i] = rabit::GetRank() + i;
   }
@@ -92,7 +94,9 @@ node 0 to all other nodes.
 using namespace rabit;
 const int N = 3;
 int main(int argc, char *argv[]) {
-  rabit::Init(argc, argv);
+  if (!rabit::Init(argc, argv)) {
+    return -1;
+  }
   std::string s;
   if (rabit::GetRank() == 0) s = "hello world";
   printf("@node[%d] before-broadcast: s=\"%s\"\n",
@@ -153,7 +157,9 @@ you can also refer to [wormhole](https://github.com/dmlc/wormhole/blob/master/le
 #include <rabit.h>
 int main(int argc, char *argv[]) {
   ...
-  rabit::Init(argc, argv);
+  if (!rabit::Init(argc, argv)) {
+    return -1;
+  }
   // load the latest checked model
   int version = rabit::LoadCheckPoint(&model);
   // initialize the model if it is the first version
@@ -206,7 +212,9 @@ using namespace rabit;
 const int N = 3;
 int main(int argc, char *argv[]) {
   int a[N] = {0};
-  rabit::Init(argc, argv);
+  if (!rabit::Init(argc, argv)) {
+    return -1;
+  }
   // lazy preparation function
   auto prepare = [&]() {
     printf("@node[%d] run prepare function\n", rabit::GetRank());

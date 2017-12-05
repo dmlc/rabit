@@ -43,13 +43,13 @@ struct ThreadLocalEntry {
 typedef ThreadLocalStore<ThreadLocalEntry> EngineThreadLocal;
 
 /*! \brief intiialize the synchronization module */
-void Init(int argc, char *argv[]) {
+bool Init(int argc, char *argv[]) {
   ThreadLocalEntry* e = EngineThreadLocal::Get();
   utils::Check(e->engine.get() == nullptr,
                "rabit::Init is already called in this thread");
   e->initialized = true;
   e->engine.reset(new Manager());
-  e->engine->Init(argc, argv);
+  return e->engine->Init(argc, argv);
 }
 
 /*! \brief finalize syncrhonization module */

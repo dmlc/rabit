@@ -77,7 +77,9 @@ int main(int argc, char *argv[]) {
   int n = atoi(argv[1]);
   int nrep = atoi(argv[2]);
   utils::Check(nrep >= 1, "need to at least repeat running once");
-  rabit::Init(argc, argv);
+  if (!rabit::Init(argc, argv)) {
+    return -1;
+  }
   //int rank = rabit::GetRank();
   int nproc = rabit::GetWorldSize();
   std::string name = rabit::GetProcessorName();
