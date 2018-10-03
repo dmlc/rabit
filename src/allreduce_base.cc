@@ -24,7 +24,7 @@ AllreduceBase::AllreduceBase(void) {
   nport_trial = 1000;
   rank = 0;
   world_size = -1;
-  connect_retry = 5;
+  connect_retry = 50;
   hadoop_mode = 0;
   version_number = 0;
   // 32 K items
@@ -210,7 +210,7 @@ utils::TCPSocket AllreduceBase::ConnectTracker(void) const {
         #ifdef _MSC_VER
         Sleep(1);
         #else
-        sleep(1);
+        sleep(10);
         #endif
         continue;
       }
