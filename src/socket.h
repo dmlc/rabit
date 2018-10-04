@@ -434,6 +434,7 @@ struct SelectHelper {
    */
   inline void WatchRead(SOCKET fd) {
     FD_SET(fd, &read_set);
+    Utils::Printf("WatchRead %d", fd)
     if (fd > maxfd) maxfd = fd;
   }
   /*!
@@ -442,6 +443,7 @@ struct SelectHelper {
    */
   inline void WatchWrite(SOCKET fd) {
     FD_SET(fd, &write_set);
+    Utils::Printf("WatchWrite %d", fd)
     if (fd > maxfd) maxfd = fd;
   }
   /*!
@@ -450,6 +452,7 @@ struct SelectHelper {
    */
   inline void WatchException(SOCKET fd) {
     FD_SET(fd, &except_set);
+    Utils::Printf("WatchException %d", fd)
     if (fd > maxfd) maxfd = fd;
   }
   /*!

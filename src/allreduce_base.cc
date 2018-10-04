@@ -597,6 +597,7 @@ AllreduceBase::TryAllreduceTree(void *sendrecvbuf_,
 AllreduceBase::ReturnType
 AllreduceBase::TryBroadcast(void *sendrecvbuf_, size_t total_size, int root) {
   RefLinkVector &links = tree_links;
+  Utils::Printf("broadcast to %d node", links.size())
   if (links.size() == 0 || total_size == 0) return kSuccess;
   utils::Check(root < world_size,
                "Broadcast: root should be smaller than world size");
