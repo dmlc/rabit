@@ -424,7 +424,8 @@ namespace rabit {
             }
         };
 
-/*! \brief helper data structure to perform select */
+
+        /*! \brief helper data structure to perform select */
         struct SelectHelper {
         public:
             /*!
