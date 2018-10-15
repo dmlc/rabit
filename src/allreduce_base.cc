@@ -135,7 +135,7 @@ void AllreduceBase::Shutdown(void) {
 }
 void AllreduceBase::TrackerPrint(const std::string &msg) {
   if (tracker_uri == "NULL") {
-    utils::Printf("%s", msg.c_str()); return;
+    utils::Printf("Rabit::AllreduceBase::TrackerPrint INFO %s", msg.c_str()); return;
   }
   utils::TCPSocket tracker = this->ConnectTracker();
   tracker.SendStr(std::string("print"));
@@ -597,7 +597,7 @@ AllreduceBase::TryAllreduceTree(void *sendrecvbuf_,
 AllreduceBase::ReturnType
 AllreduceBase::TryBroadcast(void *sendrecvbuf_, size_t total_size, int root) {
   RefLinkVector &links = tree_links;
-  Utils::Printf("broadcast to %d node", links.size())
+  utils::Printf("Rabit::AllreduceBase::TryBroadcast INFO# broadcast to %d node", links.size());
   if (links.size() == 0 || total_size == 0) return kSuccess;
   utils::Check(root < world_size,
                "Broadcast: root should be smaller than world size");

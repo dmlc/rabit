@@ -434,7 +434,7 @@ struct SelectHelper {
    */
   inline void WatchRead(SOCKET fd) {
     FD_SET(fd, &read_set);
-    Utils::Printf("WatchRead %d", fd)
+    utils::Printf("Rabit::Socket::SelectHelper::WatchRead #INFO %d", fd);
     if (fd > maxfd) maxfd = fd;
   }
   /*!
@@ -443,7 +443,7 @@ struct SelectHelper {
    */
   inline void WatchWrite(SOCKET fd) {
     FD_SET(fd, &write_set);
-    Utils::Printf("WatchWrite %d", fd)
+    utils::Printf("Rabit::Socket::SelectHelper::WatchWrite #INFO %d", fd);
     if (fd > maxfd) maxfd = fd;
   }
   /*!
@@ -452,7 +452,7 @@ struct SelectHelper {
    */
   inline void WatchException(SOCKET fd) {
     FD_SET(fd, &except_set);
-    Utils::Printf("WatchException %d", fd)
+    utils::Printf("Rabit::Socket::SelectHelper::WatchException #INFO %d", fd);
     if (fd > maxfd) maxfd = fd;
   }
   /*!
@@ -499,6 +499,7 @@ struct SelectHelper {
    *         return -1 if error occurs
    */
   inline int Select(long timeout = 0) {  // NOLINT(*)
+      utils::Printf("Rabit::Socket::SelectHelper::Select #INFO %d", maxfd + 1);
     int ret =  Select_(static_cast<int>(maxfd + 1),
                        &read_set, &write_set, &except_set, timeout);
     if (ret == -1) {
