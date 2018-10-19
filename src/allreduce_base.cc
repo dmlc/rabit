@@ -210,7 +210,7 @@ utils::TCPSocket AllreduceBase::ConnectTracker(void) const {
         #ifdef _MSC_VER
         Sleep(1);
         #else
-        sleep(1);
+        sleep(retry);
         #endif
         continue;
       }
