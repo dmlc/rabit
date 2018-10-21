@@ -208,7 +208,7 @@ utils::TCPSocket AllreduceBase::ConnectTracker(void) const {
       } else {
         fprintf(stderr, "retry connect to ip(retry time %d): [%s]\n", retry, tracker_uri.c_str());
         #ifdef _MSC_VER
-        Sleep(1);
+        Sleep(retry << 1);
         #else
         sleep(retry << 1);
         #endif

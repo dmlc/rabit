@@ -130,13 +130,13 @@ class Socket {
   inline static void Startup(void) {
 #ifdef _WIN32
     WSADATA wsa_data;
-if (WSAStartup(MAKEWORD(2, 2), &wsa_data) == -1) {
-Socket::Error("Startup");
-}
-if (LOBYTE(wsa_data.wVersion) != 2 || HIBYTE(wsa_data.wVersion) != 2) {
-WSACleanup();
-utils::Error("Could not find a usable version of Winsock.dll\n");
-}
+    if (WSAStartup(MAKEWORD(2, 2), &wsa_data) == -1) {
+    Socket::Error("Startup");
+    }
+    if (LOBYTE(wsa_data.wVersion) != 2 || HIBYTE(wsa_data.wVersion) != 2) {
+    WSACleanup();
+    utils::Error("Could not find a usable version of Winsock.dll\n");
+    }
 #endif
   }
   /*!
@@ -155,9 +155,9 @@ utils::Error("Could not find a usable version of Winsock.dll\n");
   inline void SetNonBlock(bool non_block) {
 #ifdef _WIN32
     u_long mode = non_block ? 1 : 0;
-if (ioctlsocket(sockfd, FIONBIO, &mode) != NO_ERROR) {
-Socket::Error("SetNonBlock");
-}
+    if (ioctlsocket(sockfd, FIONBIO, &mode) != NO_ERROR) {
+      Socket::Error("SetNonBlock");
+    }
 #else
     int flag = fcntl(sockfd, F_GETFL, 0);
     if (flag == -1) {
@@ -199,8 +199,8 @@ Socket::Error("SetNonBlock");
       }
 #if defined(_WIN32)
       if (WSAGetLastError() != WSAEADDRINUSE) {
-Socket::Error("TryBindHost");
-}
+        Socket::Error("TryBindHost");
+      }
 #else
       if (errno != EADDRINUSE) {
         Socket::Error("TryBindHost");
@@ -312,7 +312,7 @@ class TCPSocket : public Socket{
   inline int AtMark(void) const {
 #ifdef _WIN32
     unsigned long atmark;  // NOLINT(*)
-if (ioctlsocket(sockfd, SIOCATMARK, &atmark) != NO_ERROR) return -1;
+    if (ioctlsocket(sockfd, SIOCATMARK, &atmark) != NO_ERROR) return -1;
 #else
     int atmark;
     if (ioctl(sockfd, SIOCATMARK, &atmark) == -1) return -1;

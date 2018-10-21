@@ -69,7 +69,7 @@ AllreduceRobust::MsgPassing(const NodeType &node_value,
     if (parent_index == -1) {
       utils::Assert(stage != 2 && stage != 1, "invalie stage id");
     }
-    // select helper
+    // poll helper
     utils::PollHelper watcher;
     bool done = (stage == 3);
     for (int i = 0; i < nlink; ++i) {

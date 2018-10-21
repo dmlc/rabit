@@ -120,17 +120,17 @@ int main(int argc, char *argv[]) {
     printf("[%d] reload-trail=%d, init iter=%d\n", rank, ntrial, iter);
   }
   for (int r = iter; r < 3; ++r) {
-    //TestMax(&model, &local, ntrial, r);
-    //printf("[%d] !!!TestMax pass, iter=%d\n",  rank, r);
+    TestMax(&model, &local, ntrial, r);
+    printf("[%d] !!!TestMax pass, iter=%d\n",  rank, r);
     int step = std::max(nproc / 3, 1);
     for (int i = 0; i < nproc; i += step) {
-      //TestBcast(n, i, ntrial, r);
+      TestBcast(n, i, ntrial, r);
     }
-    //printf("[%d] !!!TestBcast pass, iter=%d\n", rank, r);
-    //TestSum(&model, &local, ntrial, r);
-    //printf("[%d] !!!TestSum pass, iter=%d\n", rank, r);
-    //rabit::CheckPoint(&model, &local);
-    //printf("[%d] !!!CheckPont pass, iter=%d\n", rank, r);
+    printf("[%d] !!!TestBcast pass, iter=%d\n", rank, r);
+    TestSum(&model, &local, ntrial, r);
+    printf("[%d] !!!TestSum pass, iter=%d\n", rank, r);
+    rabit::CheckPoint(&model, &local);
+    printf("[%d] !!!CheckPont pass, iter=%d\n", rank, r);
   }
   rabit::Finalize();
   return 0;
