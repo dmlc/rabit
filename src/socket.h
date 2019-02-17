@@ -1,5 +1,5 @@
 /*!
- *  Copyright (c) 2014 by Contributors
+ *  Copyright (c) 2014-2019 by Contributors
  * \file socket.h
  * \brief this file aims to provide a wrapper of sockets
  * \author Tianqi Chen
@@ -28,7 +28,7 @@
 #include <unordered_map>
 #include "../include/rabit/internal/utils.h"
 
-#if defined(_WIN32) && not defined(__MINGW32__)
+#if defined(_WIN32) || defined(__MINGW32__)
 typedef int ssize_t;
 #endif
 
