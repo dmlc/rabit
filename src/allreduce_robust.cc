@@ -94,6 +94,11 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
     return;
   }
   bool recovered = RecoverExec(sendrecvbuf_, type_nbytes * count, 0, seq_counter);
+
+  //check if restarted worker recovered from other healthy workers
+  if(recovered) {
+      printf("[%d] all reduce with recover with seq %d\n", this->rank, seq_counter);
+  }
   // now we are free to remove the last result, if any
   if (resbuf.LastSeqNo() != -1 &&
       (result_buffer_round == -1 ||

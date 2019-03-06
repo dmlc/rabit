@@ -4,6 +4,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
+#include<unistd.h>
+
 using namespace rabit;
 
 // dummy model
@@ -77,10 +79,9 @@ inline void TestBcast(size_t n, int root, int ntrial, int iter) {
   std::string res;
   if (root == rank) {
     res = s;
-    rabit::Broadcast(&res, root);
-  } else {
-    rabit::Broadcast(&res, root);
   }
+  rabit::Broadcast(&res, root);
+
   utils::Check(res == s, "[%d] TestBcast fail", rank);
 }
 
@@ -99,27 +100,35 @@ int main(int argc, char *argv[]) {
   int ntrial = 0;
   for (int i = 1; i < argc; ++i) {
     int n;
-    if (sscanf(argv[i], "rabit_num_trial=%d", &n) == 1) ntrial = n;
+    if (sscanf(argv[i], "rabit_num_trial=%d", &n) == 1) {
+      printf("rabit_num_trial=%d\n", n);
+      ntrial = n;
+    }
   }
   int iter = rabit::LoadCheckPoint(&model);
   if (iter == 0) {
     model.InitModel(n);
-    printf("[%d] reload-trail=%d, init iter=%d\n", rank, ntrial, iter);
-  } else {
-    printf("[%d] reload-trail=%d, init iter=%d\n", rank, ntrial, iter);
   }
+
+  printf("[%d] reload-trail=%d, init iter=%d\n", rank, ntrial, iter);
+
   for (int r = iter; r < 3; ++r) {
     TestMax(&model, ntrial, r);
     printf("[%d] !!!TestMax pass, iter=%d\n",  rank, r);
+
     int step = std::max(nproc / 3, 1);
     for (int i = 0; i < nproc; i += step) {
       TestBcast(n, i, ntrial, r);
     }
     printf("[%d] !!!TestBcast pass, iter=%d\n", rank, r);
+    
+
     TestSum(&model, ntrial, r);
     printf("[%d] !!!TestSum pass, iter=%d\n", rank, r);
+
+
     rabit::CheckPoint(&model);
-    printf("[%d] !!!CheckPont pass, iter=%d\n", rank, r);
+    printf("[%d] !!!Checkpoint pass, iter=%d\n", rank, r);
   }
   rabit::Finalize();
   return 0;
