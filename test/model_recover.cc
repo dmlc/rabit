@@ -4,7 +4,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
-#include<unistd.h>
 
 using namespace rabit;
 
@@ -100,17 +99,13 @@ int main(int argc, char *argv[]) {
   int ntrial = 0;
   for (int i = 1; i < argc; ++i) {
     int n;
-    if (sscanf(argv[i], "rabit_num_trial=%d", &n) == 1) {
-      printf("rabit_num_trial=%d\n", n);
-      ntrial = n;
-    }
+    if (sscanf(argv[i], "rabit_num_trial=%d", &n) == 1) ntrial = n;
+
   }
   int iter = rabit::LoadCheckPoint(&model);
   if (iter == 0) {
     model.InitModel(n);
   }
-
-  printf("[%d] reload-trail=%d, init iter=%d\n", rank, ntrial, iter);
 
   for (int r = iter; r < 3; ++r) {
     TestMax(&model, ntrial, r);
