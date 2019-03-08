@@ -5,7 +5,7 @@ all: model_recover_10_10k  model_recover_10_10k_die_same model_recover_10_10k_di
 
 # this experiment test recovery with actually process exit, use keepalive to keep program alive
 model_recover_10_10k:
-	../dmlc-core/tracker/dmlc-submit --cluster local --num-workers=2 model_recover 10000 mock=0,0,1,0 mock=1,1,1,0 rabit_num_trial=0 DMLC_NUM_ATTEMPT=10
+	../dmlc-core/tracker/dmlc-submit --cluster local --num-workers=10 model_recover 10000 mock=0,0,1,0 mock=1,1,1,0 rabit_num_trial=0 DMLC_NUM_ATTEMPT=10
 
 model_recover_10_10k_die_same:
 	../dmlc-core/tracker/dmlc-submit --cluster local --num-workers=10 model_recover 10000 mock=0,0,1,0 mock=1,1,1,0 mock=0,1,1,0 mock=4,1,1,0 mock=9,1,1,0 rabit_num_trial=0 DMLC_NUM_ATTEMPT=10

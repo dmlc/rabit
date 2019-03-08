@@ -100,28 +100,23 @@ int main(int argc, char *argv[]) {
   for (int i = 1; i < argc; ++i) {
     int n;
     if (sscanf(argv[i], "rabit_num_trial=%d", &n) == 1) ntrial = n;
-
   }
   int iter = rabit::LoadCheckPoint(&model);
   if (iter == 0) {
     model.InitModel(n);
   }
+  printf("[%d] reload-trail=%d, init iter=%d\n", rank, ntrial, iter);
 
   for (int r = iter; r < 3; ++r) {
     TestMax(&model, ntrial, r);
     printf("[%d] !!!TestMax pass, iter=%d\n",  rank, r);
-
     int step = std::max(nproc / 3, 1);
     for (int i = 0; i < nproc; i += step) {
       TestBcast(n, i, ntrial, r);
     }
     printf("[%d] !!!TestBcast pass, iter=%d\n", rank, r);
-    
-
     TestSum(&model, ntrial, r);
     printf("[%d] !!!TestSum pass, iter=%d\n", rank, r);
-
-
     rabit::CheckPoint(&model);
     printf("[%d] !!!Checkpoint pass, iter=%d\n", rank, r);
   }
