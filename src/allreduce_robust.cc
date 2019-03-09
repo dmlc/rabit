@@ -275,6 +275,9 @@ void AllreduceRobust::CheckPoint_(const Serializable *global_model,
       if (RecoverExec(NULL, 0, 0, ActionSummary::kLocalCheckPoint)) break;
       // save model model to new version place
       int new_version = !local_chkpt_version;
+      printf("[%d] local checkpoint # %d, new # %d \n",
+              this->rank, local_chkpt_version, new_version);
+
       local_chkpt[new_version].clear();
       utils::MemoryBufferStream fs(&local_chkpt[new_version]);
       if (local_model != NULL) {
@@ -301,6 +304,7 @@ void AllreduceRobust::CheckPoint_(const Serializable *global_model,
   if (lazy_checkpt) {
     global_lazycheck = global_model;
   } else {
+    printf("[%d] save global checkpoint #%d \n", this->rank, version_number);
     global_checkpoint.resize(0);
     utils::MemoryBufferStream fs(&global_checkpoint);
     fs.Write(&version_number, sizeof(version_number));
@@ -742,6 +746,9 @@ AllreduceRobust::ReturnType AllreduceRobust::TryLoadCheckPoint(bool requester) {
     succ = TryRecoverLocalState(&local_rptr[local_chkpt_version],
                                 &local_chkpt[local_chkpt_version]);
     if (succ != kSuccess) return succ;
+
+    printf("[%d] recovered local checkpoint version %d \n", this->rank, local_chkpt_version);
+
     int nlocal = std::max(static_cast<int>(local_rptr[local_chkpt_version].size()) - 1, 0);
     // check if everyone is OK
     unsigned state = 0;
