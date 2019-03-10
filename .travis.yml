@@ -1,12 +1,6 @@
 # disable sudo to use container based build
 sudo: false
 
-os:
-  - linux
-  - osx
-
-osx_image: xcode10.1
-
 # Use Build Matrix to do lint and build seperately
 env:
   matrix:
@@ -17,6 +11,7 @@ env:
     - TASK=test CXX=g++
 
 # dependent apt packages
+dist: xenial
 addons:
   apt:
     packages:
@@ -28,11 +23,7 @@ addons:
       - unzip
       - python-numpy
       - gcc-5
-  homebrew:
-    packages:
-      - gcc@7
-    update: true
-
+      
 before_install:
   - git clone https://github.com/chenqin/dmlc-core
   - export TRAVIS=dmlc-core/scripts/travis/
