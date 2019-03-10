@@ -2,7 +2,7 @@ OS := $(shell uname)
 
 ifeq ($(OS), Linux)
 ifndef CXX
-export CXX = g++
+export CXX = g++-5
 endif
 export MPICXX = mpicxx
 export LDFLAGS= -Llib -lrt
@@ -18,7 +18,7 @@ export LDFLAGS= -Llib -Wl,-rpath=/usr/local/lib/gcc6
 
 endif
 
-export WARNFLAGS= -Wall -Wextra -Wno-unused-parameter -Wno-unknown-pragmas -std=c++0x
+export WARNFLAGS= -Wall -Wextra -Wno-unused-parameter -Wno-unknown-pragmas -std=c++11
 export CFLAGS = -O3 $(WARNFLAGS)
 
 #----------------------------
