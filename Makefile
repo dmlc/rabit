@@ -1,21 +1,34 @@
 OS := $(shell uname)
 
-ifeq ($(OS), Linux)
-ifndef CXX
-export CXX = g++-5
-endif
 export MPICXX = mpicxx
-export LDFLAGS= -Llib -lrt
+export LDFLAGS=  -Llib
 
-endif
+OS := $(shell uname)
 
-ifeq ($(OS), FreeBSD)
-ifndef CXX
-export CXX = g++6
-endif
-export MPICXX = /usr/local/mpi/bin/mpicxx
-export LDFLAGS= -Llib -Wl,-rpath=/usr/local/lib/gcc6
-
+ifeq ($(OS), Darwin)
+    ifndef CC
+        export CC = $(if $(shell which clang), clang, gcc)
+    endif
+    ifndef CXX
+        export CXX = $(if $(shell which clang++), clang++, g++)
+    endif
+else
+    ifeq ($(OS), FreeBSD)
+         ifndef CXX
+             export CXX = g++6
+         endif
+         export MPICXX = /usr/local/mpi/bin/mpicxx
+         export LDFLAGS= -Llib -Wl,-rpath=/usr/local/lib/gcc6
+    else
+        # linux defaults
+        ifndef CC
+            export CC = gcc
+        endif
+        ifndef CXX
+            export CXX = g++
+        endif
+        LDFLAGS += -lrt
+    endif
 endif
 
 export WARNFLAGS= -Wall -Wextra -Wno-unused-parameter -Wno-unknown-pragmas -std=c++11
