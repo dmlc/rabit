@@ -1,30 +1,14 @@
 # disable sudo to use container based build
 sudo: false
 
-# Enabling test on Linux and OS X
-os:
-  - linux
-  - osx
-
-osx_image: xcode9.3
-
 # Use Build Matrix to do lint and build seperately
 env:
   matrix:
     - TASK=lint LINT_LANG=cpp
     - TASK=lint LINT_LANG=python
     - TASK=doc
-    - TASK=build
-    - TASK=test
-
-matrix:
-  exclude:
-    - os: osx
-      env: TASK=lint LINT_LANG=cpp
-    - os: osx
-      env: TASK=lint LINT_LANG=python
-    - os: osx
-      env: TASK=doc
+    - TASK=build CXX=g++
+    - TASK=test CXX=g++
 
 # dependent apt packages
 dist: xenial
@@ -40,11 +24,6 @@ addons:
       - python-numpy
       - gcc-4.8
       - g++-4.8
-  homebrew:
-    packages:
-      - gcc48
-      - graphviz
-    update: true
       
 before_install:
   - git clone https://github.com/chenqin/dmlc-core

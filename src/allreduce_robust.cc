@@ -94,11 +94,6 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
     return;
   }
   bool recovered = RecoverExec(sendrecvbuf_, type_nbytes * count, 0, seq_counter);
-
-  // check if restarted worker recovered from other healthy workers
-  if (recovered) {
-      printf("[%d] all reduce with recover with seq %d\n", this->rank, seq_counter);
-  }
   // now we are free to remove the last result, if any
   if (resbuf.LastSeqNo() != -1 &&
       (result_buffer_round == -1 ||
@@ -273,10 +268,8 @@ void AllreduceRobust::CheckPoint_(const Serializable *global_model,
   if (num_local_replica != 0) {
     while (true) {
       if (RecoverExec(NULL, 0, 0, ActionSummary::kLocalCheckPoint)) break;
-      // save model model to new version place
+      // save model to new version place
       int new_version = !local_chkpt_version;
-      printf("[%d] local checkpoint # %d, new # %d \n",
-              this->rank, local_chkpt_version, new_version);
 
       local_chkpt[new_version].clear();
       utils::MemoryBufferStream fs(&local_chkpt[new_version]);
@@ -747,7 +740,7 @@ AllreduceRobust::ReturnType AllreduceRobust::TryLoadCheckPoint(bool requester) {
                                 &local_chkpt[local_chkpt_version]);
     if (succ != kSuccess) return succ;
 
-    printf("[%d] recovered local checkpoint version %d \n", this->rank, local_chkpt_version);
+    printf("[%d] recovered from local checkpoint version %d \n", this->rank, local_chkpt_version);
 
     int nlocal = std::max(static_cast<int>(local_rptr[local_chkpt_version].size()) - 1, 0);
     // check if everyone is OK
