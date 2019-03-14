@@ -26,7 +26,7 @@ addons:
       - g++-4.8
       
 before_install:
-  - git clone https://github.com/chenqin/dmlc-core
+  - git clone https://github.com/dmlc/dmlc-core
   - export TRAVIS=dmlc-core/scripts/travis/
   - source ${TRAVIS}/travis_setup_env.sh
 
