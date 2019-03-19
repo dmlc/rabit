@@ -11,8 +11,8 @@
 #include <istream>
 #include <ostream>
 #include <streambuf>
-
-#include "base.h"
+// Cause https://github.com/dmlc/xgboost/issues/4274
+#include "dmlc/base.h"
 
 // include uint64_t only to make io standalone
 #ifdef _MSC_VER
