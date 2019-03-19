@@ -10,6 +10,7 @@ env:
     - TASK=build
     - TASK=mpi-build
     - TASK=test
+    - TASK=test2
 
 # dependent apt packages
 dist: xenial

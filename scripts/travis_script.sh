@@ -25,3 +25,10 @@ if [ ${TASK} == "test" ]; then
     ../scripts/travis_runtest.sh || exit -1
 fi
 
+
+if [ ${TASK} == "test2" ]; then
+    cd test2
+    git clone https://github.com/google/googletest
+    make all || exit -1
+    ./sample1_unittest || exit -1
+fi
