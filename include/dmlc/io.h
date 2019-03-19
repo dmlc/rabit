@@ -7,12 +7,12 @@
 #define DMLC_IO_H_
 #include <cstdio>
 #include <string>
+#include <cstring>
 #include <vector>
 #include <istream>
 #include <ostream>
 #include <streambuf>
-
-#include "base.h"
+#include "./logging.h"
 
 // include uint64_t only to make io standalone
 #ifdef _MSC_VER
@@ -59,12 +59,13 @@ class Stream {  // NOLINT(*)
                         bool allow_null = false);
   // helper functions to write/read different data structures
   /*!
-   * \brief writes a data to stream
+   * \brief writes a data to stream.
    *
-   * dmlc::Stream support Write/Read of most STL
-   * composites and base types.
-   * If the data type is not supported, a compile time error will
-   * be issued.
+   * dmlc::Stream support Write/Read of most STL composites and base types.
+   * If the data type is not supported, a compile time error will be issued.
+   *
+   * This function is endian-aware,
+   * the output endian defined by DMLC_IO_USE_LITTLE_ENDIAN
    *
    * \param data data to be written
    * \tparam T the data type to be written
@@ -74,16 +75,34 @@ class Stream {  // NOLINT(*)
   /*!
    * \brief loads a data from stream.
    *
-   * dmlc::Stream support Write/Read of most STL
-   * composites and base types.
-   * If the data type is not supported, a compile time error will
-   * be issued.
+   * dmlc::Stream support Write/Read of most STL composites and base types.
+   * If the data type is not supported, a compile time error will be issued.
+   *
+   * This function is endian-aware,
+   * the input endian defined by DMLC_IO_USE_LITTLE_ENDIAN
    *
    * \param out_data place holder of data to be deserialized
    * \return whether the load was successful
    */
   template<typename T>
   inline bool Read(T *out_data);
+  /*!
+   * \brief Endian aware write array of data.
+   * \param data The data pointer
+   * \param num_elems Number of elements
+   * \tparam T the data type.
+   */
+  template<typename T>
+  inline void WriteArray(const T* data, size_t num_elems);
+  /*!
+   * \brief Endian aware read array of data.
+   * \param data The data pointer
+   * \param num_elems Number of elements
+   * \tparam T the data type.
+   * \return whether the load was successful
+   */
+  template<typename T>
+  inline bool ReadArray(T* data, size_t num_elems);
 };
 
 /*! \brief interface of i/o stream that support seek */
@@ -157,7 +176,7 @@ class InputSplit {
   virtual void BeforeFirst(void) = 0;
   /*!
    * \brief get the next record, the returning value
-   *   is valid until next call to NextRecord or NextChunk
+   *   is valid until next call to NextRecord, NextChunk or NextBatch
    *   caller can modify the memory content of out_rec
    *
    *   For text, out_rec contains a single line
@@ -177,7 +196,7 @@ class InputSplit {
    *
    *  This function ensures there won't be partial record in the chunk
    *  caller can modify the memory content of out_chunk,
-   *  the memory is valid until next call to NextRecord or NextChunk
+   *  the memory is valid until next call to NextRecord, NextChunk or NextBatch
    *
    *  Usually NextRecord is sufficient, NextChunk can be used by some
    *  multi-threaded parsers to parse the input content
@@ -189,6 +208,28 @@ class InputSplit {
    * \sa RecordIOChunkReader to parse recordio content from out_chunk
    */
   virtual bool NextChunk(Blob *out_chunk) = 0;
+  /*!
+   * \brief get a chunk of memory that can contain multiple records,
+   *  with hint for how many records is needed,
+   *  the caller needs to parse the content of the resulting chunk,
+   *  for text file, out_chunk can contain data of multiple lines
+   *  for recordio, out_chunk can contain multiple records(including headers)
+   *
+   *  This function ensures there won't be partial record in the chunk
+   *  caller can modify the memory content of out_chunk,
+   *  the memory is valid until next call to NextRecord, NextChunk or NextBatch
+   *
+   *
+   * \param out_chunk used to store the result
+   * \param n_records used as a hint for how many records should be returned, may be ignored
+   * \return true if we can successfully get next record
+   *     false if we reached end of split
+   * \sa InputSplit::Create for definition of record
+   * \sa RecordIOChunkReader to parse recordio content from out_chunk
+   */
+  virtual bool NextBatch(Blob *out_chunk, size_t n_records) {
+    return NextChunk(out_chunk);
+  }
   /*! \brief destructor*/
   virtual ~InputSplit(void) {}
   /*!
@@ -206,12 +247,14 @@ class InputSplit {
    * \param part_index the part id of current input
    * \param num_parts total number of splits
    * \param type type of record
-   *   List of possible types: "text", "recordio"
+   *   List of possible types: "text", "recordio", "indexed_recordio"
    *     - "text":
    *         text file, each line is treated as a record
    *         input split will split on '\\n' or '\\r'
    *     - "recordio":
    *         binary recordio file, see recordio.h
+   *     - "indexed_recordio":
+   *         binary recordio file with index, see recordio.h
    * \return a new input split
    * \sa InputSplit::Type
    */
@@ -219,8 +262,46 @@ class InputSplit {
                             unsigned part_index,
                             unsigned num_parts,
                             const char *type);
+  /*!
+   * \brief factory function:
+   *  create input split given a uri for input and index
+   * \param uri the uri of the input, can contain hdfs prefix
+   * \param index_uri the uri of the index, can contain hdfs prefix
+   * \param part_index the part id of current input
+   * \param num_parts total number of splits
+   * \param type type of record
+   *   List of possible types: "text", "recordio", "indexed_recordio"
+   *     - "text":
+   *         text file, each line is treated as a record
+   *         input split will split on '\\n' or '\\r'
+   *     - "recordio":
+   *         binary recordio file, see recordio.h
+   *     - "indexed_recordio":
+   *         binary recordio file with index, see recordio.h
+   * \param shuffle whether to shuffle the output from the InputSplit,
+   *                supported only by "indexed_recordio" type.
+   *                Defaults to "false"
+   * \param seed random seed to use in conjunction with the "shuffle"
+   *             option. Defaults to 0
+   * \param batch_size a hint to InputSplit what is the intended number
+   *                   of examples return per batch. Used only by
+   *                   "indexed_recordio" type
+   * \param recurse_directories whether to recursively traverse directories
+   * \return a new input split
+   * \sa InputSplit::Type
+   */
+  static InputSplit* Create(const char *uri,
+                            const char *index_uri,
+                            unsigned part_index,
+                            unsigned num_parts,
+                            const char *type,
+                            const bool shuffle = false,
+                            const int seed = 0,
+                            const size_t batch_size = 256,
+                            const bool recurse_directories = false);
 };
 
+#ifndef _LIBCPP_SGX_NO_IOSTREAMS
 /*!
  * \brief a std::ostream class that can can wrap Stream objects,
  *  can use ostream with that output to underlying Stream
@@ -359,6 +440,7 @@ class istream : public std::basic_istream<char> {
   /*! \brief input buffer */
   InBuf buf_;
 };
+#endif
 }  // namespace dmlc
 
 #include "./serializer.h"
@@ -374,6 +456,22 @@ inline bool Stream::Read(T *out_data) {
   return serializer::Handler<T>::Read(this, out_data);
 }
 
+template<typename T>
+inline void Stream::WriteArray(const T* data, size_t num_elems) {
+  for (size_t i = 0; i < num_elems; ++i) {
+    this->Write<T>(data[i]);
+  }
+}
+
+template<typename T>
+inline bool Stream::ReadArray(T* data, size_t num_elems) {
+  for (size_t i = 0; i < num_elems; ++i) {
+    if (!this->Read<T>(data + i)) return false;
+  }
+  return true;
+}
+
+#ifndef _LIBCPP_SGX_NO_IOSTREAMS
 // implementations for ostream
 inline void ostream::OutBuf::set_stream(Stream *stream) {
   if (stream_ != NULL) this->pubsync();
@@ -420,5 +518,118 @@ inline int istream::InBuf::underflow() {
     return traits_type::to_int_type(*gptr());
   }
 }
+#endif
+
+namespace io {
+/*! \brief common data structure for URI */
+struct URI {
+  /*! \brief protocol */
+  std::string protocol;
+  /*!
+   * \brief host name, namenode for HDFS, bucket name for s3
+   */
+  std::string host;
+  /*! \brief name of the path */
+  std::string name;
+  /*! \brief enable default constructor */
+  URI(void) {}
+  /*!
+   * \brief construct from URI string
+   */
+  explicit URI(const char *uri) {
+    const char *p = std::strstr(uri, "://");
+    if (p == NULL) {
+      name = uri;
+    } else {
+      protocol = std::string(uri, p - uri + 3);
+      uri = p + 3;
+      p = std::strchr(uri, '/');
+      if (p == NULL) {
+        host = uri; name = '/';
+      } else {
+        host = std::string(uri, p - uri);
+        name = p;
+      }
+    }
+  }
+  /*! \brief string representation */
+  inline std::string str(void) const {
+    return protocol + host + name;
+  }
+};
+
+/*! \brief type of file */
+enum FileType {
+  /*! \brief the file is file */
+  kFile,
+  /*! \brief the file is directory */
+  kDirectory
+};
+
+/*! \brief use to store file information */
+struct FileInfo {
+  /*! \brief full path to the file */
+  URI path;
+  /*! \brief the size of the file */
+  size_t size;
+  /*! \brief the type of the file */
+  FileType type;
+  /*! \brief default constructor */
+  FileInfo() : size(0), type(kFile) {}
+};
+
+/*! \brief file system system interface */
+class FileSystem {
+ public:
+  /*!
+   * \brief get singleton of filesystem instance according to URI
+   * \param path can be s3://..., hdfs://..., file://...,
+   *            empty string(will return local)
+   * \return a corresponding filesystem, report error if
+   *         we cannot find a matching system
+   */
+  static FileSystem *GetInstance(const URI &path);
+  /*! \brief virtual destructor */
+  virtual ~FileSystem() {}
+  /*!
+   * \brief get information about a path
+   * \param path the path to the file
+   * \return the information about the file
+   */
+  virtual FileInfo GetPathInfo(const URI &path) = 0;
+  /*!
+   * \brief list files in a directory
+   * \param path to the file
+   * \param out_list the output information about the files
+   */
+  virtual void ListDirectory(const URI &path, std::vector<FileInfo> *out_list) = 0;
+  /*!
+   * \brief list files in a directory recursively using ListDirectory
+   * \param path to the file
+   * \param out_list the output information about the files
+   */
+  virtual void ListDirectoryRecursive(const URI &path,
+                                      std::vector<FileInfo> *out_list);
+  /*!
+   * \brief open a stream
+   * \param path path to file
+   * \param flag can be "w", "r", "a
+   * \param allow_null whether NULL can be returned, or directly report error
+   * \return the created stream, can be NULL when allow_null == true and file do not exist
+   */
+  virtual Stream *Open(const URI &path,
+                       const char* const flag,
+                       bool allow_null = false) = 0;
+  /*!
+   * \brief open a seekable stream for read
+   * \param path the path to the file
+   * \param allow_null whether NULL can be returned, or directly report error
+   * \return the created stream, can be NULL when allow_null == true and file do not exist
+   */
+  virtual SeekStream *OpenForRead(const URI &path,
+                                  bool allow_null = false) = 0;
+};
+
+}  // namespace io
 }  // namespace dmlc
 #endif  // DMLC_IO_H_

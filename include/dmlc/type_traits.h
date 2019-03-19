@@ -9,7 +9,7 @@
 #include "./base.h"
 #if DMLC_USE_CXX11
 #include <type_traits>
-#endif  // DMLC_USE_CXX11
+#endif
 #include <string>
 
 namespace dmlc {
@@ -25,7 +25,7 @@ struct is_pod {
 #else
   /*! \brief the value of the traits */
   static const bool value = false;
-#endif  // DMLC_USE_CXX11
+#endif
 };
 
 
@@ -41,7 +41,7 @@ struct is_integral {
 #else
   /*! \brief the value of the traits */
   static const bool value = false;
-#endif  // DMLC_USE_CXX11
+#endif
 };
 
 /*!
@@ -56,7 +56,7 @@ struct is_floating_point {
 #else
   /*! \brief the value of the traits */
   static const bool value = false;
-#endif  // DMLC_USE_CXX11
+#endif
 };
 
 /*!
@@ -72,7 +72,24 @@ struct is_arithmetic {
   /*! \brief the value of the traits */
   static const bool value = (dmlc::is_integral<T>::value ||
                              dmlc::is_floating_point<T>::value);
-#endif  // DMLC_USE_CXX11
+#endif
+};
+
+/*!
+ * \brief helper class to construct a string that represents type name
+ *
+ * Specialized this class to defined type name of custom types
+ *
+ * \tparam T the type to query
+ */
+template<typename T>
+struct type_name_helper {
+  /*!
+   * \return a string of typename.
+   */
+  static inline std::string value() {
+    return "";
+  }
 };
 
 /*!
@@ -81,8 +98,8 @@ struct is_arithmetic {
  * \return a const string of typename.
  */
 template<typename T>
-inline const char* type_name() {
-  return "";
+inline std::string type_name() {
+  return type_name_helper<T>::value();
 }
 
 /*!
@@ -100,7 +117,7 @@ struct has_saveload {
  * For example, IfThenElseType<true, int, float>::Type will give int
  * \tparam cond the condition
  * \tparam Then the typename to be returned if cond is true
- * \tparam The typename to be returned if cond is false
+ * \tparam Else typename to be returned if cond is false
 */
 template<bool cond, typename Then, typename Else>
 struct IfThenElseType;
@@ -115,8 +132,10 @@ struct IfThenElseType;
 /*! \brief macro to quickly declare traits information */
 #define DMLC_DECLARE_TYPE_NAME(Type, Name)            \
   template<>                                          \
-  inline const char* type_name<Type>() {              \
-    return Name;                                      \
+  struct type_name_helper<Type> {                     \
+    static inline std::string value() {               \
+      return Name;                                    \
+    }                                                 \
   }
 
 //! \cond Doxygen_Suppress
@@ -147,7 +166,7 @@ DMLC_DECLARE_TRAITS(is_integral, uint64_t, true);
 DMLC_DECLARE_TRAITS(is_floating_point, float, true);
 DMLC_DECLARE_TRAITS(is_floating_point, double, true);
 
-#endif  // DMLC_USE_CXX11
+#endif
 
 DMLC_DECLARE_TYPE_NAME(float, "float");
 DMLC_DECLARE_TYPE_NAME(double, "double");
@@ -156,6 +175,7 @@ DMLC_DECLARE_TYPE_NAME(uint32_t, "int (non-negative)");
 DMLC_DECLARE_TYPE_NAME(uint64_t, "long (non-negative)");
 DMLC_DECLARE_TYPE_NAME(std::string, "string");
 DMLC_DECLARE_TYPE_NAME(bool, "boolean");
+DMLC_DECLARE_TYPE_NAME(void*, "ptr");
 
 template<typename Then, typename Else>
 struct IfThenElseType<true, Then, Else> {

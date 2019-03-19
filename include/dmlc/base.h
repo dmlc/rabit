@@ -9,7 +9,7 @@
 /*! \brief whether use glog for logging */
 #ifndef DMLC_USE_GLOG
 #define DMLC_USE_GLOG 0
-#endif  // DMLC_USE_GLOG
+#endif
 
 /*!
  * \brief whether throw dmlc::Error instead of
@@ -19,15 +19,15 @@
  */
 #ifndef DMLC_LOG_FATAL_THROW
 #define DMLC_LOG_FATAL_THROW 1
-#endif  // DMLC_LOG_FATAL_THROW
+#endif
 
 /*!
  * \brief whether always log a message before throw
  * This can help identify the error that cannot be catched.
  */
 #ifndef DMLC_LOG_BEFORE_THROW
-#define DMLC_LOG_BEFORE_THROW 1
-#endif  // DMLC_LOG_BEFORE_THROW
+#define DMLC_LOG_BEFORE_THROW 0
+#endif
 
 /*!
  * \brief Whether to use customized logger,
@@ -35,32 +35,22 @@
  */
 #ifndef DMLC_LOG_CUSTOMIZE
 #define DMLC_LOG_CUSTOMIZE 0
-#endif  // DMLC_LOG_CUSTOMIZE
-
-/*!
- * \brief Wheter to print stack trace for fatal error,
- * enabled on linux when using gcc.
- */
-#if (!defined(DMLC_LOG_STACK_TRACE) \
-     && defined(__GNUC__) && !defined(__MINGW32__) \
-     && !defined(__sun) && !defined(__SVR4))
-#define DMLC_LOG_STACK_TRACE 1
-#endif  // guards
+#endif
 
 /*! \brief whether compile with hdfs support */
 #ifndef DMLC_USE_HDFS
 #define DMLC_USE_HDFS 0
-#endif  // DMLC_USE_HDFS
+#endif
 
 /*! \brief whether compile with s3 support */
 #ifndef DMLC_USE_S3
 #define DMLC_USE_S3 0
-#endif  // DMLC_USE_S3
+#endif
 
 /*! \brief whether or not use parameter server */
 #ifndef DMLC_USE_PS
 #define DMLC_USE_PS 0
-#endif  // DMLC_USE_PS
+#endif
 
 /*! \brief whether or not use c++11 support */
 #ifndef DMLC_USE_CXX11
@@ -68,8 +58,8 @@
 #define DMLC_USE_CXX11 1
 #else
 #define DMLC_USE_CXX11 (__cplusplus >= 201103L)
-#endif  // defined(__GXX_EXPERIMENTAL_CXX0X__) || defined(_MSC_VER)
-#endif  // DMLC_USE_CXX11
+#endif
+#endif
 
 /*! \brief strict CXX11 support */
 #ifndef DMLC_STRICT_CXX11
@@ -77,27 +67,30 @@
 #define DMLC_STRICT_CXX11 1
 #else
 #define DMLC_STRICT_CXX11 (__cplusplus >= 201103L)
-#endif  // defined(_MSC_VER)
-#endif  // DMLC_STRICT_CXX11
+#endif
+#endif
 
 /*! \brief Whether cxx11 thread local is supported */
 #ifndef DMLC_CXX11_THREAD_LOCAL
 #if defined(_MSC_VER)
-#if (_MSC_VER >= 1900)
-#define DMLC_CXX11_THREAD_LOCAL 1
-#else
-#define DMLC_CXX11_THREAD_LOCAL 0
-#endif  // (_MSC_VER >= 1900)
+#define DMLC_CXX11_THREAD_LOCAL (_MSC_VER >= 1900)
+#elif defined(__clang__)
+#define DMLC_CXX11_THREAD_LOCAL (__has_feature(cxx_thread_local))
 #else
 #define DMLC_CXX11_THREAD_LOCAL (__cplusplus >= 201103L)
-#endif  // defined(_MSC_VER)
-#endif  // DMLC_CXX11_THREAD_LOCAL
+#endif
+#endif
 
 
 /*! \brief whether RTTI is enabled */
 #ifndef DMLC_ENABLE_RTTI
 #define DMLC_ENABLE_RTTI 1
-#endif  // DMLC_ENABLE_RTTI
+#endif
+
+/*! \brief whether use fopen64 */
+#ifndef DMLC_USE_FOPEN64
+#define DMLC_USE_FOPEN64 1
+#endif
 
 /// check if g++ is before 4.6
 #if DMLC_USE_CXX11 && defined(__GNUC__) && !defined(__clang_version__)
@@ -107,9 +100,16 @@
                 "compile without c++0x, some features may be disabled")
 #undef DMLC_USE_CXX11
 #define DMLC_USE_CXX11 0
-#endif  // __GNUC__ == 4 && __GNUC_MINOR__ < 6
-#endif  // DMLC_USE_CXX11 && defined(__GNUC__) && !defined(__clang_version__)
+#endif
+#endif
 
+/*!
+ * \brief Use little endian for binary serialization
+ *  if this is set to 0, use big endian.
+ */
+#ifndef DMLC_IO_USE_LITTLE_ENDIAN
+#define DMLC_IO_USE_LITTLE_ENDIAN 1
+#endif
 
 /*!
  * \brief Enable std::thread related modules,
@@ -117,19 +117,19 @@
  */
 #ifndef DMLC_ENABLE_STD_THREAD
 #define DMLC_ENABLE_STD_THREAD DMLC_USE_CXX11
-#endif  // DMLC_ENABLE_STD_THREAD
+#endif
 
 /*! \brief whether enable regex support, actually need g++-4.9 or higher*/
 #ifndef DMLC_USE_REGEX
 #define DMLC_USE_REGEX DMLC_STRICT_CXX11
-#endif  // DMLC_USE_REGEX
+#endif
 
 /*! \brief helper macro to supress unused warning */
 #if defined(__GNUC__)
 #define DMLC_ATTRIBUTE_UNUSED __attribute__((unused))
 #else
 #define DMLC_ATTRIBUTE_UNUSED
-#endif  // defined(__GNUC__)
+#endif
 
 /*! \brief helper macro to generate string concat */
 #define DMLC_STR_CONCAT_(__x, __y) __x##__y
@@ -154,46 +154,31 @@
 #    define DISALLOW_COPY_AND_ASSIGN(T) \
        T(T const&); \
        T& operator=(T const&)
-#  endif  // DMLC_USE_CXX11
-#endif  // DISALLOW_COPY_AND_ASSIGN
+#  endif
+#endif
 
-///
-/// code block to handle optionally loading
-///
-#if !defined(__GNUC__)
-#define fopen64 std::fopen
-#endif  // !defined(__GNUC__)
-
-#if (defined __MINGW32__) && !(defined __MINGW64__)
-#define fopen64 std::fopen
-#endif  // (defined __MINGW32__) && !(defined __MINGW64__)
+#ifdef __APPLE__
+#  define off64_t off_t
+#endif
 
 #ifdef _MSC_VER
-
-#  if _MSC_VER < 1900
+#if _MSC_VER < 1900
 // NOTE: sprintf_s is not equivalent to snprintf,
 // they are equivalent when success, which is sufficient for our case
-#  define snprintf sprintf_s
-#  define vsnprintf vsprintf_s
-#  endif  // _MSC_VER < 1900
-
+#define snprintf sprintf_s
+#define vsnprintf vsprintf_s
+#endif
 #else
-
-#  ifdef _FILE_OFFSET_BITS
-#    if _FILE_OFFSET_BITS == 32
-#      pragma message("Warning: FILE OFFSET BITS defined to be 32 bit")
-#    endif  // _FILE_OFFSET_BITS == 32
-#  endif  // _FILE_OFFSET_BITS
-
-#  ifdef __APPLE__
-#    define off64_t off_t
-#    define fopen64 std::fopen
-#  endif  // __APPLE__
+#ifdef _FILE_OFFSET_BITS
+#if _FILE_OFFSET_BITS == 32
+#pragma message("Warning: FILE OFFSET BITS defined to be 32 bit")
+#endif
+#endif
 
 extern "C" {
 #include <sys/types.h>
 }
-#endif  // _MSC_VER
+#endif
 
 #ifdef _MSC_VER
 //! \cond Doxygen_Suppress
@@ -208,8 +193,7 @@ typedef unsigned __int64 uint64_t;
 //! \endcond
 #else
 #include <inttypes.h>
-#endif  // _MSC_VER
-
+#endif
 #include <string>
 #include <vector>
 
@@ -217,7 +201,7 @@ typedef unsigned __int64 uint64_t;
 #define noexcept_true throw ()
 #define noexcept_false
 #define noexcept(a) noexcept_##a
-#endif  // defined(_MSC_VER) && _MSC_VER < 1900
+#endif
 
 #if DMLC_USE_CXX11
 #define DMLC_THROW_EXCEPTION noexcept(false)
@@ -225,7 +209,7 @@ typedef unsigned __int64 uint64_t;
 #else
 #define DMLC_THROW_EXCEPTION
 #define DMLC_NO_EXCEPTION
-#endif  // DMLC_USE_CXX11
+#endif
 
 /*! \brief namespace for dmlc */
 namespace dmlc {
@@ -278,6 +262,12 @@ inline const char* BeginPtr(const std::string &str) {
 #if defined(_MSC_VER) && _MSC_VER < 1900
 #define constexpr const
 #define alignof __alignof
-#endif  // defined(_MSC_VER) && _MSC_VER < 1900
+#endif
+
+/* If fopen64 is not defined by current machine,
+   replace fopen64 with std::fopen. Also determine ability to print stack trace
+   for fatal error and define DMLC_LOG_STACK_TRACE if stack trace can be
+   produced. Always keep this #include at the bottom of dmlc/base.h */
+#include <dmlc/build_config.h>
 
 #endif  // DMLC_BASE_H_

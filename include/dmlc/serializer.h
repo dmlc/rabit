@@ -17,7 +17,9 @@
 
 #include "./base.h"
 #include "./io.h"
+#include "./logging.h"
 #include "./type_traits.h"
+#include "./endian.h"
 
 #if DMLC_USE_CXX11
 #include <unordered_map>
@@ -30,6 +32,7 @@ namespace serializer {
 /*!
  * \brief generic serialization handler
  * \tparam T the type to be serialized
+ * \tparam need_endian_swap Whether use little endian
  */
 template<typename T>
 struct Handler;
@@ -66,12 +69,33 @@ struct IfThenElse<false, Then, Else, T> {
 
 /*! \brief Serializer for POD(plain-old-data) data */
 template<typename T>
-struct PODHandler {
+struct NativePODHandler {
   inline static void Write(Stream *strm, const T &data) {
     strm->Write(&data, sizeof(T));
   }
   inline static bool Read(Stream *strm, T *dptr) {
     return strm->Read((void*)dptr, sizeof(T)) == sizeof(T);  // NOLINT(*)
+  }
+};
+
+/*! \brief Serializer for arithmetic data, handle endianness */
+template<typename T>
+struct ArithmeticHandler {
+  inline static void Write(Stream *strm, const T &data) {
+    if (DMLC_IO_NO_ENDIAN_SWAP) {
+      strm->Write(&data, sizeof(T));
+    } else {
+      T copy = data;
+      ByteSwap(&copy, sizeof(T), 1);
+      strm->Write(&copy, sizeof(T));
+    }
+  }
+  inline static bool Read(Stream *strm, T *dptr) {
+    bool ret = strm->Read((void*)dptr, sizeof(T)) == sizeof(T);  // NOLINT(*)
+    if (!DMLC_IO_NO_ENDIAN_SWAP) {
+      ByteSwap(dptr, sizeof(T), 1);
+    }
+    return ret;
   }
 };
 
@@ -101,17 +125,17 @@ struct UndefinedSerializerFor {
  * \tparam T element type
  */
 template<typename T>
-struct PODVectorHandler {
+struct NativePODVectorHandler {
   inline static void Write(Stream *strm, const std::vector<T> &vec) {
     uint64_t sz = static_cast<uint64_t>(vec.size());
-    strm->Write(&sz, sizeof(sz));
+    strm->Write<uint64_t>(sz);
     if (sz != 0) {
       strm->Write(&vec[0], sizeof(T) * vec.size());
     }
   }
   inline static bool Read(Stream *strm, std::vector<T> *out_vec) {
     uint64_t sz;
-    if (strm->Read(&sz, sizeof(sz)) != sizeof(sz)) return false;
+    if (!strm->Read<uint64_t>(&sz)) return false;
     size_t size = static_cast<size_t>(sz);
     out_vec->resize(size);
     if (sz != 0) {
@@ -130,20 +154,15 @@ template<typename T>
 struct ComposeVectorHandler {
   inline static void Write(Stream *strm, const std::vector<T> &vec) {
     uint64_t sz = static_cast<uint64_t>(vec.size());
-    strm->Write(&sz, sizeof(sz));
-    for (size_t i = 0; i < vec.size(); ++i) {
-      Handler<T>::Write(strm, vec[i]);
-    }
+    strm->Write<uint64_t>(sz);
+    strm->WriteArray(dmlc::BeginPtr(vec), vec.size());
   }
   inline static bool Read(Stream *strm, std::vector<T> *out_vec) {
     uint64_t sz;
-    if (strm->Read(&sz, sizeof(sz)) != sizeof(sz)) return false;
+    if (!strm->Read<uint64_t>(&sz)) return false;
     size_t size = static_cast<size_t>(sz);
     out_vec->resize(size);
-    for (size_t i = 0; i < size; ++i) {
-      if (!Handler<T>::Read(strm, &(*out_vec)[i])) return false;
-    }
-    return true;
+    return strm->ReadArray(dmlc::BeginPtr(*out_vec), size);
   }
 };
 
@@ -152,17 +171,17 @@ struct ComposeVectorHandler {
  * \tparam T element type
  */
 template<typename T>
-struct PODStringHandler {
+struct NativePODStringHandler {
   inline static void Write(Stream *strm, const std::basic_string<T> &vec) {
     uint64_t sz = static_cast<uint64_t>(vec.length());
-    strm->Write(&sz, sizeof(sz));
+    strm->Write<uint64_t>(sz);
     if (sz != 0) {
       strm->Write(&vec[0], sizeof(T) * vec.length());
     }
   }
   inline static bool Read(Stream *strm, std::basic_string<T> *out_vec) {
     uint64_t sz;
-    if (strm->Read(&sz, sizeof(sz)) != sizeof(sz)) return false;
+    if (!strm->Read<uint64_t>(&sz)) return false;
     size_t size = static_cast<size_t>(sz);
     out_vec->resize(size);
     if (sz != 0) {
@@ -187,17 +206,15 @@ struct PairHandler {
 };
 
 // set type handler that can handle most collection type case
-template<typename ContainerType>
+template<typename ContainerType, typename ElemType>
 struct CollectionHandler {
   inline static void Write(Stream *strm, const ContainerType &data) {
-    typedef typename ContainerType::value_type ElemType;
     // dump data to vector
     std::vector<ElemType> vdata(data.begin(), data.end());
     // serialize the vector
     Handler<std::vector<ElemType> >::Write(strm, vdata);
   }
   inline static bool Read(Stream *strm, ContainerType *data) {
-    typedef typename ContainerType::value_type ElemType;
     std::vector<ElemType> vdata;
     if (!Handler<std::vector<ElemType> >::Read(strm, &vdata)) return false;
     data->clear();
@@ -246,11 +263,14 @@ struct Handler {
    * \param data the data obeject to be serialized
    */
   inline static void Write(Stream *strm, const T &data) {
-    IfThenElse<dmlc::is_pod<T>::value,
-               PODHandler<T>,
-               IfThenElse<dmlc::has_saveload<T>::value,
-                          SaveLoadClassHandler<T>,
-                          UndefinedSerializerFor<T>, T>,
+    IfThenElse<dmlc::is_arithmetic<T>::value,
+               ArithmeticHandler<T>,
+               IfThenElse<dmlc::is_pod<T>::value && DMLC_IO_NO_ENDIAN_SWAP,
+                          NativePODHandler<T>,
+                          IfThenElse<dmlc::has_saveload<T>::value,
+                                     SaveLoadClassHandler<T>,
+                                     UndefinedSerializerFor<T>, T>,
+                          T>,
                T>
         ::Write(strm, data);
   }
@@ -261,12 +281,16 @@ struct Handler {
    * \return whether the read is successful
    */
   inline static bool Read(Stream *strm, T *data) {
-    return IfThenElse<dmlc::is_pod<T>::value,
-                      PODHandler<T>,
-                      IfThenElse<dmlc::has_saveload<T>::value,
-                                 SaveLoadClassHandler<T>,
-                                 UndefinedSerializerFor<T>, T>,
-                      T>
+    return
+    IfThenElse<dmlc::is_arithmetic<T>::value,
+               ArithmeticHandler<T>,
+               IfThenElse<dmlc::is_pod<T>::value && DMLC_IO_NO_ENDIAN_SWAP,
+                          NativePODHandler<T>,
+                          IfThenElse<dmlc::has_saveload<T>::value,
+                                     SaveLoadClassHandler<T>,
+                                     UndefinedSerializerFor<T>, T>,
+                          T>,
+               T>
     ::Read(strm, data);
   }
 };
@@ -275,14 +299,14 @@ struct Handler {
 template<typename T>
 struct Handler<std::vector<T> > {
   inline static void Write(Stream *strm, const std::vector<T> &data) {
-    IfThenElse<dmlc::is_pod<T>::value,
-               PODVectorHandler<T>,
+    IfThenElse<dmlc::is_pod<T>::value && DMLC_IO_NO_ENDIAN_SWAP,
+               NativePODVectorHandler<T>,
                ComposeVectorHandler<T>, std::vector<T> >
     ::Write(strm, data);
   }
   inline static bool Read(Stream *strm, std::vector<T> *data) {
-    return IfThenElse<dmlc::is_pod<T>::value,
-                      PODVectorHandler<T>,
+    return IfThenElse<dmlc::is_pod<T>::value && DMLC_IO_NO_ENDIAN_SWAP,
+                      NativePODVectorHandler<T>,
                       ComposeVectorHandler<T>,
                       std::vector<T> >
     ::Read(strm, data);
@@ -292,15 +316,15 @@ struct Handler<std::vector<T> > {
 template<typename T>
 struct Handler<std::basic_string<T> > {
   inline static void Write(Stream *strm, const std::basic_string<T> &data) {
-    IfThenElse<dmlc::is_pod<T>::value,
-               PODStringHandler<T>,
+    IfThenElse<dmlc::is_pod<T>::value && (DMLC_IO_NO_ENDIAN_SWAP || sizeof(T) == 1),
+               NativePODStringHandler<T>,
                UndefinedSerializerFor<T>,
                std::basic_string<T> >
     ::Write(strm, data);
   }
   inline static bool Read(Stream *strm, std::basic_string<T> *data) {
-    return IfThenElse<dmlc::is_pod<T>::value,
-                      PODStringHandler<T>,
+    return IfThenElse<dmlc::is_pod<T>::value && (DMLC_IO_NO_ENDIAN_SWAP || sizeof(T) == 1),
+                      NativePODStringHandler<T>,
                       UndefinedSerializerFor<T>,
                       std::basic_string<T> >
     ::Read(strm, data);
@@ -310,15 +334,19 @@ struct Handler<std::basic_string<T> > {
 template<typename TA, typename TB>
 struct Handler<std::pair<TA, TB> > {
   inline static void Write(Stream *strm, const std::pair<TA, TB> &data) {
-    IfThenElse<dmlc::is_pod<TA>::value && dmlc::is_pod<TB>::value,
-               PODHandler<std::pair<TA, TB> >,
+    IfThenElse<dmlc::is_pod<TA>::value &&
+               dmlc::is_pod<TB>::value &&
+               DMLC_IO_NO_ENDIAN_SWAP,
+               NativePODHandler<std::pair<TA, TB> >,
                PairHandler<TA, TB>,
                std::pair<TA, TB> >
     ::Write(strm, data);
   }
   inline static bool Read(Stream *strm, std::pair<TA, TB> *data) {
-    return IfThenElse<dmlc::is_pod<TA>::value && dmlc::is_pod<TB>::value,
-                      PODHandler<std::pair<TA, TB> >,
+    return IfThenElse<dmlc::is_pod<TA>::value &&
+                      dmlc::is_pod<TB>::value &&
+                      DMLC_IO_NO_ENDIAN_SWAP,
+                      NativePODHandler<std::pair<TA, TB> >,
                       PairHandler<TA, TB>,
                       std::pair<TA, TB> >
     ::Read(strm, data);
@@ -327,22 +355,22 @@ struct Handler<std::pair<TA, TB> > {
 
 template<typename K, typename V>
 struct Handler<std::map<K, V> >
-    : public CollectionHandler<std::map<K, V> > {
+    : public CollectionHandler<std::map<K, V>, std::pair<K, V> > {
 };
 
 template<typename K, typename V>
 struct Handler<std::multimap<K, V> >
-    : public CollectionHandler<std::multimap<K, V> > {
+    : public CollectionHandler<std::multimap<K, V>, std::pair<K, V> > {
 };
 
 template<typename T>
 struct Handler<std::set<T> >
-    : public CollectionHandler<std::set<T> > {
+    : public CollectionHandler<std::set<T>, T> {
 };
 
 template<typename T>
 struct Handler<std::multiset<T> >
-    : public CollectionHandler<std::multiset<T> > {
+    : public CollectionHandler<std::multiset<T>, T> {
 };
 
 template<typename T>
@@ -358,22 +386,22 @@ struct Handler<std::deque<T> >
 #if DMLC_USE_CXX11
 template<typename K, typename V>
 struct Handler<std::unordered_map<K, V> >
-    : public CollectionHandler<std::unordered_map<K, V> > {
+    : public CollectionHandler<std::unordered_map<K, V>, std::pair<K, V> > {
 };
 
 template<typename K, typename V>
 struct Handler<std::unordered_multimap<K, V> >
-    : public CollectionHandler<std::unordered_multimap<K, V> > {
+    : public CollectionHandler<std::unordered_multimap<K, V>, std::pair<K, V> > {
 };
 
 template<typename T>
 struct Handler<std::unordered_set<T> >
-    : public CollectionHandler<std::unordered_set<T> > {
+    : public CollectionHandler<std::unordered_set<T>, T> {
 };
 
 template<typename T>
 struct Handler<std::unordered_multiset<T> >
-    : public CollectionHandler<std::unordered_multiset<T> > {
+    : public CollectionHandler<std::unordered_multiset<T>, T> {
 };
 #endif
 //! \endcond
