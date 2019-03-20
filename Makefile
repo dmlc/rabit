@@ -95,7 +95,7 @@ lib/librabit_empty.a: $(BPATH)/engine_empty.o $(BPATH)/c_api.o
 lib/librabit_mpi.a lib/librabit_mpi.so: $(MPIOBJ)
 
 $(OBJ) :
-	$(CXX) -c $(CFLAGS) -o $@ $(firstword $(filter %.cpp %.c %.cc, $^) ) -I include/
+	$(CXX) -c $(CFLAGS) -o $@ $(firstword $(filter %.cpp %.c %.cc, $^) ) -I include/ -I dmlc-core/include
 
 $(MPIOBJ) :
 	$(MPICXX) -c $(CFLAGS) -o $@ $(firstword $(filter %.cpp %.c %.cc, $^) )
