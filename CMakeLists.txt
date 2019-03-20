@@ -30,9 +30,7 @@ foreach(lib ${rabit_libs})
   #include "./internal/utils.h"
   target_include_directories(${lib} PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>"
-    "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include/rabit>"
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/dmlc-core/include>"
-    "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/dmlc-core/include/dmlc>"
     )
 endforeach()
 

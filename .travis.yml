@@ -9,6 +9,7 @@ env:
     - TASK=doc
     - TASK=build
     - TASK=mpi-build
+    - TASK=cmake-build
     - TASK=test
 
 # dependent apt packages
