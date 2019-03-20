@@ -68,10 +68,10 @@ BPATH=.
 # objectives that makes up rabit library
 MPIOBJ= $(BPATH)/engine_mpi.o
 OBJ= $(BPATH)/allreduce_base.o $(BPATH)/allreduce_robust.o $(BPATH)/engine.o $(BPATH)/engine_empty.o $(BPATH)/engine_mock.o\
-	$(BPATH)/c_api.o $(BPATH)/engine_base.o
+	$(BPATH)/c_api.o $(BPATH)/engine_base.o $(BPATH)/socket.o
 SLIB= lib/librabit.so lib/librabit_mpi.so lib/librabit_mock.so lib/librabit_base.so
 ALIB= lib/librabit.a lib/librabit_mpi.a lib/librabit_empty.a lib/librabit_mock.a lib/librabit_base.a
-HEADERS=src/*.h include/rabit/*.h include/rabit/internal/*.h
+HEADERS=src/*.h include/rabit/*.h include/rabit/internal/*.h dmlc-core/include/dmlc/*.h
 DMLC=dmlc-core
 
 .PHONY: clean all install mpi python lint doc doxygen
@@ -79,7 +79,7 @@ DMLC=dmlc-core
 all: lib/librabit.a lib/librabit_mock.a  lib/librabit.so lib/librabit_base.a lib/librabit_mock.so
 mpi: lib/librabit_mpi.a lib/librabit_mpi.so
 
-$(BPATH)/allreduce_base.o: src/allreduce_base.cc $(HEADERS)
+$(BPATH)/allreduce_base.o: src/allreduce_base.cc src/socket.cc $(HEADERS)
 $(BPATH)/engine.o: src/engine.cc $(HEADERS)
 $(BPATH)/allreduce_robust.o: src/allreduce_robust.cc $(HEADERS)
 $(BPATH)/engine_mpi.o: src/engine_mpi.cc $(HEADERS)
@@ -87,11 +87,12 @@ $(BPATH)/engine_empty.o: src/engine_empty.cc $(HEADERS)
 $(BPATH)/engine_mock.o: src/engine_mock.cc $(HEADERS)
 $(BPATH)/engine_base.o: src/engine_base.cc $(HEADERS)
 $(BPATH)/c_api.o: src/c_api.cc $(HEADERS)
+$(BPATH)/socket.o: src/socket.cc $(HEADERS)
 
-lib/librabit.a lib/librabit.so: $(BPATH)/allreduce_base.o $(BPATH)/allreduce_robust.o $(BPATH)/engine.o $(BPATH)/c_api.o
-lib/librabit_base.a lib/librabit_base.so: $(BPATH)/allreduce_base.o $(BPATH)/engine_base.o $(BPATH)/c_api.o
-lib/librabit_mock.a lib/librabit_mock.so: $(BPATH)/allreduce_base.o $(BPATH)/allreduce_robust.o $(BPATH)/engine_mock.o $(BPATH)/c_api.o
-lib/librabit_empty.a: $(BPATH)/engine_empty.o $(BPATH)/c_api.o
+lib/librabit.a lib/librabit.so: $(BPATH)/allreduce_base.o $(BPATH)/allreduce_robust.o $(BPATH)/engine.o $(BPATH)/c_api.o $(BPATH)/socket.o
+lib/librabit_base.a lib/librabit_base.so: $(BPATH)/allreduce_base.o $(BPATH)/engine_base.o $(BPATH)/c_api.o $(BPATH)/socket.o
+lib/librabit_mock.a lib/librabit_mock.so: $(BPATH)/allreduce_base.o $(BPATH)/allreduce_robust.o $(BPATH)/engine_mock.o $(BPATH)/c_api.o $(BPATH)/socket.o
+lib/librabit_empty.a: $(BPATH)/engine_empty.o $(BPATH)/c_api.o $(BPATH)/socket.o
 lib/librabit_mpi.a lib/librabit_mpi.so: $(MPIOBJ)
 
 $(OBJ) :
