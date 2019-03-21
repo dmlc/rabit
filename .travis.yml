@@ -10,7 +10,7 @@ env:
     - TASK=build
     - TASK=mpi-build
     - TASK=cmake-build
-    - TASK=test
+    - TASK=test CXX=g++-4.8
 
 # dependent apt packages
 dist: xenial
