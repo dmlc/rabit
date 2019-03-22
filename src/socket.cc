@@ -31,10 +31,10 @@ void TCPSocket::Create(int af) {
     }
 
     // TODO (chenqin): improve conn in time-wait state handling
-    //int optval = 1;
-    //if( setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof (optval)) < 0){
+    // int optval = 1;
+    // if( setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof (optval)) < 0){
     //    Socket::Error("Reuse Port");
-    //}
+    // }
 }
 
 /*!
