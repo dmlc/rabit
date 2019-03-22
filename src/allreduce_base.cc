@@ -312,7 +312,6 @@ void AllreduceBase::ReConnectLinks(const char *cmd) {
       Assert(tracker.RecvAll(&hrank, sizeof(hrank)) == sizeof(hrank),
              "ReConnectLink failure 10");
       r.sock.Create();
-      printf("%s",hname.c_str());
       if (!r.sock.Connect(utils::SockAddr(hname.c_str(), hport))) {
         num_error += 1; r.sock.Close(); continue;
       }
