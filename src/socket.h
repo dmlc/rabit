@@ -192,7 +192,7 @@ class Socket {
    * \param end_port ending port number to try
    * \return the port successfully bind to, return -1 if failed to bind any port
    */
-  inline int TryBindHost(int start_port, int end_port) throw() {
+  inline int TryBindHost(int start_port, int end_port) {
     // TODO(tqchen) add prefix check
     for (int port = start_port; port < end_port; ++port) {
       SockAddr addr("0.0.0.0", port);
