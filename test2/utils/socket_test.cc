@@ -5,7 +5,6 @@
  * \author Chen Qin
  */
 #include <limits.h>
-#include <pthread.h>
 #include "../../src/socket.h"
 #include "gtest/gtest.h"
 
