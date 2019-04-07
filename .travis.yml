@@ -1,4 +1,3 @@
-# disable sudo to use container based build
 sudo: true
 
 os:
@@ -16,7 +15,7 @@ env:
     - TASK=build
     - TASK=mpi-build
     - TASK=cmake-build
-    - TASK=test CXX=g++-4.8
+    - TASK=test CXX=g++
     - TASK=xgb-java-tests
 
 matrix:
@@ -27,8 +26,6 @@ matrix:
       env: TASK=lint LINT_LANG=python
     - os: osx
       env: TASK=doc
-    - os: osx
-      env: TASK=test CXX=g++-4.8
     - os: osx
       env: TASK=mpi-build
 
@@ -94,5 +91,4 @@ notifications:
   email:
     on_success: change
     on_failure: always
-
 
