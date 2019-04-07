@@ -207,6 +207,7 @@ utils::TCPSocket AllreduceBase::ConnectTracker(void) const {
         utils::Socket::Error("Connect");
       } else {
         fprintf(stderr, "retry connect to ip(retry time %d): [%s]\n", retry, tracker_uri.c_str());
+
 #if defined(_MSC_VER) || defined (__MINGW32__)
         Sleep(retry << 1);
 #else
