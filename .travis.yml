@@ -1,5 +1,11 @@
 # disable sudo to use container based build
-sudo: false
+sudo: true
+
+os:
+  - linux
+  - osx
+
+osx_image: xcode9.3
 
 # Use Build Matrix to do lint and build seperately
 env:
@@ -11,13 +17,28 @@ env:
     - TASK=mpi-build
     - TASK=cmake-build
     - TASK=test CXX=g++-4.8
-    - TASK=xgb-cmake
     - TASK=xgb-java-tests
 
+matrix:
+  exclude:
+    - os: osx
+      env: TASK=lint LINT_LANG=cpp
+    - os: osx
+      env: TASK=lint LINT_LANG=python
+    - os: osx
+      env: TASK=doc
+    - os: osx
+      env: TASK=test CXX=g++-4.8
+    - os: osx
+      env: TASK=mpi-build
+
 # dependent apt packages
-dist: xenial
 addons:
   apt:
+    sources:
+      - llvm-toolchain-trusty-5.0
+      - ubuntu-toolchain-r-test
+      - george-edison55-precise-backports
     packages:
       - doxygen
       - libopenmpi-dev
@@ -33,10 +54,22 @@ addons:
       - openssh-client
       - openssh-server
       - libopenmpi-dev
+      - clang
+      - clang-tidy-5.0
+      - cmake-data
+      - graphviz
+  homebrew:
+    packages:
+      - gcc@7
+      - graphviz
+      - openssl
+      - libgit2
+    update: true
       
 before_install:
   - export TRAVIS=dmlc-core/scripts/travis/
   - export PYTHONPATH=${PYTHONPATH}:${PWD}/python-package
+  - echo "MAVEN_OPTS='-Xmx2g -XX:MaxPermSize=1024m -XX:ReservedCodeCacheSize=512m -Dorg.slf4j.simpleLogger.defaultLogLevel=error'" > ~/.mavenrc
   - source ${TRAVIS}/travis_setup_env.sh
 
 install:
@@ -44,15 +77,17 @@ install:
 
 script: scripts/travis_script.sh
 
+cache:
+  directories:
+    - ${HOME}/.cache/usr
+    - ${HOME}/.cache/pip
 
 before_cache:
   - ${TRAVIS}/travis_before_cache.sh
 
-
-cache:
-  directories:
-    - ${HOME}/.cache/usr
-
+after_success:
+  - tree build
+  - bash <(curl -s https://codecov.io/bash) -a '-o src/ src/*.c'
 
 notifications:
 # Emails are sent to the committer's git-configured email address by default,
