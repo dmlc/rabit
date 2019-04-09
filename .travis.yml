@@ -1,5 +1,5 @@
 # disable sudo to use container based build
-sudo: true
+sudo: false
 
 # Use Build Matrix to do lint and build seperately
 env:
@@ -11,8 +11,8 @@ env:
     - TASK=mpi-build
     - TASK=cmake-build
     - TASK=test CXX=g++-4.8
-    #- TASK=xgb-cmake
-    #- TASK=xgb-java-tests
+    - TASK=xgb-cmake
+    - TASK=xgb-java-tests
 
 # dependent apt packages
 dist: xenial

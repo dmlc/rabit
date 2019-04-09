@@ -33,10 +33,10 @@ if [ ${TASK} == "cmake-build" ]; then
 fi
 
 if [ ${TASK} == "xgb-cmake" ]; then
-    git clone --recursive https://github.com/dmlc/xgboost ../xgboost
+    git clone --recursive https://github.com/chenqin/xgboost ../xgboost
     rm -rf ../xgboost/rabit
-    cp -r ../rabit ../xgboost/rabit
-
+    ln -s ../rabit ../xgboost/rabit
+    cd ../xgboost
     set -e
     # Build gtest via cmake
     wget -nc https://github.com/google/googletest/archive/release-1.7.0.zip
@@ -59,9 +59,9 @@ if [ ${TASK} == "xgb-cmake" ]; then
 fi
 
 if [ ${TASK} == "xgb-java-tests" ]; then
-    git clone --recursive https://github.com/dmlc/xgboost ../xgboost
+    git clone --recursive https://github.com/chenqin/xgboost ../xgboost
     rm -rf ../xgboost/rabit
-    cp -r ../rabit ../xgboost/rabit
+    ln -s ../rabit ../xgboost/rabit
     echo "MAVEN_OPTS='-Xmx2g -XX:MaxPermSize=1024m -XX:ReservedCodeCacheSize=512m -Dorg.slf4j.simpleLogger.defaultLogLevel=error'" > ~/.mavenrc
     cd ../xgboost
     set -e
