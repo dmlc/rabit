@@ -37,6 +37,7 @@ if [ ${TASK} == "xgb-cmake" ]; then
     rm -rf ../xgboost/rabit
     ln -s ../rabit ../xgboost/rabit
     cd ../xgboost
+    source tests/travis/setup.sh
     set -e
     # Build gtest via cmake
     wget -nc https://github.com/google/googletest/archive/release-1.7.0.zip
@@ -64,6 +65,8 @@ if [ ${TASK} == "xgb-java-tests" ]; then
     ln -s ../rabit ../xgboost/rabit
     echo "MAVEN_OPTS='-Xmx2g -XX:MaxPermSize=1024m -XX:ReservedCodeCacheSize=512m -Dorg.slf4j.simpleLogger.defaultLogLevel=error'" > ~/.mavenrc
     cd ../xgboost
+    source tests/travis/setup.sh
+
     set -e
     cd jvm-packages
     mvn -q clean install -DskipTests -Dmaven.test.skip
