@@ -16,16 +16,9 @@ env:
     - TASK=mpi-build
     - TASK=cmake-build
     - TASK=test CXX=g++
-    - TASK=xgb-java-tests
 
 matrix:
   exclude:
-    - os: osx
-      env: TASK=lint LINT_LANG=cpp
-    - os: osx
-      env: TASK=lint LINT_LANG=python
-    - os: osx
-      env: TASK=doc
     - os: osx
       env: TASK=mpi-build
 
@@ -50,15 +43,9 @@ addons:
       - openmpi-common
       - openssh-client
       - openssh-server
-      - libopenmpi-dev
-      - clang
-      - clang-tidy-5.0
-      - cmake-data
-      - graphviz
   homebrew:
     packages:
-      - gcc@7
-      - graphviz
+      - gcc48
       - openssl
       - libgit2
     update: true
@@ -66,7 +53,6 @@ addons:
 before_install:
   - export TRAVIS=dmlc-core/scripts/travis/
   - export PYTHONPATH=${PYTHONPATH}:${PWD}/python-package
-  - echo "MAVEN_OPTS='-Xmx2g -XX:MaxPermSize=1024m -XX:ReservedCodeCacheSize=512m -Dorg.slf4j.simpleLogger.defaultLogLevel=error'" > ~/.mavenrc
   - source ${TRAVIS}/travis_setup_env.sh
 
 install:

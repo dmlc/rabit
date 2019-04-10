@@ -32,15 +32,3 @@ if [ ${TASK} == "cmake-build" ]; then
     make all || exit -1
 fi
 
-if [ ${TASK} == "xgb-java-tests" ]; then
-    git clone --recursive https://github.com/chenqin/xgboost ../xgboost
-    rm -rf ../xgboost/rabit
-    ln -s ../rabit ../xgboost/rabit
-    cd ../xgboost
-    source tests/travis/setup.sh
-
-    set -e
-    cd jvm-packages
-    mvn -q clean install -DskipTests -Dmaven.test.skip
-    mvn -q test || exit -1
-fi
