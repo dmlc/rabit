@@ -274,7 +274,14 @@ void AllreduceBase::ReConnectLinks(const char *cmd) {
   // create listening socket
   utils::TCPSocket sock_listen;
   sock_listen.Create();
-  int port = sock_listen.TryBindHost(slave_port, slave_port + nport_trial);
+
+  // [slave_port, slave_port+1 .... slave_port + newrank ...slave_port + nport_trial)
+  // work around processes bind to same port without set reuse option,
+  // start explore from slave_port + newrank towards end
+  int port = sock_listen.TryBindHost(slave_port+ newrank%nport_trial, slave_port + nport_trial);
+  // if no port bindable, explore first half of range
+  if (port == -1) sock_listen.TryBindHost(slave_port, newrank% nport_trial + slave_port);
+
   utils::Check(port != -1, "ReConnectLink fail to bind the ports specified");
   sock_listen.Listen();
 
@@ -311,6 +318,7 @@ void AllreduceBase::ReConnectLinks(const char *cmd) {
              "ReConnectLink failure 9");
       Assert(tracker.RecvAll(&hrank, sizeof(hrank)) == sizeof(hrank),
              "ReConnectLink failure 10");
+
       r.sock.Create();
       if (!r.sock.Connect(utils::SockAddr(hname.c_str(), hport))) {
         num_error += 1; r.sock.Close(); continue;
