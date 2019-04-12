@@ -1,8 +1,8 @@
 OS := $(shell uname)
 
-export MPICXX = mpicxx
-export LDFLAGS=  -Llib
-
+export WARNFLAGS= -Wall -Wextra -Wno-unused-parameter -Wno-unknown-pragmas -std=c++11
+export CFLAGS = -O3 $(WARNFLAGS)
+export LDFLAGS =-Llib
 OS := $(shell uname)
 
 ifeq ($(OS), Darwin)
@@ -12,6 +12,9 @@ ifeq ($(OS), Darwin)
     ifndef CXX
         export CXX = $(if $(shell which clang++), clang++, g++)
     endif
+    export MPICXX=/usr/local/opt/openmpi/bin/mpicxx
+    export LDFLAGS+=-L/usr/local/opt/openmpi/lib
+    export CFLAGS += -I/usr/local/opt/openmpi/include
 else
     ifeq ($(OS), FreeBSD)
          ifndef CXX
@@ -20,6 +23,7 @@ else
          export MPICXX = /usr/local/mpi/bin/mpicxx
          export LDFLAGS= -Llib -Wl,-rpath=/usr/local/lib/gcc6
     else
+        export MPICXX = mpicxx
         # linux defaults
         ifndef CC
             export CC = gcc
@@ -27,12 +31,9 @@ else
         ifndef CXX
             export CXX = g++
         endif
-        LDFLAGS += -lrt
+        LDFLAGS +=-lrt
     endif
 endif
-
-export WARNFLAGS= -Wall -Wextra -Wno-unused-parameter -Wno-unknown-pragmas -std=c++11
-export CFLAGS = -O3 $(WARNFLAGS)
 
 #----------------------------
 # Settings for power and arm arch

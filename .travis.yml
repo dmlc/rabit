@@ -17,11 +17,6 @@ env:
     - TASK=cmake-build
     - TASK=test CXX=g++
 
-matrix:
-  exclude:
-    - os: osx
-      env: TASK=mpi-build
-
 # dependent apt packages
 addons:
   apt:
@@ -45,9 +40,10 @@ addons:
       - openssh-server
   homebrew:
     packages:
-      - gcc48
+      - gcc49
       - openssl
       - libgit2
+      - openmpi
     update: true
       
 before_install:
