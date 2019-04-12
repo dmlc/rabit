@@ -37,6 +37,10 @@ recommonmark
 recom
 _*
 
+#mpi lib
+mpich/
+mpich-3.2/
+
 # Jetbrain
 .idea
 cmake-build-debug/

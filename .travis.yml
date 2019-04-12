@@ -1,4 +1,4 @@
-sudo: true
+sudo: false 
 
 os:
   - linux
@@ -26,7 +26,6 @@ addons:
       - george-edison55-precise-backports
     packages:
       - doxygen
-      - libopenmpi-dev
       - wget
       - git
       - libcurl4-openssl-dev
@@ -34,8 +33,6 @@ addons:
       - python-numpy
       - gcc-4.8
       - g++-4.8
-      - openmpi-bin
-      - openmpi-common
       - openssh-client
       - openssh-server
   homebrew:
@@ -43,7 +40,6 @@ addons:
       - gcc49
       - openssl
       - libgit2
-      - openmpi
     update: true
       
 before_install:
@@ -60,6 +56,7 @@ cache:
   directories:
     - ${HOME}/.cache/usr
     - ${HOME}/.cache/pip
+    - mpich
 
 before_cache:
   - ${TRAVIS}/travis_before_cache.sh
