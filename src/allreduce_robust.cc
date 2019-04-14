@@ -50,16 +50,6 @@ void AllreduceRobust::Shutdown(void) {
   // execute check ack step, load happens here
   utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck, ActionSummary::kSpecialOp),
                 "Shutdown: check ack must return true");
-  // one worker shutdowns and closes sockets while rest still run kCheckAck,
-  // seems has something to do with time-wait state in tcp connection,
-  // this cause rest workers checkandrecover and hang inf,
-  // https://github.com/dmlc/xgboost/pull/3818
-  // TODO(Chen Qin): a fundamental fix for this
-#if defined(_MSC_VER) || defined (__MINGW32__)
-        Sleep(1);
-#else
-        sleep(1);
-#endif
   AllreduceBase::Shutdown();
 }
 /*!
