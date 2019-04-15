@@ -27,11 +27,17 @@ OBJ = $(RABIT_OBJ) speed_test.o model_recover.o local_recover.o lazy_recover.o
 MPIBIN = speed_test.mpi
 .PHONY: clean all lib mpi
 
+.PHONY: lib all
+
 all: $(BIN)
+
 lib:
-	cd ..;make;cd -
+	cd ..;make clean;make;cd -
+
+.PHONY: mpi
 mpi:
 	cd ..;make mpi;cd -
+
 # programs
 speed_test.o: speed_test.cc ../include/rabit/*.h lib mpi
 model_recover.o: model_recover.cc ../include/rabit/*.h lib
