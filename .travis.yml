@@ -1,10 +1,12 @@
-sudo: false 
+sudo: true
 
 os:
   - linux
   - osx
 
-osx_image: xcode9.3
+osx_image: xcode10.2
+
+dist: xenial
 
 # Use Build Matrix to do lint and build seperately
 env:
@@ -35,6 +37,8 @@ addons:
       - g++-4.8
       - openssh-client
       - openssh-server
+      - python3
+      - python3-setuptools
   homebrew:
     packages:
       - gcc49
@@ -45,14 +49,14 @@ addons:
       
 before_install:
   - export TRAVIS=dmlc-core/scripts/travis/
-  - export PYTHONPATH=${PYTHONPATH}:${PWD}/python-package
   - source ${TRAVIS}/travis_setup_env.sh
   - ${TRAVIS}/travis_osx_install.sh
 
 install:
-  - if [[ ${TRAVIS_OS_NAME} == "osx" ]]; then brew install python; fi
-  - python3 --version ; python3 -m pip --version
-  - python3 -m pip install cpplint pylint kubernetes urllib3
+  - if [[ ${TRAVIS_OS_NAME} == "linux" ]]; then sudo apt-get install python3-pip; fi
+  - if [[ ${TRAVIS_OS_NAME} == "osx" ]]; then brew install python3; fi
+  - pip3 install cpplint pylint urllib3
+  - pip3 install websocket-client kubernetes
 
 script: scripts/travis_script.sh
 
