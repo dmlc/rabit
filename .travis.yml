@@ -40,15 +40,19 @@ addons:
       - gcc49
       - openssl
       - libgit2
+      - python3
     update: true
       
 before_install:
   - export TRAVIS=dmlc-core/scripts/travis/
   - export PYTHONPATH=${PYTHONPATH}:${PWD}/python-package
   - source ${TRAVIS}/travis_setup_env.sh
+  - ${TRAVIS}/travis_osx_install.sh
 
 install:
-  - pip install --user cpplint pylint kubernetes urllib3
+  - if [[ ${TRAVIS_OS_NAME} == "osx" ]]; then brew install python; fi
+  - python3 --version ; python3 -m pip --version
+  - python3 -m pip install cpplint pylint kubernetes urllib3
 
 script: scripts/travis_script.sh
 
