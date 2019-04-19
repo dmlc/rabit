@@ -4,7 +4,7 @@ os:
   - linux
   - osx
 
-osx_image: xcode9.3
+osx_image: xcode10.2
 
 dist: xenial
 
@@ -55,7 +55,7 @@ before_install:
 install:
   - if [[ ${TRAVIS_OS_NAME} == "linux" ]]; then sudo apt-get install python3-pip; fi
   - if [[ ${TRAVIS_OS_NAME} == "osx" ]]; then brew install python3; fi
-  - pip3 install cpplint pylint urllib3
+  - pip3 install cpplint pylint urllib3 numpy
   - pip3 install websocket-client kubernetes
 
 script: scripts/travis_script.sh
