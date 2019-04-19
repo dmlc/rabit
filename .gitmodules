@@ -1,4 +1,4 @@
 [submodule "dmlc-core"]
 	path = dmlc-core
 	url = https://github.com/chenqin/dmlc-core
-	branch = py3
+	branch = master
