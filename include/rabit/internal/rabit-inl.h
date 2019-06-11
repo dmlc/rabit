@@ -177,6 +177,15 @@ inline void Allreduce(DType *sendrecvbuf, size_t count, std::function<void()> pr
 inline void TrackerPrint(const std::string &msg) {
   engine::GetEngine()->TrackerPrint(msg);
 }
+
+inline void TrackerSetConfig(const std::string &key, const std::string &value) {
+  engine::GetEngine()->TrackerSetConfig(key, value);
+}
+
+inline void TrackerGetConfig(const std::string &key, std::string* value) {
+  engine::GetEngine()->TrackerGetConfig(key, value);
+}
+
 #ifndef RABIT_STRICT_CXX98_
 inline void TrackerPrintf(const char *fmt, ...) {
   const int kPrintBuffer = 1 << 10;

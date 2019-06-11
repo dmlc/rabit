@@ -171,7 +171,6 @@ void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root)
  */
 int AllreduceRobust::LoadCheckPoint(Serializable *global_model,
                                     Serializable *local_model) {
-  
   // skip action in single node
   if (world_size == 1) return 0;
   this->LocalModelCheck(local_model != NULL);
@@ -208,7 +207,8 @@ int AllreduceRobust::LoadCheckPoint(Serializable *global_model,
     // run another phase of check ack, if recovered from data
     utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck, ActionSummary::kSpecialOp),
                   "check ack must return true");
-    printf("[%d] load checkpoint global %d version %d\n", rank, global_checkpoint.length(), version_number);
+    utils::Printf("[%d] load checkpoint global %ld version %d\n", rank,
+      global_checkpoint.length(), version_number);
     return version_number;
   } else {
     // reset result buffer

@@ -99,6 +99,19 @@ inline std::string GetProcessorName();
  * \param msg the message to be printed
  */
 inline void TrackerPrint(const std::string &msg);
+/*!
+ * \brief save config to tracker,
+ * \param key configuration key
+ * \param value value of config
+ */
+inline void TrackerSetConfig(const std::string &key, const std::string &value);
+/*!
+ * \brief get config to tracker,
+ * \param key configuration key
+ * \param value value of config
+ */
+inline void TrackerGetConfig(const std::string &key, std::string* value);
+
 #ifndef RABIT_STRICT_CXX98_
 /*!
  * \brief prints the msg to the tracker, this function may not be available

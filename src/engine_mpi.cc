@@ -77,6 +77,15 @@ class MPIEngine : public IEngine {
       utils::Printf("%s", msg.c_str());
     }
   }
+  virtual void TrackerSetConfig(const std::string &key, const std::string &value) {
+    // simply print information into the tracker
+    // TODO(chen qin): figure out how to support MPI
+    utils::Printf("%s-%s", key.c_str(), value.c_str());
+  }
+  virtual void TrackerGetConfig(const std::string& key, std::string* value) {
+    // simply print information into the tracker
+    utils::Printf("%s", key.c_str());
+  }
 
  private:
   int version_number;
