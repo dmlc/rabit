@@ -298,7 +298,6 @@ void AllreduceRobust::CheckPoint_(const Serializable *global_model,
   if (lazy_checkpt) {
     global_lazycheck = global_model;
   } else {
-    printf("[%d] save global checkpoint #%d \n", this->rank, version_number);
     global_checkpoint.resize(0);
     utils::MemoryBufferStream fs(&global_checkpoint);
     fs.Write(&version_number, sizeof(version_number));

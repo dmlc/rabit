@@ -147,9 +147,6 @@ void AllreduceBase::TrackerPrint(const std::string &msg) {
 }
 
 void AllreduceBase::TrackerSetConfig(const std::string &key, const std::string &value) {
-  if (tracker_uri == "NULL") {
-    utils::Printf("%s", key.c_str()); return;
-  }
   utils::TCPSocket tracker = this->ConnectTracker();
   tracker.SendStr(std::string("set"));
   tracker.SendStr(key);
@@ -158,9 +155,6 @@ void AllreduceBase::TrackerSetConfig(const std::string &key, const std::string &
 }
 
 void AllreduceBase::TrackerGetConfig(const std::string &key, std::string* value) {
-  if (tracker_uri == "NULL") {
-    utils::Printf("%s", key.c_str()); return;
-  }
   utils::TCPSocket tracker = this->ConnectTracker();
   tracker.SendStr(std::string("get"));
   tracker.SendStr(key);
