@@ -190,6 +190,15 @@ void AllreduceBase::SetParam(const char *name, const char *val) {
   if (!strcmp(name, "DMLC_WORKER_CONNECT_RETRY")) {
     connect_retry = atoi(val);
   }
+  if (!strcmp(name, "DMLC_WORKER_STOP_PROCESS_ON_ERROR")) {
+    if (!strcmp(val, "true")) {
+      rabit::utils::STOP_PROCESS_ON_ERROR = true;
+    } else if (!strcmp(val, "false")) {
+      rabit::utils::STOP_PROCESS_ON_ERROR = false;
+    } else {
+      throw std::runtime_error("invalid value of DMLC_WORKER_STOP_PROCESS_ON_ERROR");
+    }
+  }
 }
 /*!
  * \brief initialize connection to the tracker

@@ -61,6 +61,9 @@ namespace utils {
 /*! \brief error message buffer length */
 const int kPrintBuffer = 1 << 12;
 
+/*! \brief we may want to keep the process alive when there are multiple workers co-locate in the same process */
+bool STOP_PROCESS_ON_ERROR = true;
+
 #ifndef RABIT_CUSTOMIZE_MSG_
 /*!
  * \brief handling of Assert error, caused by inappropriate input
@@ -68,7 +71,11 @@ const int kPrintBuffer = 1 << 12;
  */
 inline void HandleAssertError(const char *msg) {
   fprintf(stderr, "AssertError:%s\n", msg);
-  exit(-1);
+  if (STOP_PROCESS_ON_ERROR) {
+    exit(-1);
+  } else {
+    throw std::runtime_error(msg);
+  }
 }
 /*!
  * \brief handling of Check error, caused by inappropriate input
@@ -76,7 +83,11 @@ inline void HandleAssertError(const char *msg) {
  */
 inline void HandleCheckError(const char *msg) {
   fprintf(stderr, "%s\n", msg);
-  exit(-1);
+  if (STOP_PROCESS_ON_ERROR) {
+    exit(-1);
+  } else {
+    throw std::runtime_error(msg);
+  }
 }
 inline void HandlePrint(const char *msg) {
   printf("%s", msg);
