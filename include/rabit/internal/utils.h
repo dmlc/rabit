@@ -62,7 +62,7 @@ namespace utils {
 const int kPrintBuffer = 1 << 12;
 
 /*! \brief we may want to keep the process alive when there are multiple workers co-locate in the same process */
-bool STOP_PROCESS_ON_ERROR = true;
+extern bool STOP_PROCESS_ON_ERROR;
 
 #ifndef RABIT_CUSTOMIZE_MSG_
 /*!

@@ -14,7 +14,13 @@
 #include "./allreduce_base.h"
 
 namespace rabit {
+
+namespace utils {
+  bool STOP_PROCESS_ON_ERROR = true;
+}
+
 namespace engine {
+
 // constructor
 AllreduceBase::AllreduceBase(void) {
   tracker_uri = "NULL";
