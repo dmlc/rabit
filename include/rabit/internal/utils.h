@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <string>
 #include <cstdlib>
+#include <stdexcept>
 #include <vector>
 
 #ifndef RABIT_STRICT_CXX98_
@@ -61,7 +62,8 @@ namespace utils {
 /*! \brief error message buffer length */
 const int kPrintBuffer = 1 << 12;
 
-/*! \brief we may want to keep the process alive when there are multiple workers co-locate in the same process */
+/*! \brief we may want to keep the process alive when there are multiple workers
+ * co-locate in the same process */
 extern bool STOP_PROCESS_ON_ERROR;
 
 #ifndef RABIT_CUSTOMIZE_MSG_
