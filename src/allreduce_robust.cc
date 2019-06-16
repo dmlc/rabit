@@ -31,12 +31,16 @@ AllreduceRobust::AllreduceRobust(void) {
   env_vars.push_back("rabit_global_replica");
   env_vars.push_back("rabit_local_replica");
 }
-void AllreduceRobust::Init(int argc, char* argv[]) {
-  AllreduceBase::Init(argc, argv);
-  if (num_global_replica == 0) {
-    result_buffer_round = -1;
+bool AllreduceRobust::Init(int argc, char* argv[]) {
+  if (AllreduceBase::Init(argc, argv)) {
+    if (num_global_replica == 0) {
+      result_buffer_round = -1;
+    } else {
+      result_buffer_round = std::max(world_size / num_global_replica, 1);
+    }
+    return true;
   } else {
-    result_buffer_round = std::max(world_size / num_global_replica, 1);
+    return false;
   }
 }
 /*! \brief shutdown the engine */
