@@ -54,6 +54,7 @@ AllreduceBase::AllreduceBase(void) {
   env_vars.push_back("DMLC_TRACKER_URI");
   env_vars.push_back("DMLC_TRACKER_PORT");
   env_vars.push_back("DMLC_WORKER_CONNECT_RETRY");
+  env_vars.push_back("DMLC_WORKER_STOP_PROCESS_ON_ERROR");
 }
 
 // initialization function
