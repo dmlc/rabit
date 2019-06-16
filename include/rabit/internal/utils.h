@@ -72,10 +72,11 @@ extern bool STOP_PROCESS_ON_ERROR;
  * \param msg error message
  */
 inline void HandleAssertError(const char *msg) {
-  fprintf(stderr, "AssertError:%s\n", msg);
   if (STOP_PROCESS_ON_ERROR) {
+    fprintf(stderr, "AssertError:%s, shutting down process\n", msg);
     exit(-1);
   } else {
+    fprintf(stderr, "AssertError:%s, rabit is configured to keep process running\n", msg);
     throw std::runtime_error(msg);
   }
 }
@@ -84,10 +85,11 @@ inline void HandleAssertError(const char *msg) {
  * \param msg error message
  */
 inline void HandleCheckError(const char *msg) {
-  fprintf(stderr, "%s\n", msg);
   if (STOP_PROCESS_ON_ERROR) {
+    fprintf(stderr, "shutting down process", msg);
     exit(-1);
   } else {
+    fprintf(stderr, "rabit is configured to keep process running\n", msg);
     throw std::runtime_error(msg);
   }
 }
