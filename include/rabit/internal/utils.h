@@ -86,10 +86,10 @@ inline void HandleAssertError(const char *msg) {
  */
 inline void HandleCheckError(const char *msg) {
   if (STOP_PROCESS_ON_ERROR) {
-    fprintf(stderr, "shutting down process", msg);
+    fprintf(stderr, "%s, shutting down process", msg);
     exit(-1);
   } else {
-    fprintf(stderr, "rabit is configured to keep process running\n", msg);
+    fprintf(stderr, "%s, rabit is configured to keep process running\n", msg);
     throw std::runtime_error(msg);
   }
 }
