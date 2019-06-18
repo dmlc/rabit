@@ -121,6 +121,18 @@ inline void TrackerGetConfig(const std::string &key, std::string* value);
  * \param fmt the format string
  */
 inline void TrackerPrintf(const char *fmt, ...);
+/*!
+ * \brief save config to tracker,
+ * \param key configuration key
+ * \param value value of config
+ */
+inline void TrackerSetConfig(const char *key, const char *value, ...);
+/*!
+ * \brief get config to tracker,
+ * \param key configuration key
+ * \param value value of config
+ */
+inline void TrackerGetConfig(const char *key, char* value, ...);
 #endif  // RABIT_STRICT_CXX98_
 /*!
  * \brief broadcasts a memory region to every node from the root

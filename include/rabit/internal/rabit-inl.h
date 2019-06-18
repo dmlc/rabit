@@ -197,6 +197,38 @@ inline void TrackerPrintf(const char *fmt, ...) {
   msg.resize(strlen(msg.c_str()));
   TrackerPrint(msg);
 }
+
+inline void TrackerSetConfig(const char *key, const char *value, ...) {
+  const int kPrintBuffer = 1 << 10;
+  std::string k(kPrintBuffer, '\0'), v(kPrintBuffer, '\0');
+
+  va_list args1, args2;
+  va_start(args1, key);
+  va_start(args2, value);
+  vsnprintf(&k[0], kPrintBuffer, key, args1);
+  vsnprintf(&v[0], kPrintBuffer, value, args2);
+  va_end(args1);
+  va_end(args2);
+  k.resize(strlen(k.c_str()));
+  v.resize(strlen(v.c_str()));
+  engine::GetEngine()->TrackerSetConfig(k, v);
+}
+
+inline void TrackerGetConfig(const char *key, char* value, ...) {
+  const int kPrintBuffer = 1 << 10;
+  std::string k(kPrintBuffer, '\0'), v(kPrintBuffer, '\0');
+
+  va_list args1, args2;
+  va_start(args1, key);
+  va_start(args2, value);
+  vsnprintf(&k[0], kPrintBuffer, key, args1);
+  vsnprintf(&v[0], kPrintBuffer, value, args2);
+  va_end(args1);
+  va_end(args2);
+  k.resize(strlen(k.c_str()));
+  v.resize(strlen(v.c_str()));
+  engine::GetEngine()->TrackerGetConfig(k, &v);
+}
 #endif  // RABIT_STRICT_CXX98_
 // load latest check point
 inline int LoadCheckPoint(Serializable *global_model,
