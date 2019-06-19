@@ -105,13 +105,13 @@ inline void TrackerPrint(const std::string &msg);
  * \param key configuration key
  * \param value value of config
  */
-inline void TrackerSetConfig(const std::string &key, const int bsize, const void* value);
+inline void TrackerSetConfig(const std::string &key, const std::string &value);
 /*!
  * \brief get config to tracker,
  * \param key configuration key
  * \param value value of config
  */
-inline void TrackerGetConfig(const std::string &key, const int bsize, void* value);
+inline void TrackerGetConfig(const std::string &key, std::string* value);
 
 #ifndef RABIT_STRICT_CXX98_
 /*!
@@ -127,13 +127,13 @@ inline void TrackerPrintf(const char *fmt, ...);
  * \param key configuration key
  * \param value value of config
  */
-inline void TrackerSetConfig(const char *key, const int bsize, const void* value, ...);
+inline void TrackerSetConfig(const char *key, const char *value, ...);
 /*!
  * \brief get config to tracker,
  * \param key configuration key
  * \param value value of config
  */
-inline void TrackerGetConfig(const char *key, const int bsize, void* value, ...);
+inline void TrackerGetConfig(const char *key, char* value, ...);
 #endif  // RABIT_STRICT_CXX98_
 /*!
  * \brief broadcasts a memory region to every node from the root
@@ -143,8 +143,7 @@ inline void TrackerGetConfig(const char *key, const int bsize, void* value, ...)
  * \param size the data size
  * \param root the process root
  */
-inline void Broadcast(void *sendrecv_data, size_t size, int root, 
-  const char* caller = __builtin_FUNCTION());
+inline void Broadcast(void *sendrecv_data, size_t size, int root, const char* caller = __builtin_FUNCTION());
 /*!
  * \brief broadcasts an std::vector<DType> to every node from root
  * \param sendrecv_data the pointer to send/receive vector,
@@ -154,16 +153,14 @@ inline void Broadcast(void *sendrecv_data, size_t size, int root,
  *               that can be directly transmitted by sending the sizeof(DType)
  */
 template<typename DType>
-inline void Broadcast(std::vector<DType> *sendrecv_data, int root, 
-  const char* caller = __builtin_FUNCTION());
+inline void Broadcast(std::vector<DType> *sendrecv_data, int root, const char* caller = __builtin_FUNCTION());
 /*!
  * \brief broadcasts a std::string to every node from the root
  * \param sendrecv_data the pointer to the send/receive buffer,
  *        for the receiver, the vector does not need to be pre-allocated
  * \param root the process root
  */
-inline void Broadcast(std::string *sendrecv_data, int root, 
-  const char* caller = __builtin_FUNCTION());
+inline void Broadcast(std::string *sendrecv_data, int root, const char* caller = __builtin_FUNCTION());
 /*!
  * \brief performs in-place Allreduce on sendrecvbuf
  *        this function is NOT thread-safe
@@ -188,8 +185,7 @@ inline void Broadcast(std::string *sendrecv_data, int root,
 template<typename OP, typename DType>
 inline void Allreduce(DType *sendrecvbuf, size_t count,
                       void (*prepare_fun)(void *) = NULL,
-                      void *prepare_arg = NULL, 
-                      const char* caller = __builtin_FUNCTION());
+                      void *prepare_arg = NULL, const char* caller = __builtin_FUNCTION());
 // C++11 support for lambda prepare function
 #if DMLC_USE_CXX11
 /*!
@@ -218,8 +214,7 @@ inline void Allreduce(DType *sendrecvbuf, size_t count,
  */
 template<typename OP, typename DType>
 inline void Allreduce(DType *sendrecvbuf, size_t count,
-                      std::function<void()> prepare_fun, 
-                      const char* caller = __builtin_FUNCTION());
+                      std::function<void()> prepare_fun, const char* caller = __builtin_FUNCTION());
 #endif  // C++11
 /*!
  * \brief loads the latest check point
