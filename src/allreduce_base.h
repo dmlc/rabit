@@ -54,8 +54,8 @@ class AllreduceBase : public IEngine {
    * \param msg message to be printed in the tracker
    */
   virtual void TrackerPrint(const std::string &msg);
-  virtual void TrackerSetConfig(const std::string &key, const std::string &value);
-  virtual void TrackerGetConfig(const std::string& key, std::string* value);
+  virtual void TrackerSetConfig(const std::string &key, const int bytesize, const void* value);
+  virtual void TrackerGetConfig(const std::string &key, const int bytesize, void* value);
 
   /*! \brief get rank */
   virtual int GetRank(void) const {

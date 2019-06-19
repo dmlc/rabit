@@ -92,6 +92,7 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
     if (prepare_fun != NULL) prepare_fun(prepare_arg);
     return;
   }
+
   bool recovered = RecoverExec(sendrecvbuf_, type_nbytes * count, 0, seq_counter);
   // now we are free to remove the last result, if any
   if (resbuf.LastSeqNo() != -1 &&
