@@ -84,8 +84,7 @@ RABIT_DLL void RabitGetProcessorName(char *out_name,
  * \param root the root of process
  */
 RABIT_DLL void RabitBroadcast(void *sendrecv_data,
-                              rbt_ulong size, int root,
-                              const char* caller = __builtin_FUNCTION());
+                              rbt_ulong size, int root);
 /*!
  * \brief perform in-place allreduce, on sendrecvbuf
  *        this function is NOT thread-safe
@@ -109,8 +108,7 @@ RABIT_DLL void RabitAllreduce(void *sendrecvbuf,
                               int enum_dtype,
                               int enum_op,
                               void (*prepare_fun)(void *arg),
-                              void *prepare_arg, 
-                              const char* caller = __builtin_FUNCTION());
+                              void *prepare_arg);
 
 /*!
  * \brief load latest check point
