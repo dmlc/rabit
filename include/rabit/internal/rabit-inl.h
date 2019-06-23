@@ -178,11 +178,11 @@ inline void TrackerPrint(const std::string &msg) {
   engine::GetEngine()->TrackerPrint(msg);
 }
 
-inline void TrackerSetConfig(const std::string &key, const std::string &value) {
+inline void TrackerSetConfig(const std::string &key, const int &value) {
   engine::GetEngine()->TrackerSetConfig(key, value);
 }
 
-inline void TrackerGetConfig(const std::string &key, std::string* value) {
+inline void TrackerGetConfig(const std::string &key, int &value) {
   engine::GetEngine()->TrackerGetConfig(key, value);
 }
 
@@ -198,36 +198,28 @@ inline void TrackerPrintf(const char *fmt, ...) {
   TrackerPrint(msg);
 }
 
-inline void TrackerSetConfig(const char *key, const char *value, ...) {
+inline void TrackerSetConfig(const char *key, const int* value, ...) {
   const int kPrintBuffer = 1 << 10;
   std::string k(kPrintBuffer, '\0'), v(kPrintBuffer, '\0');
 
-  va_list args1, args2;
+  va_list args1;
   va_start(args1, key);
-  va_start(args2, value);
   vsnprintf(&k[0], kPrintBuffer, key, args1);
-  vsnprintf(&v[0], kPrintBuffer, value, args2);
   va_end(args1);
-  va_end(args2);
   k.resize(strlen(k.c_str()));
-  v.resize(strlen(v.c_str()));
-  engine::GetEngine()->TrackerSetConfig(k, v);
+  engine::GetEngine()->TrackerSetConfig(k, *value);
 }
 
-inline void TrackerGetConfig(const char *key, char* value, ...) {
+inline void TrackerGetConfig(const char *key, int* value, ...) {
   const int kPrintBuffer = 1 << 10;
   std::string k(kPrintBuffer, '\0'), v(kPrintBuffer, '\0');
 
-  va_list args1, args2;
+  va_list args1;
   va_start(args1, key);
-  va_start(args2, value);
   vsnprintf(&k[0], kPrintBuffer, key, args1);
-  vsnprintf(&v[0], kPrintBuffer, value, args2);
   va_end(args1);
-  va_end(args2);
   k.resize(strlen(k.c_str()));
-  v.resize(strlen(v.c_str()));
-  engine::GetEngine()->TrackerGetConfig(k, &v);
+  engine::GetEngine()->TrackerGetConfig(k, *value);
 }
 #endif  // RABIT_STRICT_CXX98_
 // load latest check point

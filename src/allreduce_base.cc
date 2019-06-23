@@ -146,19 +146,19 @@ void AllreduceBase::TrackerPrint(const std::string &msg) {
   tracker.Close();
 }
 
-void AllreduceBase::TrackerSetConfig(const std::string &key, const std::string &value) {
+void AllreduceBase::TrackerSetConfig(const std::string &key, const int &value) {
   utils::TCPSocket tracker = this->ConnectTracker();
   tracker.SendStr(std::string("set"));
   tracker.SendStr(key);
-  tracker.SendStr(value);
+  tracker.Send(&value, sizeof(int));
   tracker.Close();
 }
 
-void AllreduceBase::TrackerGetConfig(const std::string &key, std::string* value) {
+void AllreduceBase::TrackerGetConfig(const std::string &key, int &value) {
   utils::TCPSocket tracker = this->ConnectTracker();
   tracker.SendStr(std::string("get"));
   tracker.SendStr(key);
-  tracker.RecvStr(value);
+  tracker.Recv(&value, sizeof(int));
   tracker.Close();
 }
 

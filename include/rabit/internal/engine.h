@@ -158,8 +158,8 @@ class IEngine {
    * \param msg message to be printed in the tracker
    */
   virtual void TrackerPrint(const std::string &msg) = 0;
-  virtual void TrackerSetConfig(const std::string &key, const std::string &value) = 0;
-  virtual void TrackerGetConfig(const std::string& key, std::string* value) = 0;
+  virtual void TrackerSetConfig(const std::string &key, const int &value) = 0;
+  virtual void TrackerGetConfig(const std::string& key, int &value) = 0;
 };
 
 /*! \brief initializes the engine module */
