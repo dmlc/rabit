@@ -23,6 +23,7 @@ AllreduceRobust::AllreduceRobust(void) {
   num_global_replica = 5;
   default_local_replica = 2;
   seq_counter = 0;
+  cur_cache_seq = 0;
   local_chkpt_version = 0;
   result_buffer_round = 1;
   global_lazycheck = NULL;
@@ -47,6 +48,7 @@ void AllreduceRobust::Shutdown(void) {
                 "Shutdown: check point must return true");
   // reset result buffer
   resbuf.Clear(); seq_counter = 0;
+  cachebuf.Clear(); cur_cache_seq = 0;
   // execute check ack step, load happens here
   utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck, ActionSummary::kSpecialOp),
                 "Shutdown: check ack must return true");
@@ -86,7 +88,8 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
                                 size_t count,
                                 ReduceFunction reducer,
                                 PreprocFunction prepare_fun,
-                                void *prepare_arg) {
+                                void *prepare_arg,
+                                int* cache_seq) {
   // skip action in single node
   if (world_size == 1 || world_size == -1) {
     if (prepare_fun != NULL) prepare_fun(prepare_arg);
@@ -119,6 +122,19 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
     }
   }
   resbuf.PushTemp(seq_counter, type_nbytes, count);
+
+  // code can hit here means no cache with cache_seq in nodes
+  // store to cache and assign new cache_seq back to caller
+  // if cache_seq number is less than current_cache_seq skip
+  if(cache_seq != NULL && *cache_seq >= cur_cache_seq){
+    utils::Printf("[%d] input cache seq %d, internal cache seq %d\n", rank, *cache_seq, cur_cache_seq);
+    temp = cachebuf.AllocTemp(type_nbytes, count);
+    cachebuf.PushTemp(cur_cache_seq, type_nbytes, count);
+    std::memcpy(temp, sendrecvbuf_, type_nbytes * count);
+    *cache_seq = cur_cache_seq;
+    cur_cache_seq += 1;
+  }
+
   seq_counter += 1;
 }
 /*!
@@ -726,7 +742,7 @@ AllreduceRobust::TryRecoverData(RecoverType role,
  *  will pass seqno to rest of nodes and reconstruct/backfill sendrecvbuf_ 
  *  of specific seqno from other nodes.
  */
-AllreduceRobust::ReturnType AllreduceRobust::TryLoadCache(void* sendrecvbuf, bool requester) {
+AllreduceRobust::ReturnType AllreduceRobust::TryRestoreCache(void* sendrecvbuf, bool requester) {
   RecoverType role =  requester ? kRequestData : kHaveData;
   ReturnType succ;
   // recover global checkpoint
@@ -737,25 +753,32 @@ AllreduceRobust::ReturnType AllreduceRobust::TryLoadCache(void* sendrecvbuf, boo
   if (succ != kSuccess) return succ;
   // there is no checkpoints, which might be okay as long as resbuf has allreduce cache
   //if (size == 0) return kSuccess;
+  
+  ReturnType ret = TryAllreduce(&cur_cache_seq, sizeof(int), 1, op::Reducer<op::Max, unsigned>);
 
-  //TODO: run allreduce min and populate restored sequence counter to kHaveData hosts
-  int a = 0;
-  size_t s = 0;
-  // query first avaliable allreduce
-  void* buf = cachebuf.Query(a, &s);
+  for(int i = 0 ; i <= cur_cache_seq; i++){
+    size_t s = 0;
+    // query first avaliable allreduce
+    void* buf = cachebuf.Query(i, &s);
 
-  // get size of allreduce buf from other 
-  ReturnType ret = TryRecoverData(role, &s, sizeof(size_t), recv_link, req_in);
-  utils::Printf("[%d] requester %d size %d op %d\n", rank, requester, s, seq_counter);
+    // get size of allreduce buf from other 
+    ret = TryRecoverData(role, &s, sizeof(size_t), recv_link, req_in);
 
-  // for requester, allocate cache and push into cachebuf
-  // if cachebuf in other nodes are not empty
-  if (requester && s > 0) {
-    buf = cachebuf.AllocTemp(s, 1);
-    cachebuf.PushTemp(this->seq_counter, s, 1);
+    // for requester, allocate cache and push into cachebuf
+    // if cachebuf in other nodes are not empty
+
+    // if all nodes shows empty 
+    if (s == 0 && buf == NULL) return kSuccess;
+
+    if (requester && s > 0) {
+      buf = cachebuf.AllocTemp(s, 1);
+      cachebuf.PushTemp(i, s, 1);
+      utils::Printf("[%d] requester %d size %d op %d\n", rank, requester, s, seq_counter);
+    }
+
+    // backfill result from other nodes only write to requester
+    TryRecoverData(role, buf, s, recv_link, req_in);
   }
-  // backfill result from other nodes only write to requester
-  ret = TryRecoverData(role, buf, s, recv_link, req_in);
 
   return ret;
 }
@@ -919,7 +942,7 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno) {
         if (req.check_point()) return true;
       } else if (act.load_check()) {
         // check cache
-        TryLoadCache(buf, req.load_check());
+        TryRestoreCache(buf, req.load_check());
         // if there is only check_ack and load_check, do load_check
         if (!CheckAndRecover(TryLoadCheckPoint(req.load_check()))) continue;
         // if requested load check, then misson complete
@@ -948,7 +971,7 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno) {
           // all the nodes called load_check, this is an incomplete action
           if (!act.diff_seq()) return false;
           // load cache stored from other node to local TODO: consider return type
-          TryLoadCache(buf, req.load_check());
+          TryRestoreCache(buf, req.load_check());
           // load check have higher priority, do load_check
           if (!CheckAndRecover(TryLoadCheckPoint(req.load_check()))) continue;
           // if requested load check, then misson complete

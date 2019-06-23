@@ -54,13 +54,15 @@ class IEngine {
    *                     will be called by the function before performing Allreduce in order to initialize the data in sendrecvbuf.
    *                     If the result of Allreduce can be recovered directly, then prepare_func will NOT be called
    * \param prepare_arg argument used to pass into the lazy preprocessing function
+   * \param cache_seq argument used to pass into or fetch cached allreduce seq_no
    */
   virtual void Allreduce(void *sendrecvbuf_,
                          size_t type_nbytes,
                          size_t count,
                          ReduceFunction reducer,
                          PreprocFunction prepare_fun = NULL,
-                         void *prepare_arg = NULL) = 0;
+                         void *prepare_arg = NULL,
+                         int* cache_seq = NULL) = 0;
   /*!
    * \brief broadcasts data from root to every other node
    * \param sendrecvbuf_ buffer for both sending and receiving data
@@ -158,8 +160,8 @@ class IEngine {
    * \param msg message to be printed in the tracker
    */
   virtual void TrackerPrint(const std::string &msg) = 0;
-  virtual void TrackerSetConfig(const std::string &key, const int &value) = 0;
-  virtual void TrackerGetConfig(const std::string& key, int &value) = 0;
+  virtual void TrackerSetCacheIndex(const std::string &key, const int &value) = 0;
+  virtual void TrackerGetCacheIndex(const std::string& key, int &value) = 0;
 };
 
 /*! \brief initializes the engine module */
@@ -214,7 +216,8 @@ void Allreduce_(void *sendrecvbuf,
                 mpi::DataType dtype,
                 mpi::OpType op,
                 IEngine::PreprocFunction prepare_fun = NULL,
-                void *prepare_arg = NULL);
+                void *prepare_arg = NULL,
+                int* cache_seq = NULL);
 
 /*!
  * \brief handle for customized reducer, used to handle customized reduce

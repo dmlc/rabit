@@ -100,17 +100,17 @@ inline std::string GetProcessorName();
  */
 inline void TrackerPrint(const std::string &msg);
 /*!
- * \brief save config to tracker,
+ * \brief save allreduce/braodcast cache and seq_no index to tracker
  * \param key configuration key
  * \param value value of config
  */
-inline void TrackerSetConfig(const std::string &key, const std::string &value);
+inline void TrackerSetCacheIndex(const std::string &key, const int &value);
 /*!
- * \brief get config to tracker,
+ * \brief get cached allreduce/braodcast index from tracker,
  * \param key configuration key
  * \param value value of config
  */
-inline void TrackerGetConfig(const std::string &key, std::string* value);
+inline void TrackerGetCacheINdex(const std::string &key, int &value);
 
 #ifndef RABIT_STRICT_CXX98_
 /*!
@@ -184,7 +184,8 @@ inline void Broadcast(std::string *sendrecv_data, int root);
 template<typename OP, typename DType>
 inline void Allreduce(DType *sendrecvbuf, size_t count,
                       void (*prepare_fun)(void *) = NULL,
-                      void *prepare_arg = NULL);
+                      void *prepare_arg = NULL,
+                      int* cache_seq = NULL);
 // C++11 support for lambda prepare function
 #if DMLC_USE_CXX11
 /*!
@@ -213,7 +214,7 @@ inline void Allreduce(DType *sendrecvbuf, size_t count,
  */
 template<typename OP, typename DType>
 inline void Allreduce(DType *sendrecvbuf, size_t count,
-                      std::function<void()> prepare_fun);
+                      std::function<void()> prepare_fun, int* cache_seq = NULL);
 #endif  // C++11
 /*!
  * \brief loads the latest check point

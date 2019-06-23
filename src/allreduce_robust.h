@@ -44,13 +44,15 @@ class AllreduceRobust : public AllreduceBase {
    *                     will be called by the function before performing Allreduce, to intialize the data in sendrecvbuf_.
    *                     If the result of Allreduce can be recovered directly, then prepare_func will NOT be called
    * \param prepare_arg argument used to passed into the lazy preprocessing function
+   * \param prepare_arg argument used to passed into the lazy preprocessing function
    */
   virtual void Allreduce(void *sendrecvbuf_,
                          size_t type_nbytes,
                          size_t count,
                          ReduceFunction reducer,
                          PreprocFunction prepare_fun = NULL,
-                         void *prepare_arg = NULL);
+                         void *prepare_arg = NULL,
+                         int* cache_seq = NULL);
   /*!
    * \brief broadcast data from root to all nodes
    * \param sendrecvbuf_ buffer for both sending and recving data
@@ -254,10 +256,6 @@ class AllreduceRobust : public AllreduceBase {
       data_.resize(rptr_.back() + nhop);
       return BeginPtr(data_) + rptr_.back();
     }
-    inline void PushNamedTemp(const std::string& name, int seqid, size_t type_nbytes, size_t count) {
-      map_[name] = seqid;
-      PushTemp(seqid, type_nbytes, count);
-    }
     // push the result in temp to the
     inline void PushTemp(int seqid, size_t type_nbytes, size_t count) {
       size_t size = type_nbytes * count;
@@ -269,10 +267,6 @@ class AllreduceRobust : public AllreduceBase {
       rptr_.push_back(rptr_.back() + nhop);
       size_.push_back(size);
       utils::Assert(data_.size() == rptr_.back(), "PushTemp inconsistent");
-    }
-    inline void* QueryName(const std::string& name, size_t *p_size) {
-      if(map_.find(name) != map_.end()) return Query(map_.find(name)->second, p_size);
-      return nullptr;
     }
     // return the stored result of seqid, if any
     inline void* Query(int seqid, size_t *p_size) {
@@ -305,8 +299,6 @@ class AllreduceRobust : public AllreduceBase {
     std::vector<size_t> size_;
     // content of the buffer
     std::vector<uint64_t> data_;
-    // lookup map
-    std::map<std::string, int> map_;
   };
   /*!
    * \brief internal consistency check function,
@@ -397,7 +389,7 @@ class AllreduceRobust : public AllreduceBase {
    * \return this function can return kSuccess/kSockError/kGetExcept, see ReturnType for details
    * \sa ReturnType
    */
-  ReturnType TryLoadCache(void *buf, bool requester);
+  ReturnType TryRestoreCache(void *buf, bool requester);
   /*!
    * \brief try to get the result of operation specified by seqno
    *
@@ -542,6 +534,8 @@ o   *  the input state must exactly one saved state(local state of current node)
   int result_buffer_round;
   // result buffer of all reduce
   ResultBuffer resbuf;
+  // current cached allreduce/braodcast sequence number
+  int cur_cache_seq;
   // result buffer of cached all reduce
   ResultBuffer cachebuf;
   // last check point global model

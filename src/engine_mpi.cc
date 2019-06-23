@@ -27,7 +27,8 @@ class MPIEngine : public IEngine {
                          size_t count,
                          ReduceFunction reducer,
                          PreprocFunction prepare_fun,
-                         void *prepare_arg) {
+                         void *prepare_arg, 
+                         int* cache_seq) {
     utils::Error("MPIEngine:: Allreduce is not supported,"\
                  "use Allreduce_ instead");
   }
@@ -145,7 +146,8 @@ void Allreduce_(void *sendrecvbuf,
                 mpi::DataType dtype,
                 mpi::OpType op,
                 IEngine::PreprocFunction prepare_fun,
-                void *prepare_arg) {
+                void *prepare_arg,
+                int* cache_seq) {
   if (prepare_fun != NULL) prepare_fun(prepare_arg);
   MPI::COMM_WORLD.Allreduce(MPI_IN_PLACE, sendrecvbuf,
                             count, GetType(dtype), GetOp(op));
