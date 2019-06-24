@@ -364,7 +364,8 @@ class AllreduceRobust : public AllreduceBase {
    *    - false means this is the lastest action that has not yet been executed, need to execute the action
    */
   bool RecoverExec(void *buf, size_t size, int flag,
-                   int seqno = ActionSummary::kSpecialOp);
+                   int seqno = ActionSummary::kSpecialOp,
+                   const int* cache_seq = NULL);
   /*!
    * \brief try to load check point
    *
@@ -389,7 +390,7 @@ class AllreduceRobust : public AllreduceBase {
    * \return this function can return kSuccess/kSockError/kGetExcept, see ReturnType for details
    * \sa ReturnType
    */
-  ReturnType TryRestoreCache(void *buf, bool requester);
+  ReturnType TryRestoreCache(void *buf, bool requester, const int* cache_seq=NULL);
   /*!
    * \brief try to get the result of operation specified by seqno
    *
