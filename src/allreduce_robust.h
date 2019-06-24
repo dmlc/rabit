@@ -179,23 +179,29 @@ class AllreduceRobust : public AllreduceBase {
     // check point Ack, we use a two phase message in check point,
     // this is the second phase of check pointing
     static const int kCheckAck = 4;
+    // some node want to load cache
+    static const int kLoadCache = 8;
     // there are difference sequence number the nodes proposed
     // this means we want to do recover execution of the lower sequence
     // action instead of normal execution
-    static const int kDiffSeq = 8;
+    static const int kDiffSeq = 16;
     // constructor
     ActionSummary(void) {}
     // constructor of action
     explicit ActionSummary(int flag, int minseqno = kSpecialOp) {
-      seqcode = (minseqno << 4) | flag;
+      seqcode = (minseqno << 5) | flag;
     }
     // minimum number of all operations
     inline int min_seqno(void) const {
-      return seqcode >> 4;
+      return seqcode >> 5;
     }
     // whether the operation set contains a load_check
     inline bool load_check(void) const {
       return (seqcode & kLoadCheck) != 0;
+    }
+    // whether the operation set contains a load_cache
+    inline bool load_cache(void) const {
+      return (seqcode & kLoadCache) != 0;
     }
     // whether the operation set contains a check point
     inline bool check_point(void) const {
@@ -211,7 +217,20 @@ class AllreduceRobust : public AllreduceBase {
     }
     // returns the operation flag of the result
     inline int flag(void) const {
-      return seqcode & 15;
+      return seqcode & 31;
+    }
+    inline void print(){
+      utils::Printf("{min_seqno : %d, load_check : %d, "
+                    "load_cache : %d , check_point : %d, check_ack : %d, diff_seq : %d}\n",
+                    min_seqno(), load_check(), load_cache(),
+                    check_point(), check_ack(), diff_seq());
+    }
+    inline bool equal(ActionSummary as){
+       return min_seqno() == as.min_seqno() &&
+       load_check() == as.load_check() &&
+       load_cache() == as.load_cache() &&
+       check_point() == as.check_point() &&
+       diff_seq() == diff_seq();
     }
     // reducer for Allreduce, get the result ActionSummary from all nodes
     inline static void Reducer(const void *src_, void *dst_,
