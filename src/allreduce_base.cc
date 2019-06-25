@@ -142,7 +142,7 @@ bool AllreduceBase::Shutdown(void) {
     sock_listen.Close();
     utils::TCPSocket::Finalize();
     return true;
-  } catch (std::exception e) {
+  } catch (const std::exception& e) {
     fprintf(stderr, "failed to shutdown due to %s\n", e.what());
     return false;
   }
@@ -427,7 +427,7 @@ bool AllreduceBase::ReConnectLinks(const char *cmd) {
     Assert(next_rank == -1 || ring_next != NULL,
            "cannot find next ring in the link");
     return true;
-  } catch (std::exception e) {
+  } catch (const std::exception& e) {
     fprintf(stderr, "failed in ReconnectLink %s\n", e.what());
     return false;
   }

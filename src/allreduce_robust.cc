@@ -62,7 +62,7 @@ bool AllreduceRobust::Shutdown(void) {
 #endif
 
     return AllreduceBase::Shutdown();
-  } catch (std::exception e) {
+  } catch (const std::exception& e) {
     fprintf(stderr, "%s\n", e.what());
     return false;
   }

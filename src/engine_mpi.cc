@@ -95,7 +95,7 @@ bool Init(int argc, char *argv[]) {
   try {
     MPI::Init(argc, argv);
     return true;
-  } catch (std::exception e) {
+  } catch (const std::exception& e) {
     fprintf(stderr, " failed in MPI Init %s\n", e.what());
     return false;
   }
@@ -105,7 +105,7 @@ bool Finalize(void) {
   try {
     MPI::Finalize();
     return true;
-  } catch (std::exception e) {
+  } catch (const std::exception& e) {
     fprintf(stderr, "failed in MPI shutdown %s\n", e.what());
     return false;
   }
