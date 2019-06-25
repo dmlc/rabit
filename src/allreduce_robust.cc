@@ -96,13 +96,7 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
     return;
   }
 
-  bool use_cache = RecoverExec(sendrecvbuf_, type_nbytes*count, ActionSummary::kLoadCache, ActionSummary::kSpecialOp, cache_seq);
-  // TODO ? now we are free to remove the last result, if any
-  //if (resbuf.LastSeqNo() != -1 &&
-  //    (result_buffer_round == -1 ||
-  //     resbuf.LastSeqNo() % result_buffer_round != rank % result_buffer_round)) {
-  //  resbuf.DropLast();
-  //}
+  bool use_cache = RecoverExec(sendrecvbuf_, type_nbytes*count, ActionSummary::kLoadCache, cur_cache_seq, cache_seq);
   
   bool recovered = RecoverExec(sendrecvbuf_, type_nbytes * count, 0, seq_counter);
   
@@ -741,62 +735,47 @@ AllreduceRobust::TryRecoverData(RecoverType role,
  *  will pass seqno to rest of nodes and reconstruct/backfill sendrecvbuf_ 
  *  of specific seqno from other nodes.
  */
-AllreduceRobust::ReturnType AllreduceRobust::TryRestoreCache(void* sendrecvbuf, bool requester, const int* cache_seq) {
+AllreduceRobust::ReturnType AllreduceRobust::TryRestoreCache(void* sendrecvbuf, bool requester, const int min_seq) {
   // sync all nodes if there is a cache recovery
   size_t is_recovery = requester ? 1 : 0;
-  TryAllreduce(&is_recovery, sizeof(size_t), 1,  op::Reducer<op::Min, unsigned>);
+  ReturnType ret = TryAllreduce(&is_recovery, sizeof(size_t), 1,  op::Reducer<op::Min, unsigned>);
+  // unable to sync state
+  if(ret != kSuccess) return ret;
+
   // if everyone is requester, do nothing
-  if (is_recovery == 1) return kGetExcept;
+  if (is_recovery == 1) return kSuccess;
 
   int max_cache_size = cur_cache_seq;
-  int min_cache_size = cur_cache_seq;
 
-  TryAllreduce(&max_cache_size, sizeof(int), 1,  op::Reducer<op::Max, unsigned>);
-  TryAllreduce(&min_cache_size, sizeof(int), 1,  op::Reducer<op::Min, unsigned>);
-  // if everyone has same cache seq, skip
-  if(max_cache_size == min_cache_size) return kGetExcept;
-
+  // for requester only, check how many entries missing
+  ret = TryAllreduce(&max_cache_size, sizeof(int), 1,  op::Reducer<op::Max, unsigned>);
+  if (ret != kSuccess) return ret;
+  
   RecoverType role = requester ? kRequestData : kHaveData;
-  ReturnType succ;
-  // recover global checkpoint
-  size_t size = this->global_checkpoint.length();
+  
+  size_t size = 1;
   int recv_link;
   std::vector<bool> req_in;
-  succ = TryDecideRouting(role, &size, &recv_link, &req_in);
-  if (succ != kSuccess) return succ;
+  ret = TryDecideRouting(role, &size, &recv_link, &req_in);
+  if (ret != kSuccess) return ret;
 
-  // sync from non requester to requester how many cache entries are
-  int max = cur_cache_seq;
-  ReturnType ret = TryAllreduce(&max, sizeof(int), 1, op::Reducer<op::Max, unsigned>);
-
-  // TODO: for non recover nodes, those doesn't execute
-  //for(; cur_cache_seq < std::max(cur_cache_seq, max); cur_cache_seq++){
-    //utils::Printf("[%d] cache entry %d\n", rank, cur_cache_seq); 
-    size_t s = 0;
-    // query first avaliable allreduce
-    void* buf = cachebuf.Query(0, &s);
-    bool is_empty = s == 0 ? true : false;
-
-    // get size of allreduce buf from other 
-    ret = TryRecoverData(role, &s, sizeof(size_t), recv_link, req_in);
-    //utils::Printf("[%d] cache size %d requester %d\n", rank, s, requester);
-
-    // for requester, allocate cache and push into cachebuf
-    // if cachebuf in other nodes are not empty
-
-    if (requester && is_empty && cur_cache_seq == 0) {
-      buf = cachebuf.AllocTemp(s, 1);
-      cachebuf.PushTemp(0, s, 1);
-      utils::Printf("[%d] requester %d size %d op %d\n", rank, requester, s, seq_counter);
+  // only recover missing cache entries in requester
+  for(int i = min_seq; i < max_cache_size; i++){
+    size_t cache_size = 0;
+    void* buf = cachebuf.Query(i, &cache_size);
+    utils::Assert(requester == (cache_size == 0), "if requester, cache entry is empty, vice versa");
+    ret = TryRecoverData(role, &cache_size, sizeof(size_t), recv_link, req_in);
+    if(requester) {
+      buf = cachebuf.AllocTemp(cache_size, 1);
+      cachebuf.PushTemp(i, cache_size, 1);
+      utils::Printf("[%d] requester %d size %d op %d\n", rank, requester, cache_size, seq_counter);
       cur_cache_seq +=1;
+      //allocate memory for cache entry i
     }
-
-    //utils::Printf("[%d] cache size %d requester %d\n", rank, s, requester);
-    // backfill result from other nodes only write to requester
-    TryRecoverData(role, buf, s, recv_link, req_in);
-  //}
-  
-  // is_recovery finish, short circuit checkpoint
+    ret = TryRecoverData(role, buf, cache_size, recv_link, req_in);
+    if (ret != kSuccess) return ret;
+  }
+ 
   return kSuccess;
 }
 
@@ -936,8 +915,8 @@ AllreduceRobust::TryGetResult(void *sendrecvbuf, size_t size, int seqno, bool re
  *    - false means this is the lastest action that has not yet been executed, need to execute the action
  */
 bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, const int* cache_seq) {
-
-  if (flag != 0) {
+  // skip load cache state as we isolated with assertions
+  if (flag != 0 && flag !=ActionSummary::kLoadCache ) {
     utils::Assert(seqno == ActionSummary::kSpecialOp, "must only set seqno for normal operations");
   }
 
@@ -991,20 +970,17 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, c
           // if requested load check, then misson complete
           if (req.load_check()) return true;
         } else {
-          // build a isolated state and execte cache restore
+          // run all nodes in a isolated state and execte cache restore
           if(act.load_cache()) {
+            //all nodes has same cur_cache_seq, no need to sync
             if (!act.diff_seq()) return false;
             //assert load cache don't mingle with nodes in other states
-            utils::Assert(!act.load_check(), "load cache expect no nodes in load cache mode");
-            utils::Assert(!act.check_point(), "load cache expect no nodes doing checkpoint");
-            utils::Assert(!act.check_ack(), "load cache expect no nodes doing check ack");
-
-            //do extra check if everyone is loading cache, no one is loading cache
-            //utils::Printf("[%d] req ", rank);
-            //req.print();
-            //utils::Printf("[%d] act ", rank);
-            //act.print();
-            TryRestoreCache(buf, req.load_cache(), cache_seq);
+            utils::Assert(!act.load_check(), "load cache state expect no nodes doing load cache");
+            utils::Assert(!act.check_point(), "load cache state expect no nodes doing checkpoint");
+            utils::Assert(!act.check_ack(), "load cache state expect no nodes doing check ack");
+            // if restore cache failed, retry from what's left
+            if(TryRestoreCache(buf, req.load_cache(), act.min_seqno()) != kSuccess) continue;
+            // if requested load cache, then mission complete
             if(req.load_cache()) return true;
           }else{
             // no special flags, no checkpoint, check ack, load_check

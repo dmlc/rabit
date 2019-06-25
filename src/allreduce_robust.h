@@ -409,7 +409,7 @@ class AllreduceRobust : public AllreduceBase {
    * \return this function can return kSuccess/kSockError/kGetExcept, see ReturnType for details
    * \sa ReturnType
    */
-  ReturnType TryRestoreCache(void *buf, bool requester, const int* cache_seq=NULL);
+  ReturnType TryRestoreCache(void *buf, bool requester, const int min_seq=0);
   /*!
    * \brief try to get the result of operation specified by seqno
    *
