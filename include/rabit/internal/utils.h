@@ -73,7 +73,7 @@ extern bool STOP_PROCESS_ON_ERROR;
  */
 inline void HandleAssertError(const char *msg) {
   if (STOP_PROCESS_ON_ERROR) {
-    exit(-1);	    fprintf(stderr, "AssertError:%s, shutting down process\n", msg);
+    fprintf(stderr, "AssertError:%s, shutting down process\n", msg);
     exit(-1);
   } else {
     fprintf(stderr, "AssertError:%s, rabit is configured to keep process running\n", msg);
@@ -86,7 +86,7 @@ inline void HandleAssertError(const char *msg) {
  */
 inline void HandleCheckError(const char *msg) {
   if (STOP_PROCESS_ON_ERROR) {
-    exit(-1);	    fprintf(stderr, "%s, shutting down process", msg);
+    fprintf(stderr, "%s, shutting down process", msg);
     exit(-1);
   } else {
     fprintf(stderr, "%s, rabit is configured to keep process running\n", msg);
