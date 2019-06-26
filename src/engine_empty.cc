@@ -68,11 +68,11 @@ class EmptyEngine : public IEngine {
     // simply print information into the tracker
     utils::Printf("%s", msg.c_str());
   }
-  virtual void TrackerSetConfig(const std::string &key, const std::string &value) {
+  virtual void SetCache(const std::string &key, const void* buf) {
     // simply print information into the tracker
-    utils::Printf("%s-%s", key.c_str(), value.c_str());
+    utils::Printf("%s", key.c_str());
   }
-  virtual void TrackerGetConfig(const std::string& key, std::string* value) {
+  virtual void GetCache(const std::string& key, void* buf) {
     // simply print information into the tracker
     utils::Printf("%s", key.c_str());
   }

@@ -100,17 +100,17 @@ inline std::string GetProcessorName();
  */
 inline void TrackerPrint(const std::string &msg);
 /*!
- * \brief save allreduce/braodcast cache and seq_no index to tracker
- * \param key configuration key
- * \param value value of config
+ * \brief save allreduce/braodcast cache
+ * \param key unique key of cache
+ * \param buf value of allreduce broadcast cache
  */
-inline void TrackerSetCacheIndex(const std::string &key, const int &value);
+inline void SetCache(const std::string &key, const void* buf);
 /*!
- * \brief get cached allreduce/braodcast index from tracker,
+ * \brief get cached allreduce/braodcast
  * \param key configuration key
- * \param value value of config
+ * \param buf value of allreduce broadcast cache
  */
-inline void TrackerGetCacheINdex(const std::string &key, int &value);
+inline void GetCache(const std::string &key, void* buf);
 
 #ifndef RABIT_STRICT_CXX98_
 /*!
@@ -126,13 +126,13 @@ inline void TrackerPrintf(const char *fmt, ...);
  * \param key configuration key
  * \param value value of config
  */
-inline void TrackerSetConfig(const char *key, const char *value, ...);
+inline void SetCache(const char *key, const void* buf, ...);
 /*!
  * \brief get config to tracker,
  * \param key configuration key
  * \param value value of config
  */
-inline void TrackerGetConfig(const char *key, char* value, ...);
+inline void GetCache(const char *key, void* buf ...);
 #endif  // RABIT_STRICT_CXX98_
 /*!
  * \brief broadcasts a memory region to every node from the root
@@ -184,8 +184,7 @@ inline void Broadcast(std::string *sendrecv_data, int root);
 template<typename OP, typename DType>
 inline void Allreduce(DType *sendrecvbuf, size_t count,
                       void (*prepare_fun)(void *) = NULL,
-                      void *prepare_arg = NULL,
-                      int* cache_seq = NULL);
+                      void *prepare_arg = NULL);
 // C++11 support for lambda prepare function
 #if DMLC_USE_CXX11
 /*!
@@ -214,7 +213,7 @@ inline void Allreduce(DType *sendrecvbuf, size_t count,
  */
 template<typename OP, typename DType>
 inline void Allreduce(DType *sendrecvbuf, size_t count,
-                      std::function<void()> prepare_fun, int* cache_seq = NULL);
+                      std::function<void()> prepare_fun);
 #endif  // C++11
 /*!
  * \brief loads the latest check point

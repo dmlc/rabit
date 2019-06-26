@@ -61,8 +61,7 @@ class IEngine {
                          size_t count,
                          ReduceFunction reducer,
                          PreprocFunction prepare_fun = NULL,
-                         void *prepare_arg = NULL,
-                         int* cache_seq = NULL) = 0;
+                         void *prepare_arg = NULL) = 0;
   /*!
    * \brief broadcasts data from root to every other node
    * \param sendrecvbuf_ buffer for both sending and receiving data
@@ -160,8 +159,8 @@ class IEngine {
    * \param msg message to be printed in the tracker
    */
   virtual void TrackerPrint(const std::string &msg) = 0;
-  virtual void TrackerSetCacheIndex(const std::string &key, const int &value) = 0;
-  virtual void TrackerGetCacheIndex(const std::string& key, int &value) = 0;
+  virtual void SetCache(const std::string &key, const void *buf) = 0;
+  virtual void GetCache(const std::string& key, void *buf) = 0;
 };
 
 /*! \brief initializes the engine module */
@@ -216,8 +215,7 @@ void Allreduce_(void *sendrecvbuf,
                 mpi::DataType dtype,
                 mpi::OpType op,
                 IEngine::PreprocFunction prepare_fun = NULL,
-                void *prepare_arg = NULL,
-                int* cache_seq = NULL);
+                void *prepare_arg = NULL);
 
 /*!
  * \brief handle for customized reducer, used to handle customized reduce

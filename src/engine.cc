@@ -84,10 +84,9 @@ void Allreduce_(void *sendrecvbuf,
                 mpi::DataType dtype,
                 mpi::OpType op,
                 IEngine::PreprocFunction prepare_fun,
-                void *prepare_arg,
-                int* cache_seq) {
+                void *prepare_arg) {
   GetEngine()->Allreduce(sendrecvbuf, type_nbytes, count,
-                         red, prepare_fun, prepare_arg, cache_seq);
+                         red, prepare_fun, prepare_arg);
 }
 
 // code for reduce handle

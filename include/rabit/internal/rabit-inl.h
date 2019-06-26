@@ -156,10 +156,9 @@ inline void Broadcast(std::string *sendrecv_data, int root) {
 template<typename OP, typename DType>
 inline void Allreduce(DType *sendrecvbuf, size_t count,
                       void (*prepare_fun)(void *arg),
-                      void *prepare_arg,
-                      int* cache_seq) {
+                      void *prepare_arg) {
   engine::Allreduce_(sendrecvbuf, sizeof(DType), count, op::Reducer<OP, DType>,
-                     engine::mpi::GetType<DType>(), OP::kType, prepare_fun, prepare_arg, cache_seq);
+                     engine::mpi::GetType<DType>(), OP::kType, prepare_fun, prepare_arg);
 }
 
 // C++11 support for lambda prepare function
@@ -168,9 +167,9 @@ inline void InvokeLambda_(void *fun) {
   (*static_cast<std::function<void()>*>(fun))();
 }
 template<typename OP, typename DType>
-inline void Allreduce(DType *sendrecvbuf, size_t count, std::function<void()> prepare_fun, int* cache_seq) {
+inline void Allreduce(DType *sendrecvbuf, size_t count, std::function<void()> prepare_fun) {
   engine::Allreduce_(sendrecvbuf, sizeof(DType), count, op::Reducer<OP, DType>,
-                     engine::mpi::GetType<DType>(), OP::kType, InvokeLambda_, &prepare_fun, cache_seq);
+                     engine::mpi::GetType<DType>(), OP::kType, InvokeLambda_, &prepare_fun);
 }
 #endif  // C++11
 
@@ -179,12 +178,12 @@ inline void TrackerPrint(const std::string &msg) {
   engine::GetEngine()->TrackerPrint(msg);
 }
 
-inline void TrackerSetCacheIndex(const std::string &key, const int &value) {
-  engine::GetEngine()->TrackerSetCacheIndex(key, value);
+inline void SetCache(const std::string &key, const void* buf) {
+  engine::GetEngine()->SetCache(key, buf);
 }
 
-inline void TrackerGetCacheIndex(const std::string &key, int &value) {
-  engine::GetEngine()->TrackerGetCacheIndex(key, value);
+inline void GetCache(const std::string &key, void* buf) {
+  engine::GetEngine()->GetCache(key, buf);
 }
 
 #ifndef RABIT_STRICT_CXX98_
@@ -199,7 +198,7 @@ inline void TrackerPrintf(const char *fmt, ...) {
   TrackerPrint(msg);
 }
 
-inline void TrackerSetCacheIndex(const char *key, const int* value, ...) {
+inline void SetCache(const char *key, const void* buf, ...) {
   const int kPrintBuffer = 1 << 10;
   std::string k(kPrintBuffer, '\0'), v(kPrintBuffer, '\0');
 
@@ -208,10 +207,10 @@ inline void TrackerSetCacheIndex(const char *key, const int* value, ...) {
   vsnprintf(&k[0], kPrintBuffer, key, args1);
   va_end(args1);
   k.resize(strlen(k.c_str()));
-  engine::GetEngine()->TrackerSetCacheIndex(k, *value);
+  engine::GetEngine()->SetCache(k, buf);
 }
 
-inline void TrackerGetCacheIndex(const char *key, int* value, ...) {
+inline void GetCache(const char *key, void* buf, ...) {
   const int kPrintBuffer = 1 << 10;
   std::string k(kPrintBuffer, '\0'), v(kPrintBuffer, '\0');
 
@@ -220,7 +219,7 @@ inline void TrackerGetCacheIndex(const char *key, int* value, ...) {
   vsnprintf(&k[0], kPrintBuffer, key, args1);
   va_end(args1);
   k.resize(strlen(k.c_str()));
-  engine::GetEngine()->TrackerGetCacheIndex(k, *value);
+  engine::GetEngine()->GetCache(k, buf);
 }
 #endif  // RABIT_STRICT_CXX98_
 // load latest check point

@@ -54,8 +54,8 @@ class AllreduceBase : public IEngine {
    * \param msg message to be printed in the tracker
    */
   virtual void TrackerPrint(const std::string &msg);
-  virtual void TrackerSetCacheIndex(const std::string &key, const int &value);
-  virtual void TrackerGetCacheIndex(const std::string &key, int &value);
+  virtual void SetCache(const std::string &key, const void* buf);
+  virtual void GetCache(const std::string &key, void* buf);
 
   /*! \brief get rank */
   virtual int GetRank(void) const {
@@ -91,11 +91,9 @@ class AllreduceBase : public IEngine {
                          size_t count,
                          ReduceFunction reducer,
                          PreprocFunction prepare_fun = NULL,
-                         void *prepare_arg = NULL,
-                         int* cache_seq = NULL) {
+                         void *prepare_arg = NULL) {
     if (prepare_fun != NULL) prepare_fun(prepare_arg);
     if (world_size == 1 || world_size == -1) return;
-    utils::Assert(cache_seq == NULL, "allreduce_base doesn't support allreduce cache");
     utils::Assert(TryAllreduce(sendrecvbuf_,
                                type_nbytes, count, reducer) == kSuccess,
                   "Allreduce failed");

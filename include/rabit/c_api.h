@@ -108,8 +108,7 @@ RABIT_DLL void RabitAllreduce(void *sendrecvbuf,
                               int enum_dtype,
                               int enum_op,
                               void (*prepare_fun)(void *arg),
-                              void *prepare_arg,
-                              int* cache_seq);
+                              void *prepare_arg);
 
 /*!
  * \brief load latest check point

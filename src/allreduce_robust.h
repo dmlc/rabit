@@ -33,6 +33,9 @@ class AllreduceRobust : public AllreduceBase {
    * \param val parameter value
    */
   virtual void SetParam(const char *name, const char *val);
+
+  virtual void SetCache(const std::string &key, const void *buf);
+  virtual void GetCache(const std::string &key, void *buf);
   /*!
    * \brief perform in-place allreduce, on sendrecvbuf
    *        this function is NOT thread-safe
@@ -51,8 +54,7 @@ class AllreduceRobust : public AllreduceBase {
                          size_t count,
                          ReduceFunction reducer,
                          PreprocFunction prepare_fun = NULL,
-                         void *prepare_arg = NULL,
-                         int* cache_seq = NULL);
+                         void *prepare_arg = NULL);
   /*!
    * \brief broadcast data from root to all nodes
    * \param sendrecvbuf_ buffer for both sending and recving data
@@ -215,14 +217,15 @@ class AllreduceRobust : public AllreduceBase {
     inline bool diff_seq(void) const {
       return (seqcode & kDiffSeq) != 0;
     }
+
     // returns the operation flag of the result
     inline int flag(void) const {
       return seqcode & 31;
     }
-    inline void print(){
-      utils::Printf("{min_seqno : %d, load_check : %d, "
+    inline void print(int rank, std::string prefix ){
+      utils::Printf("[%d] %s - {min_seqno : %d, load_check : %d, "
                     "load_cache : %d , check_point : %d, check_ack : %d, diff_seq : %d}\n",
-                    min_seqno(), load_check(), load_cache(),
+                    rank, prefix.c_str(), min_seqno(), load_check(), load_cache(),
                     check_point(), check_ack(), diff_seq());
     }
     inline bool equal(ActionSummary as){
@@ -383,8 +386,7 @@ class AllreduceRobust : public AllreduceBase {
    *    - false means this is the lastest action that has not yet been executed, need to execute the action
    */
   bool RecoverExec(void *buf, size_t size, int flag,
-                   int seqno = ActionSummary::kSpecialOp,
-                   const int* cache_seq = NULL);
+                   int seqno = ActionSummary::kSpecialOp);
   /*!
    * \brief try to load check point
    *

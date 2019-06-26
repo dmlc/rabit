@@ -27,8 +27,7 @@ class MPIEngine : public IEngine {
                          size_t count,
                          ReduceFunction reducer,
                          PreprocFunction prepare_fun,
-                         void *prepare_arg, 
-                         int* cache_seq) {
+                         void *prepare_arg) {
     utils::Error("MPIEngine:: Allreduce is not supported,"\
                  "use Allreduce_ instead");
   }
@@ -78,12 +77,12 @@ class MPIEngine : public IEngine {
       utils::Printf("%s", msg.c_str());
     }
   }
-  virtual void TrackerSetConfig(const std::string &key, const std::string &value) {
+  virtual void SetCache(const std::string &key, const void* buf) {
     // simply print information into the tracker
     // TODO(chen qin): figure out how to support MPI
-    utils::Printf("%s-%s", key.c_str(), value.c_str());
+    utils::Printf("%s-%s", key.c_str());
   }
-  virtual void TrackerGetConfig(const std::string& key, std::string* value) {
+  virtual void GetCache(const std::string& key, void* buf) {
     // simply print information into the tracker
     utils::Printf("%s", key.c_str());
   }
@@ -146,8 +145,7 @@ void Allreduce_(void *sendrecvbuf,
                 mpi::DataType dtype,
                 mpi::OpType op,
                 IEngine::PreprocFunction prepare_fun,
-                void *prepare_arg,
-                int* cache_seq) {
+                void *prepare_arg) {
   if (prepare_fun != NULL) prepare_fun(prepare_arg);
   MPI::COMM_WORLD.Allreduce(MPI_IN_PLACE, sendrecvbuf,
                             count, GetType(dtype), GetOp(op));
