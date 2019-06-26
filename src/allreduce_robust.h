@@ -34,8 +34,8 @@ class AllreduceRobust : public AllreduceBase {
    */
   virtual void SetParam(const char *name, const char *val);
 
-  virtual void SetCache(const std::string &key, const void *buf);
-  virtual void GetCache(const std::string &key, void *buf);
+  virtual int SetCache(const std::string &key, const void *buf, const size_t buflen);
+  virtual int GetCache(const std::string &key, void *buf, const size_t buflen);
   /*!
    * \brief perform in-place allreduce, on sendrecvbuf
    *        this function is NOT thread-safe

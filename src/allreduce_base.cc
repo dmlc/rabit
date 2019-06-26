@@ -146,19 +146,14 @@ void AllreduceBase::TrackerPrint(const std::string &msg) {
   tracker.Close();
 }
 
-void AllreduceBase::SetCache(const std::string &key, const void *buf) {
+int AllreduceBase::SetCache(const std::string &key, const void *buf, const size_t buflen) {
   utils::Error("base class don't support cache");
+  return -1;
 }
 
-void AllreduceBase::GetCache(const std::string &key, void* buf) {
+int AllreduceBase::GetCache(const std::string &key, void* buf, const size_t buflen) {
   utils::Error("base class don't support cache");
-  /*
-  utils::TCPSocket tracker = this->ConnectTracker();
-  tracker.SendStr(std::string("get"));
-  tracker.SendStr(key);
-  tracker.Recv(&value, sizeof(int));
-  tracker.Close();
-   */
+  return -1;
 }
 
 // util to parse data with unit suffix

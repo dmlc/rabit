@@ -104,13 +104,13 @@ inline void TrackerPrint(const std::string &msg);
  * \param key unique key of cache
  * \param buf value of allreduce broadcast cache
  */
-inline void SetCache(const std::string &key, const void* buf);
+inline int SetCache(const std::string &key, const void* buf, const size_t buflen);
 /*!
  * \brief get cached allreduce/braodcast
  * \param key configuration key
  * \param buf value of allreduce broadcast cache
  */
-inline void GetCache(const std::string &key, void* buf);
+inline int GetCache(const std::string &key, void* buf, const size_t buflen);
 
 #ifndef RABIT_STRICT_CXX98_
 /*!

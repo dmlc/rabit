@@ -77,14 +77,16 @@ class MPIEngine : public IEngine {
       utils::Printf("%s", msg.c_str());
     }
   }
-  virtual void SetCache(const std::string &key, const void* buf) {
+  virtual int SetCache(const std::string &key, const void* buf, const size_t buflen) {
     // simply print information into the tracker
     // TODO(chen qin): figure out how to support MPI
-    utils::Printf("%s-%s", key.c_str());
+    utils::Error("MPI impl doesn't support cache");
+    return -1;
   }
-  virtual void GetCache(const std::string& key, void* buf) {
+  virtual int GetCache(const std::string& key, void* buf) {
     // simply print information into the tracker
-    utils::Printf("%s", key.c_str());
+    utils::Error("MPI impl doesn't support cache");
+    return -1;
   }
 
  private:

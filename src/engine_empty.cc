@@ -68,13 +68,15 @@ class EmptyEngine : public IEngine {
     // simply print information into the tracker
     utils::Printf("%s", msg.c_str());
   }
-  virtual void SetCache(const std::string &key, const void* buf) {
+  virtual int SetCache(const std::string &key, const void* buf, const size_t buflen) {
     // simply print information into the tracker
     utils::Printf("%s", key.c_str());
+    return -1;
   }
-  virtual void GetCache(const std::string& key, void* buf) {
+  virtual int GetCache(const std::string& key, void* buf, const size_t buflen) {
     // simply print information into the tracker
     utils::Printf("%s", key.c_str());
+    return -1;
   }
 
  private:
