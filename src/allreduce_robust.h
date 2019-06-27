@@ -406,12 +406,11 @@ class AllreduceRobust : public AllreduceBase {
    *        This is a collaborative function called by all nodes
    *        only the nodes with requester set to true really needs to load the check point
    *        other nodes acts as collaborative roles to complete this request
-   * \param buf the buffer to store the result, this parameter is only used when current node is requester 
    * \param requester whether current node is the requester
    * \return this function can return kSuccess/kSockError/kGetExcept, see ReturnType for details
    * \sa ReturnType
    */
-  ReturnType TryRestoreCache(void *buf, bool requester, const int min_seq=0);
+  ReturnType TryRestoreCache(bool requester, const int min_seq=0);
   /*!
    * \brief try to get the result of operation specified by seqno
    *

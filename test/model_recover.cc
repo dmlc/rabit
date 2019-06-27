@@ -37,7 +37,7 @@ inline void TestMax(Model *model, int ntrial, int iter) {
   }
   rabit::Allreduce<op::Max>(&ndata[0], ndata.size());
   std::vector<float> ntest(model->data.size());
-  //rabit::GetCache("test", &ntest, ntest.size());
+  rabit::GetCache("test", &ntest[0], ntest.size());
   rabit::SetCache("test", &ndata[0], ndata.size());
 
   for (size_t i = 0; i < ndata.size(); ++i) {
