@@ -159,6 +159,11 @@ class AllreduceRobust : public AllreduceBase {
     /*! \brief current node only helps to pass data around */
     kPassData = 2
   };
+
+  enum SeqType {
+    kOR = 0,
+    KAND = 1
+  };
   /*!
    * \brief summary of actions proposed in all nodes
    *  this data structure is used to make consensus decision
@@ -190,50 +195,54 @@ class AllreduceRobust : public AllreduceBase {
     // constructor
     ActionSummary(void) {}
     // constructor of action
-    explicit ActionSummary(int flag, int minseqno = kSpecialOp) {
-      seqcode = (minseqno << 5) | flag;
+    explicit ActionSummary(int action_flag, int role_diff_flag = 0, int minseqno = kSpecialOp, 
+      int maxseqno = kSpecialOp) {
+      seqcode = (minseqno << 5) | action_flag;
+      maxseqcode = (maxseqno << 5) | role_diff_flag;
     }
-    // minimum number of all operations
-    inline int min_seqno(void) const {
-      return seqcode >> 5;
+    // minimum number of all operations by default
+    // maximum number of all cache operations otherwise
+    inline int seqno(SeqType t = SeqType::kOR) const {
+      int code = t == SeqType::kOR ? seqcode : maxseqcode;
+      return code >> 5;
     }
+    
     // whether the operation set contains a load_check
-    inline bool load_check(void) const {
-      return (seqcode & kLoadCheck) != 0;
+    inline bool load_check(SeqType t = SeqType::kOR) const {
+      int code = t == SeqType::kOR ? seqcode : maxseqcode;
+      return (code & kLoadCheck) != 0;
     }
     // whether the operation set contains a load_cache
-    inline bool load_cache(void) const {
-      return (seqcode & kLoadCache) != 0;
+    inline bool load_cache(SeqType t = SeqType::kOR) const {
+      int code = t == SeqType::kOR ? seqcode : maxseqcode;
+      return (code & kLoadCache) != 0;
     }
     // whether the operation set contains a check point
-    inline bool check_point(void) const {
-      return (seqcode & kCheckPoint) != 0;
+    inline bool check_point(SeqType t = SeqType::kOR) const {
+      int code = t == SeqType::kOR ? seqcode : maxseqcode;
+      return (code & kCheckPoint) != 0;
     }
     // whether the operation set contains a check ack
-    inline bool check_ack(void) const {
-      return (seqcode & kCheckAck) != 0;
+    inline bool check_ack(SeqType t = SeqType::kOR) const {
+      int code = t == SeqType::kOR ? seqcode : maxseqcode;
+      return (code & kCheckAck) != 0;
     }
     // whether the operation set contains different sequence number
-    inline bool diff_seq(void) const {
-      return (seqcode & kDiffSeq) != 0;
+    inline bool diff_seq(SeqType t = SeqType::kOR) const {
+      int code = t == SeqType::kOR ? seqcode : maxseqcode;
+      return (code & kDiffSeq) != 0;
     }
-
     // returns the operation flag of the result
-    inline int flag(void) const {
-      return seqcode & 31;
+    inline int flag(SeqType t = SeqType::kOR) const {
+      int code = t == SeqType::kOR ? seqcode : maxseqcode;
+      return code & 31;
     }
+    
     inline void print(int rank, std::string prefix ){
-      utils::Printf("[%d] %s - {min_seqno : %d, load_check : %d, "
-                    "load_cache : %d , check_point : %d, check_ack : %d, diff_seq : %d}\n",
-                    rank, prefix.c_str(), min_seqno(), load_check(), load_cache(),
-                    check_point(), check_ack(), diff_seq());
-    }
-    inline bool equal(ActionSummary as){
-       return min_seqno() == as.min_seqno() &&
-       load_check() == as.load_check() &&
-       load_cache() == as.load_cache() &&
-       check_point() == as.check_point() &&
-       diff_seq() == diff_seq();
+      utils::Printf("[%d] %s - |%d|%d|%d| - |%d|%d|%d|\n",
+                    rank, prefix.c_str(),
+                    seqno(), load_cache(), diff_seq(),
+                    seqno(SeqType::KAND), load_cache(SeqType::KAND), diff_seq(SeqType::KAND));
     }
     // reducer for Allreduce, get the result ActionSummary from all nodes
     inline static void Reducer(const void *src_, void *dst_,
@@ -241,21 +250,26 @@ class AllreduceRobust : public AllreduceBase {
       const ActionSummary *src = (const ActionSummary*)src_;
       ActionSummary *dst = reinterpret_cast<ActionSummary*>(dst_);
       for (int i = 0; i < len; ++i) {
-        int src_seqno = src[i].min_seqno();
-        int dst_seqno = dst[i].min_seqno();
-        int flag = src[i].flag() | dst[i].flag();
-        if (src_seqno == dst_seqno) {
-          dst[i] = ActionSummary(flag, src_seqno);
-        } else {
-          dst[i] = ActionSummary(flag | kDiffSeq,
-                                 std::min(src_seqno, dst_seqno));
-        }
+        int min_seqno = std::min(src[i].seqno(), dst[i].seqno());
+        int max_seqno = std::max(src[i].seqno(SeqType::KAND), dst[i].seqno(SeqType::KAND));
+        int action_flag = src[i].flag() | dst[i].flag();
+        
+        // if any node is not requester set to 0 otherwise 1
+        int role_flag = src[i].flag(SeqType::KAND) & dst[i].flag(SeqType::KAND);
+        
+        int min_diff_flag = src[i].seqno() != dst[i].seqno() ? kDiffSeq : 0;
+        int max_diff_flag = src[i].seqno(SeqType::KAND) != dst[i].seqno(SeqType::KAND) ? kDiffSeq : 0;
+        dst[i] = ActionSummary(action_flag | min_diff_flag, 
+                                role_flag | max_diff_flag, 
+                                min_seqno, max_seqno);
       }
     }
 
    private:
-    // internel sequence code
+    // internel sequence code min of seqno
     int seqcode;
+    // internal sequence code max of seqno
+    int maxseqcode;
   };
   /*! \brief data structure to remember result of Bcast and Allreduce calls */
   class ResultBuffer {
@@ -410,7 +424,7 @@ class AllreduceRobust : public AllreduceBase {
    * \return this function can return kSuccess/kSockError/kGetExcept, see ReturnType for details
    * \sa ReturnType
    */
-  ReturnType TryRestoreCache(bool requester, const int min_seq=0);
+  ReturnType TryRestoreCache(bool requester, const int min_seq=ActionSummary::kSpecialOp, const int max_seq=ActionSummary::kSpecialOp);
   /*!
    * \brief try to get the result of operation specified by seqno
    *
