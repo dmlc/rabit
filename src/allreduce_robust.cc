@@ -74,6 +74,7 @@ void AllreduceRobust::SetParam(const char *name, const char *val) {
 
 int AllreduceRobust::SetCache(const std::string &key, const void *buf, size_t buflen) {
   utils::TCPSocket tracker = this->ConnectTracker();
+  
   tracker.SendStr(std::string("set"));
   tracker.SendStr(key);
   tracker.Send(&cur_cache_seq, sizeof(int));
@@ -83,7 +84,7 @@ int AllreduceRobust::SetCache(const std::string &key, const void *buf, size_t bu
   cachebuf.PushTemp(cur_cache_seq, buflen, 1);
   std::memcpy(temp, buf, buflen);
   cur_cache_seq += 1;
-  utils::Printf("[%d] cur_cache_seq %d\n",rank, cur_cache_seq);
+  //utils::Printf("[%d] set %s cur_cache_seq %d size %d\n",rank, key.c_str(), cur_cache_seq, buflen);
   
   return 0;
 }
@@ -101,10 +102,12 @@ int AllreduceRobust::GetCache(const std::string &key, void* buf, const size_t bu
   if(index == -1) return -1;
   size_t siz = 0;
   void* temp = cachebuf.Query(index, &siz);
-  if(cur_cache_seq > 0 && siz > 0) {
-    utils::Assert(siz == buflen, "cache size is same as expected");
-    std::memcpy(buf, temp, buflen);
-  }
+  utils::Assert(cur_cache_seq > index, "cur cache seq cotains info");
+  utils::Assert(siz == buflen, "cache size is same as expected");
+  utils::Assert(siz > 0, "cache size should be greater than 0");
+  // cahce is immutable
+  buf = temp;
+  //std::memcpy(buf, temp, buflen);
   return 0;
 }
 
@@ -133,8 +136,10 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
     if (prepare_fun != NULL) prepare_fun(prepare_arg);
     return;
   }
-  utils::Printf("[%d] caller %s called allreduce with seq %d\n", rank, caller_, seq_counter);
-  bool recovered = RecoverExec(sendrecvbuf_, type_nbytes * count, 0, seq_counter);
+  //utils::Printf("[%d] caller %s called allreduce with seq %d\n", rank, caller_, seq_counter);
+  std::string a(caller_);
+   a+=" allreduce try recover";
+  bool recovered = RecoverExec(sendrecvbuf_, type_nbytes * count, 0, seq_counter, cur_cache_seq, a.c_str());
   
   if (!recovered && prepare_fun != NULL) prepare_fun(prepare_arg);
   void *temp = resbuf.AllocTemp(type_nbytes, count);
@@ -143,10 +148,15 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
       std::memcpy(temp, sendrecvbuf_, type_nbytes * count); break;
     } else {
       std::memcpy(temp, sendrecvbuf_, type_nbytes * count);
-      if (CheckAndRecover(TryAllreduce(temp, type_nbytes, count, reducer))) {
+      utils::Printf("[%d] caller %s called tryallreduce with seq %d size %d\n", rank, a.c_str(), seq_counter, type_nbytes*count);
+
+      //int size = type_nbytes*count;
+      //std::string caller(caller_);
+      if (CheckAndRecover(TryAllreduce(temp, type_nbytes, count, reducer, a.c_str()))) {
         std::memcpy(sendrecvbuf_, temp, type_nbytes * count); break;
       } else {
-        recovered = RecoverExec(sendrecvbuf_, type_nbytes * count, 0, seq_counter);
+        a+=" allreduce not recovered";
+        recovered = RecoverExec(sendrecvbuf_, type_nbytes * count, 0, seq_counter, cur_cache_seq, a.c_str());
       }
     }
   }
@@ -163,8 +173,10 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
 void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root, const char* caller_) {
   // skip action in single node
   if (world_size == 1 || world_size == -1) return;
-  utils::Printf("[%d] caller %s called broadcast with seq %d\n", rank, caller_, seq_counter);
-  bool recovered = RecoverExec(sendrecvbuf_, total_size, 0, seq_counter);
+  std::string a(caller_);
+  a+=" broadcast try recover ";
+  //utils::Printf("[%d] caller %s called broadcast with seq %d\n", rank, caller_, seq_counter);
+  bool recovered = RecoverExec(sendrecvbuf_, total_size, 0, seq_counter, cur_cache_seq, a.c_str());
   // now we are free to remove the last result, if any
   if (resbuf.LastSeqNo() != -1 &&
       (result_buffer_round == -1 ||
@@ -179,7 +191,8 @@ void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root,
       if (CheckAndRecover(TryBroadcast(sendrecvbuf_, total_size, root))) {
         std::memcpy(temp, sendrecvbuf_, total_size); break;
       } else {
-        recovered = RecoverExec(sendrecvbuf_, total_size, 0, seq_counter);
+         a+=" allreduce not recovered";
+        recovered = RecoverExec(sendrecvbuf_, total_size, 0, seq_counter, cur_cache_seq, a.c_str());
       }
     }
   }
@@ -849,7 +862,7 @@ AllreduceRobust::ReturnType AllreduceRobust::TryLoadCheckPoint(bool requester) {
       // partially complete state
       state = 4;
     }
-    succ = TryAllreduce(&state, sizeof(state), 1, op::Reducer<op::BitOR, unsigned>);
+    succ = TryAllreduce(&state, sizeof(state), 1, op::Reducer<op::BitOR, unsigned>, NULL);
     if (succ != kSuccess) return succ;
     utils::Check(state == 1 || state == 2,
                  "LoadCheckPoint: too many nodes fails, cannot recover local state");
@@ -943,7 +956,7 @@ AllreduceRobust::TryGetResult(void *sendrecvbuf, size_t size, int seqno, bool re
  *           result by recovering procedure, the action is complete, no further action is needed
  *    - false means this is the lastest action that has not yet been executed, need to execute the action
  */
-bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, int cache_seqno) {
+bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, int cache_seqno, const char* caller_) {
   // skip load cache state as we isolated with assertions
   if (flag != 0 && flag != ActionSummary::kLoadCache) {
     utils::Assert(seqno == ActionSummary::kSpecialOp, "must only set seqno for normal operations");
@@ -956,9 +969,9 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, i
     // copy to action and send to allreduce with other nodes
     ActionSummary act = req;
 
-    utils::Printf("[%d] seqno %d, seqcunter %d, cache %d \n",rank, seqno, seq_counter, cur_cache_seq);
+    utils::Printf("[%d] caller %s seqno %d, seqcunter %d, cache %d \n",rank, caller_, seqno, seq_counter, cur_cache_seq);
     // get the reduced action
-    if (!CheckAndRecover(TryAllreduce(&act, sizeof(act), 1, ActionSummary::Reducer))) continue;
+    if (!CheckAndRecover(TryAllreduce(&act, sizeof(act), 1, ActionSummary::Reducer, NULL))) continue;
 
     if(act.load_cache()){
       //assert load cache don't mingle with nodes in other states
@@ -1018,27 +1031,37 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, i
             
             // if restore cache failed, retry from what's left
             if(TryRestoreCache(req.load_cache(), act.seqno(), act.seqno(SeqType::KAND)) != kSuccess) continue;
+            //utils::Printf("[%d] %s", rank, caller_);
+            //req.print(rank, "req restore");
+            //act.print(rank, "act restore");
+
             // if requested load cache, then mission complete
             if(req.load_cache()) return true;
             //utils::Printf("min_seqno|load_cache|diff_seq|max_seqno|load_cache|diff_seq\n");
-            req.print(rank, "req exit");
-            act.print(rank, "act exit");
+            //utils::Printf("[%d] %s", rank, caller_);
+            //req.print(rank, "req exit");
+            //act.print(rank, "act exit");
             continue;
           }
 
           // no special flags, no checkpoint, check ack, load_check
           utils::Assert(act.seqno() != ActionSummary::kSpecialOp, "min seq bug");
           if (act.diff_seq()) {
-            req.print(rank, "req enter");
-            act.print(rank, "act enter");
+            //utils::Printf("[%d] %s", rank, caller_);
+            //req.print(rank, "req enter");
+            //act.print(rank, "act enter");
             //utils::Assert(req.seqno() <= act.seqno(), "requester should not larger than all nodes seq");
             bool requester = req.seqno() == act.seqno();
 
             if (!CheckAndRecover(TryGetResult(buf, size, act.seqno(), requester))) continue;
             if (requester) return true;
           } else {
+            //utils::Printf("[%d] %s", rank, caller_);
             req.print(rank, "req return");
             act.print(rank, "act return");
+            if(rank == 1 && act.seqno() == 3){
+              //utils::Printf("track here");
+            }
             // all the request is same,
             // this is most recent command that is yet to be executed
             return false;

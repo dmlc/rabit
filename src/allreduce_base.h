@@ -96,7 +96,7 @@ class AllreduceBase : public IEngine {
     if (prepare_fun != NULL) prepare_fun(prepare_arg);
     if (world_size == 1 || world_size == -1) return;
     utils::Assert(TryAllreduce(sendrecvbuf_,
-                               type_nbytes, count, reducer) == kSuccess,
+                               type_nbytes, count, reducer, caller_) == kSuccess,
                   "Allreduce failed");
   }
   /*!
@@ -392,7 +392,8 @@ class AllreduceBase : public IEngine {
   ReturnType TryAllreduce(void *sendrecvbuf_,
                           size_t type_nbytes,
                           size_t count,
-                          ReduceFunction reducer);
+                          ReduceFunction reducer,
+                          const char* caller_);
   /*!
    * \brief broadcast data from root to all nodes, this function can fail,and will return the cause of failure
    * \param sendrecvbuf_ buffer for both sending and receiving data

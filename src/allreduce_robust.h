@@ -401,7 +401,8 @@ class AllreduceRobust : public AllreduceBase {
    *    - false means this is the lastest action that has not yet been executed, need to execute the action
    */
   bool RecoverExec(void *buf, size_t size, int flag,
-                   int seqno = ActionSummary::kSpecialOp, int cacheseqno = ActionSummary::kSpecialOp);
+                   int seqno = ActionSummary::kSpecialOp, int cacheseqno = ActionSummary::kSpecialOp,
+                   const char* caller_ = __builtin_FUNCTION());
   /*!
    * \brief try to load check point
    *
