@@ -1021,24 +1021,24 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, i
             // if requested load cache, then mission complete
             if(req.load_cache()) return true;
             //utils::Printf("min_seqno|load_cache|diff_seq|max_seqno|load_cache|diff_seq\n");
-            //req.print(rank, "req exit");
-            //act.print(rank, "act exit");
+            req.print(rank, "req exit");
+            act.print(rank, "act exit");
             continue;
           }
 
           // no special flags, no checkpoint, check ack, load_check
           utils::Assert(act.seqno() != ActionSummary::kSpecialOp, "min seq bug");
           if (act.diff_seq()) {
-            //req.print(rank, "req enter");
-            //act.print(rank, "act enter");
+            req.print(rank, "req enter");
+            act.print(rank, "act enter");
             //utils::Assert(req.seqno() <= act.seqno(), "requester should not larger than all nodes seq");
             bool requester = req.seqno() == act.seqno();
 
             if (!CheckAndRecover(TryGetResult(buf, size, act.seqno(), requester))) continue;
             if (requester) return true;
           } else {
-            //req.print(rank, "req return");
-            //act.print(rank, "act return");
+            req.print(rank, "req return");
+            act.print(rank, "act return");
             // all the request is same,
             // this is most recent command that is yet to be executed
             return false;
