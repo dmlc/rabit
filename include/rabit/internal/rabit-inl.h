@@ -127,28 +127,31 @@ inline std::string GetProcessorName(void) {
   return engine::GetEngine()->GetHost();
 }
 // broadcast data to all other nodes from root
-inline void Broadcast(void *sendrecv_data, size_t size, int root) {
+inline void Broadcast(void *sendrecv_data, size_t size, int root, const char* str) {
+  utils::Printf("#[%d] %s\n", GetRank(), str);
   engine::GetEngine()->Broadcast(sendrecv_data, size, root);
 }
 template<typename DType>
-inline void Broadcast(std::vector<DType> *sendrecv_data, int root) {
+inline void Broadcast(std::vector<DType> *sendrecv_data, int root, const char* str) {
+  utils::Printf("#[%d] %s\n", GetRank(), str);
   size_t size = sendrecv_data->size();
   Broadcast(&size, sizeof(size), root);
   if (sendrecv_data->size() != size) {
     sendrecv_data->resize(size);
   }
   if (size != 0) {
-    Broadcast(&(*sendrecv_data)[0], size * sizeof(DType), root);
+    Broadcast(&(*sendrecv_data)[0], size * sizeof(DType), root, str);
   }
 }
-inline void Broadcast(std::string *sendrecv_data, int root) {
+inline void Broadcast(std::string *sendrecv_data, int root, const char* str) {
+  utils::Printf("#[%d] %s\n", GetRank(), str);
   size_t size = sendrecv_data->length();
   Broadcast(&size, sizeof(size), root);
   if (sendrecv_data->length() != size) {
     sendrecv_data->resize(size);
   }
   if (size != 0) {
-    Broadcast(&(*sendrecv_data)[0], size * sizeof(char), root);
+    Broadcast(&(*sendrecv_data)[0], size * sizeof(char), root, str);
   }
 }
 
@@ -156,7 +159,8 @@ inline void Broadcast(std::string *sendrecv_data, int root) {
 template<typename OP, typename DType>
 inline void Allreduce(DType *sendrecvbuf, size_t count,
                       void (*prepare_fun)(void *arg),
-                      void *prepare_arg) {
+                      void *prepare_arg, const char* str) {
+  utils::Printf("#[%d] %s\n", GetRank(), str);
   engine::Allreduce_(sendrecvbuf, sizeof(DType), count, op::Reducer<OP, DType>,
                      engine::mpi::GetType<DType>(), OP::kType, prepare_fun, prepare_arg);
 }
@@ -167,7 +171,8 @@ inline void InvokeLambda_(void *fun) {
   (*static_cast<std::function<void()>*>(fun))();
 }
 template<typename OP, typename DType>
-inline void Allreduce(DType *sendrecvbuf, size_t count, std::function<void()> prepare_fun) {
+inline void Allreduce(DType *sendrecvbuf, size_t count, std::function<void()> prepare_fun, const char* str) {
+  utils::Printf("#[%d] %s\n", GetRank(), str);
   engine::Allreduce_(sendrecvbuf, sizeof(DType), count, op::Reducer<OP, DType>,
                      engine::mpi::GetType<DType>(), OP::kType, InvokeLambda_, &prepare_fun);
 }
@@ -280,7 +285,8 @@ inline Reducer<DType, freduce>::Reducer(void) {
 template<typename DType, void (*freduce)(DType &dst, const DType &src)> // NOLINT(*)
 inline void Reducer<DType, freduce>::Allreduce(DType *sendrecvbuf, size_t count,
                                                void (*prepare_fun)(void *arg),
-                                               void *prepare_arg) {
+                                               void *prepare_arg, const char* str) {
+  utils::Printf("#[%d] %s\n", GetRank(), str);
   handle_.Allreduce(sendrecvbuf, sizeof(DType), count, prepare_fun, prepare_arg);
 }
 // function to perform reduction for SerializeReducer
@@ -329,7 +335,8 @@ template<typename DType>
 inline void SerializeReducer<DType>::Allreduce(DType *sendrecvobj,
                                                size_t max_nbyte, size_t count,
                                                void (*prepare_fun)(void *arg),
-                                               void *prepare_arg) {
+                                               void *prepare_arg, const char* str) {
+  utils::Printf("#[%d] %s\n", GetRank(), str);
   buffer_.resize(max_nbyte * count);
   // setup closure
   SerializeReduceClosure<DType> c;
@@ -347,13 +354,15 @@ inline void SerializeReducer<DType>::Allreduce(DType *sendrecvobj,
 #if DMLC_USE_CXX11
 template<typename DType, void (*freduce)(DType &dst, const DType &src)>  // NOLINT(*)g
 inline void Reducer<DType, freduce>::Allreduce(DType *sendrecvbuf, size_t count,
-                                               std::function<void()> prepare_fun) {
+                                               std::function<void()> prepare_fun, const char* str) {
+  utils::Printf("#[%d] %s\n", GetRank(), str);
   this->Allreduce(sendrecvbuf, count, InvokeLambda_, &prepare_fun);
 }
 template<typename DType>
 inline void SerializeReducer<DType>::Allreduce(DType *sendrecvobj,
                                                size_t max_nbytes, size_t count,
-                                               std::function<void()> prepare_fun) {
+                                               std::function<void()> prepare_fun, const char* str) {
+  utils::Printf("#[%d] %s\n", GetRank(), str);
   this->Allreduce(sendrecvobj, max_nbytes, count, InvokeLambda_, &prepare_fun);
 }
 #endif  // DMLC_USE_CXX11
