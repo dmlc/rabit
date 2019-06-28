@@ -90,7 +90,7 @@ int AllreduceRobust::SetCache(const std::string &key, const void *buf, size_t bu
 
 int AllreduceRobust::GetCache(const std::string &key, void* buf, const size_t buflen) {
   // as requester sync with rest of nodes on latest cache content
-  if(!RecoverExec(NULL, 0, ActionSummary::kLoadCache, cur_cache_seq, cur_cache_seq)) return -1;
+  if(!RecoverExec(NULL, 0, ActionSummary::kLoadCache, seq_counter, cur_cache_seq)) return -1;
 
   utils::TCPSocket tracker = this->ConnectTracker();
   tracker.SendStr(std::string("get"));
