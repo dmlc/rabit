@@ -54,14 +54,15 @@ class AllreduceRobust : public AllreduceBase {
                          size_t count,
                          ReduceFunction reducer,
                          PreprocFunction prepare_fun = NULL,
-                         void *prepare_arg = NULL);
+                         void *prepare_arg = NULL,
+                         const char* caller_=NULL);
   /*!
    * \brief broadcast data from root to all nodes
    * \param sendrecvbuf_ buffer for both sending and recving data
    * \param size the size of the data to be broadcasted
    * \param root the root worker id to broadcast the data
    */
-  virtual void Broadcast(void *sendrecvbuf_, size_t total_size, int root);
+  virtual void Broadcast(void *sendrecvbuf_, size_t total_size, int root, const char* caller_=NULL);
   /*!
    * \brief load latest check point
    * \param global_model pointer to the globally shared model/state

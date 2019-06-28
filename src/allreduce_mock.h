@@ -48,16 +48,17 @@ class AllreduceMock : public AllreduceRobust {
                          size_t count,
                          ReduceFunction reducer,
                          PreprocFunction prepare_fun,
-                         void *prepare_arg) {
+                         void *prepare_arg, 
+                         const char* caller_) {
     this->Verify(MockKey(rank, version_number, seq_counter, num_trial), "AllReduce");
     double tstart = utils::GetTime();
     AllreduceRobust::Allreduce(sendrecvbuf_, type_nbytes,
-                               count, reducer, prepare_fun, prepare_arg);
+                               count, reducer, prepare_fun, prepare_arg, caller_);
     tsum_allreduce += utils::GetTime() - tstart;
   }
-  virtual void Broadcast(void *sendrecvbuf_, size_t total_size, int root) {
+  virtual void Broadcast(void *sendrecvbuf_, size_t total_size, int root, const char* caller_) {
     this->Verify(MockKey(rank, version_number, seq_counter, num_trial), "Broadcast");
-    AllreduceRobust::Broadcast(sendrecvbuf_, total_size, root);
+    AllreduceRobust::Broadcast(sendrecvbuf_, total_size, root, caller_);
   }
   virtual int LoadCheckPoint(Serializable *global_model,
                              Serializable *local_model) {

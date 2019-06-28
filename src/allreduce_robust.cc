@@ -126,13 +126,14 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
                                 size_t count,
                                 ReduceFunction reducer,
                                 PreprocFunction prepare_fun,
-                                void *prepare_arg) {
+                                void *prepare_arg,
+                                const char* caller_) {
   // skip action in single node
   if (world_size == 1 || world_size == -1) {
     if (prepare_fun != NULL) prepare_fun(prepare_arg);
     return;
   }
-  utils::Printf("[%d] called allreduce with seq %d\n", rank, seq_counter);
+  utils::Printf("[%d] caller %s called allreduce with seq %d\n", rank, caller_, seq_counter);
   bool recovered = RecoverExec(sendrecvbuf_, type_nbytes * count, 0, seq_counter);
   
   if (!recovered && prepare_fun != NULL) prepare_fun(prepare_arg);
@@ -159,10 +160,10 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
  * \param size the size of the data to be broadcasted
  * \param root the root worker id to broadcast the data
  */
-void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root) {
+void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root, const char* caller_) {
   // skip action in single node
   if (world_size == 1 || world_size == -1) return;
-
+  utils::Printf("[%d] caller %s called broadcast with seq %d\n", rank, caller_, seq_counter);
   bool recovered = RecoverExec(sendrecvbuf_, total_size, 0, seq_counter);
   // now we are free to remove the last result, if any
   if (resbuf.LastSeqNo() != -1 &&
@@ -1020,28 +1021,24 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, i
             // if requested load cache, then mission complete
             if(req.load_cache()) return true;
             //utils::Printf("min_seqno|load_cache|diff_seq|max_seqno|load_cache|diff_seq\n");
-            req.print(rank, "req exit");
-            act.print(rank, "act exit");
+            //req.print(rank, "req exit");
+            //act.print(rank, "act exit");
             continue;
           }
 
           // no special flags, no checkpoint, check ack, load_check
           utils::Assert(act.seqno() != ActionSummary::kSpecialOp, "min seq bug");
           if (act.diff_seq()) {
-            req.print(rank, "req enter");
-            act.print(rank, "act enter");
-            if(act.seqno() == 4) return false;
-            bool requester = req.seqno() <= act.seqno();
+            //req.print(rank, "req enter");
+            //act.print(rank, "act enter");
+            //utils::Assert(req.seqno() <= act.seqno(), "requester should not larger than all nodes seq");
+            bool requester = req.seqno() == act.seqno();
 
             if (!CheckAndRecover(TryGetResult(buf, size, act.seqno(), requester))) continue;
             if (requester) return true;
           } else {
-            req.print(rank, "req return");
-            act.print(rank, "act return");
-
-            if(req.seqno() == 3 && rank == 1){
-              utils::Printf("track here");
-            }
+            //req.print(rank, "req return");
+            //act.print(rank, "act return");
             // all the request is same,
             // this is most recent command that is yet to be executed
             return false;

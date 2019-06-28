@@ -91,7 +91,8 @@ class AllreduceBase : public IEngine {
                          size_t count,
                          ReduceFunction reducer,
                          PreprocFunction prepare_fun = NULL,
-                         void *prepare_arg = NULL) {
+                         void *prepare_arg = NULL,
+                         const char* caller_=NULL) {
     if (prepare_fun != NULL) prepare_fun(prepare_arg);
     if (world_size == 1 || world_size == -1) return;
     utils::Assert(TryAllreduce(sendrecvbuf_,
@@ -104,7 +105,7 @@ class AllreduceBase : public IEngine {
    * \param size the size of the data to be broadcasted
    * \param root the root worker id to broadcast the data
    */
-  virtual void Broadcast(void *sendrecvbuf_, size_t total_size, int root) {
+  virtual void Broadcast(void *sendrecvbuf_, size_t total_size, int root, const char* caller_=NULL) {
     if (world_size == 1 || world_size == -1) return;
     utils::Assert(TryBroadcast(sendrecvbuf_, total_size, root) == kSuccess,
                   "Broadcast failed");
