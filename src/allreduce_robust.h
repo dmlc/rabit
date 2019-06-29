@@ -55,7 +55,7 @@ class AllreduceRobust : public AllreduceBase {
                          ReduceFunction reducer,
                          PreprocFunction prepare_fun = NULL,
                          void *prepare_arg = NULL,
-                         const char* caller_=NULL);
+                         const char* caller_ = NULL);
   /*!
    * \brief broadcast data from root to all nodes
    * \param sendrecvbuf_ buffer for both sending and recving data

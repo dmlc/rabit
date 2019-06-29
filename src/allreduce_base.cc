@@ -430,8 +430,7 @@ AllreduceBase::ReturnType
 AllreduceBase::TryAllreduce(void *sendrecvbuf_,
                             size_t type_nbytes,
                             size_t count,
-                            ReduceFunction reducer, 
-                            const char* caller_) {
+                            ReduceFunction reducer) {
   if (count > reduce_ring_mincount) {
     return this->TryAllreduceRing(sendrecvbuf_, type_nbytes, count, reducer);
   } else {
