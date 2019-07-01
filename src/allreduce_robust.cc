@@ -255,6 +255,10 @@ int AllreduceRobust::LoadCheckPoint(Serializable *global_model,
                   "check ack must return true");
     utils::Printf("[%d] load checkpoint global %ld version %d\n", rank,
       global_checkpoint.length(), version_number);
+    
+    if(!RecoverExec(NULL, 0, ActionSummary::kLoadCache, seq_counter, cur_cache_seq)) {
+      utils::Printf("no need to load cache\n");
+    }
     return version_number;
   } else {
     // reset result buffer
