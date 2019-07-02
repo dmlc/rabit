@@ -61,15 +61,14 @@ class IEngine {
                          size_t count,
                          ReduceFunction reducer,
                          PreprocFunction prepare_fun = NULL,
-                         void *prepare_arg = NULL,
-                         const char* caller_= NULL) = 0;
+                         void *prepare_arg = NULL) = 0;
   /*!
    * \brief broadcasts data from root to every other node
    * \param sendrecvbuf_ buffer for both sending and receiving data
    * \param size the size of the data to be broadcasted
    * \param root the root worker id to broadcast the data
    */
-  virtual void Broadcast(void *sendrecvbuf_, size_t size, int root, const char* caller_=NULL) = 0;
+  virtual void Broadcast(void *sendrecvbuf_, size_t size, int root) = 0;
   /*!
    * \brief explicitly re-initialize everything before calling LoadCheckPoint
    *    call this function when IEngine throws an exception,
@@ -216,8 +215,7 @@ void Allreduce_(void *sendrecvbuf,
                 mpi::DataType dtype,
                 mpi::OpType op,
                 IEngine::PreprocFunction prepare_fun = NULL,
-                void *prepare_arg = NULL,
-                const char* caller_=NULL);
+                void *prepare_arg = NULL);
 
 /*!
  * \brief handle for customized reducer, used to handle customized reduce
@@ -249,7 +247,7 @@ class ReduceHandle {
                  size_t type_nbytes,
                  size_t count,
                  IEngine::PreprocFunction prepare_fun = NULL,
-                 void *prepare_arg = NULL, const char* caller_=NULL);
+                 void *prepare_arg = NULL);
   /*! \return the number of bytes occupied by the type */
   static int TypeSize(const MPI::Datatype &dtype);
 

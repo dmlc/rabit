@@ -27,12 +27,11 @@ class MPIEngine : public IEngine {
                          size_t count,
                          ReduceFunction reducer,
                          PreprocFunction prepare_fun,
-                         void *prepare_arg, 
-                         const char* caller_=NULL) {
+                         void *prepare_arg) {
     utils::Error("MPIEngine:: Allreduce is not supported,"\
                  "use Allreduce_ instead");
   }
-  virtual void Broadcast(void *sendrecvbuf_, size_t size, int root, const char* caller_=NULL) {
+  virtual void Broadcast(void *sendrecvbuf_, size_t size, int root) {
     MPI::COMM_WORLD.Bcast(sendrecvbuf_, size, MPI::CHAR, root);
   }
   virtual void InitAfterException(void) {
@@ -148,8 +147,7 @@ void Allreduce_(void *sendrecvbuf,
                 mpi::DataType dtype,
                 mpi::OpType op,
                 IEngine::PreprocFunction prepare_fun,
-                void *prepare_arg, 
-                const char* caller_) {
+                void *prepare_arg) {
   if (prepare_fun != NULL) prepare_fun(prepare_arg);
   MPI::COMM_WORLD.Allreduce(MPI_IN_PLACE, sendrecvbuf,
                             count, GetType(dtype), GetOp(op));
@@ -197,7 +195,7 @@ void ReduceHandle::Init(IEngine::ReduceFunction redfunc, size_t type_nbytes) {
 void ReduceHandle::Allreduce(void *sendrecvbuf,
                              size_t type_nbytes, size_t count,
                              IEngine::PreprocFunction prepare_fun,
-                             void *prepare_arg, const char* caller_) {
+                             void *prepare_arg) {
   utils::Assert(handle_ != NULL, "must intialize handle to call AllReduce");
   MPI::Op *op = reinterpret_cast<MPI::Op*>(handle_);
   MPI::Datatype *dtype = reinterpret_cast<MPI::Datatype*>(htype_);

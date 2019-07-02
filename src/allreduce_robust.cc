@@ -140,16 +140,13 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
                                 size_t count,
                                 ReduceFunction reducer,
                                 PreprocFunction prepare_fun,
-                                void *prepare_arg,
-                                const char* caller_) {
+                                void *prepare_arg) {
   // skip action in single node
   if (world_size == 1 || world_size == -1) {
     if (prepare_fun != NULL) prepare_fun(prepare_arg);
     return;
   }
-  std::string caller(caller_);
-  caller+=" AllreduceRobust::Allreduce->RecoverExec1";
-  bool recovered = RecoverExec(sendrecvbuf_, type_nbytes * count, 0, seq_counter, cur_cache_seq, caller.c_str());
+  bool recovered = RecoverExec(sendrecvbuf_, type_nbytes * count, 0, seq_counter, cur_cache_seq);
   
   if (!recovered && prepare_fun != NULL) prepare_fun(prepare_arg);
   void *temp = resbuf.AllocTemp(type_nbytes, count);
@@ -162,8 +159,7 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
       if (CheckAndRecover(TryAllreduce(temp, type_nbytes, count, reducer))) {
         std::memcpy(sendrecvbuf_, temp, type_nbytes * count); break;
       } else {
-        caller +=" AllreduceRobust::Allreduce->RecoverExec2";
-        recovered = RecoverExec(sendrecvbuf_, type_nbytes * count, 0, seq_counter, cur_cache_seq, caller.c_str());
+        recovered = RecoverExec(sendrecvbuf_, type_nbytes * count, 0, seq_counter, cur_cache_seq);
       }
     }
   }
@@ -177,13 +173,11 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
  * \param size the size of the data to be broadcasted
  * \param root the root worker id to broadcast the data
  */
-void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root, const char* caller_) {
+void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root) {
   // skip action in single node
   if (world_size == 1 || world_size == -1) return;
-  std::string caller(caller_);
-  caller+=" AllreduceRobust::Broadcast->RecoverExec1 ";
-  //utils::Printf("[%d] caller %s called broadcast with seq %d\n", rank, caller_, seq_counter);
-  bool recovered = RecoverExec(sendrecvbuf_, total_size, 0, seq_counter, cur_cache_seq, caller.c_str());
+
+  bool recovered = RecoverExec(sendrecvbuf_, total_size, 0, seq_counter, cur_cache_seq);
   // now we are free to remove the last result, if any
   if (resbuf.LastSeqNo() != -1 &&
       (result_buffer_round == -1 ||
@@ -198,8 +192,7 @@ void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root,
       if (CheckAndRecover(TryBroadcast(sendrecvbuf_, total_size, root))) {
         std::memcpy(temp, sendrecvbuf_, total_size); break;
       } else {
-        caller+=" AllreduceRobust::Broadcast->RecoverExec2 ";
-        recovered = RecoverExec(sendrecvbuf_, total_size, 0, seq_counter, cur_cache_seq, caller.c_str());
+        recovered = RecoverExec(sendrecvbuf_, total_size, 0, seq_counter, cur_cache_seq);
       }
     }
   }
@@ -966,7 +959,7 @@ AllreduceRobust::TryGetResult(void *sendrecvbuf, size_t size, int seqno, bool re
  *           result by recovering procedure, the action is complete, no further action is needed
  *    - false means this is the lastest action that has not yet been executed, need to execute the action
  */
-bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, int cache_seqno, const char* caller_) {
+bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, int cache_seqno) {
   // skip load cache state as we isolated with assertions
   if (flag != 0 && flag != ActionSummary::kLoadCache) {
     utils::Assert(seqno == ActionSummary::kSpecialOp, "must only set seqno for normal operations");

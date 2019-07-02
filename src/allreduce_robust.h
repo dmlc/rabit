@@ -54,15 +54,14 @@ class AllreduceRobust : public AllreduceBase {
                          size_t count,
                          ReduceFunction reducer,
                          PreprocFunction prepare_fun = NULL,
-                         void *prepare_arg = NULL,
-                         const char* caller_ = NULL);
+                         void *prepare_arg = NULL);
   /*!
    * \brief broadcast data from root to all nodes
    * \param sendrecvbuf_ buffer for both sending and recving data
    * \param size the size of the data to be broadcasted
    * \param root the root worker id to broadcast the data
    */
-  virtual void Broadcast(void *sendrecvbuf_, size_t total_size, int root, const char* caller_=NULL);
+  virtual void Broadcast(void *sendrecvbuf_, size_t total_size, int root);
   /*!
    * \brief load latest check point
    * \param global_model pointer to the globally shared model/state
@@ -196,8 +195,8 @@ class AllreduceRobust : public AllreduceBase {
     // constructor
     ActionSummary(void) {}
     // constructor of action
-    explicit ActionSummary(int action_flag, int role_diff_flag = 0, int minseqno = kSpecialOp, 
-      int maxseqno = kSpecialOp) {
+    explicit ActionSummary(int action_flag, int role_diff_flag = 0,
+      int minseqno = kSpecialOp, int maxseqno = kSpecialOp) {
       seqcode = (minseqno << 5) | action_flag;
       maxseqcode = (maxseqno << 5) | role_diff_flag;
     }
@@ -401,8 +400,7 @@ class AllreduceRobust : public AllreduceBase {
    *    - false means this is the lastest action that has not yet been executed, need to execute the action
    */
   bool RecoverExec(void *buf, size_t size, int flag,
-                   int seqno = ActionSummary::kSpecialOp, int cacheseqno = ActionSummary::kSpecialOp,
-                   const char* caller_ = __builtin_FUNCTION());
+                   int seqno = ActionSummary::kSpecialOp, int cacheseqno = ActionSummary::kSpecialOp);
   /*!
    * \brief try to load check point
    *

@@ -84,9 +84,9 @@ void Allreduce_(void *sendrecvbuf,
                 mpi::DataType dtype,
                 mpi::OpType op,
                 IEngine::PreprocFunction prepare_fun,
-                void *prepare_arg, const char* caller_) {
+                void *prepare_arg) {
   GetEngine()->Allreduce(sendrecvbuf, type_nbytes, count,
-                         red, prepare_fun, prepare_arg, caller_);
+                         red, prepare_fun, prepare_arg);
 }
 
 // code for reduce handle
@@ -108,10 +108,10 @@ void ReduceHandle::Init(IEngine::ReduceFunction redfunc, size_t type_nbytes) {
 void ReduceHandle::Allreduce(void *sendrecvbuf,
                              size_t type_nbytes, size_t count,
                              IEngine::PreprocFunction prepare_fun,
-                             void *prepare_arg, const char* caller_) {
+                             void *prepare_arg) {
   utils::Assert(redfunc_ != NULL, "must intialize handle to call AllReduce");
   GetEngine()->Allreduce(sendrecvbuf, type_nbytes, count,
-                         redfunc_, prepare_fun, prepare_arg, caller_);
+                         redfunc_, prepare_fun, prepare_arg);
 }
 }  // namespace engine
 }  // namespace rabit

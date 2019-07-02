@@ -142,7 +142,7 @@ inline void GetCache(const char *key, void* buf ...);
  * \param size the data size
  * \param root the process root
  */
-inline void Broadcast(void *sendrecv_data, size_t size, int root, const char* str = __builtin_FUNCTION());
+inline void Broadcast(void *sendrecv_data, size_t size, int root);
 /*!
  * \brief broadcasts an std::vector<DType> to every node from root
  * \param sendrecv_data the pointer to send/receive vector,
@@ -152,14 +152,14 @@ inline void Broadcast(void *sendrecv_data, size_t size, int root, const char* st
  *               that can be directly transmitted by sending the sizeof(DType)
  */
 template<typename DType>
-inline void Broadcast(std::vector<DType> *sendrecv_data, int root, const char* str = __builtin_FUNCTION());
+inline void Broadcast(std::vector<DType> *sendrecv_data, int root);
 /*!
  * \brief broadcasts a std::string to every node from the root
  * \param sendrecv_data the pointer to the send/receive buffer,
  *        for the receiver, the vector does not need to be pre-allocated
  * \param root the process root
  */
-inline void Broadcast(std::string *sendrecv_data, int root, const char* str = __builtin_FUNCTION());
+inline void Broadcast(std::string *sendrecv_data, int root);
 /*!
  * \brief performs in-place Allreduce on sendrecvbuf
  *        this function is NOT thread-safe
@@ -184,7 +184,7 @@ inline void Broadcast(std::string *sendrecv_data, int root, const char* str = __
 template<typename OP, typename DType>
 inline void Allreduce(DType *sendrecvbuf, size_t count,
                       void (*prepare_fun)(void *) = NULL,
-                      void *prepare_arg = NULL, const char* str = __builtin_FUNCTION());
+                      void *prepare_arg = NULL);
 // C++11 support for lambda prepare function
 #if DMLC_USE_CXX11
 /*!
@@ -213,7 +213,7 @@ inline void Allreduce(DType *sendrecvbuf, size_t count,
  */
 template<typename OP, typename DType>
 inline void Allreduce(DType *sendrecvbuf, size_t count,
-                      std::function<void()> prepare_fun, const char* str = __builtin_FUNCTION());
+                      std::function<void()> prepare_fun);
 #endif  // C++11
 /*!
  * \brief loads the latest check point
@@ -312,7 +312,7 @@ class Reducer {
    */
   inline void Allreduce(DType *sendrecvbuf, size_t count,
                         void (*prepare_fun)(void *) = NULL,
-                        void *prepare_arg = NULL, const char* str = __builtin_FUNCTION());
+                        void *prepare_arg = NULL);
 #if DMLC_USE_CXX11
   /*!
    * \brief customized in-place all reduce operation, with lambda function as preprocessor
@@ -321,7 +321,7 @@ class Reducer {
    * \param prepare_fun lambda function executed to prepare the data, if necessary
    */
   inline void Allreduce(DType *sendrecvbuf, size_t count,
-                        std::function<void()> prepare_fun, const char* str = __builtin_FUNCTION());
+                        std::function<void()> prepare_fun);
 #endif  // DMLC_USE_CXX11
 
  private:
@@ -356,7 +356,7 @@ class SerializeReducer {
   inline void Allreduce(DType *sendrecvobj,
                         size_t max_nbyte, size_t count,
                         void (*prepare_fun)(void *) = NULL,
-                        void *prepare_arg = NULL, const char* str = __builtin_FUNCTION());
+                        void *prepare_arg = NULL);
 // C++11 support for lambda prepare function
 #if DMLC_USE_CXX11
   /*!
@@ -369,7 +369,7 @@ class SerializeReducer {
    */
   inline void Allreduce(DType *sendrecvobj,
                         size_t max_nbyte, size_t count,
-                        std::function<void()> prepare_fun, const char* str = __builtin_FUNCTION());
+                        std::function<void()> prepare_fun);
 #endif  // DMLC_USE_CXX11
 
  private:

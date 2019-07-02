@@ -25,12 +25,11 @@ class EmptyEngine : public IEngine {
                          size_t count,
                          ReduceFunction reducer,
                          PreprocFunction prepare_fun,
-                         void *prepare_arg, 
-                         const char* caller_=NULL) {
+                         void *prepare_arg) {
     utils::Error("EmptyEngine:: Allreduce is not supported,"\
                  "use Allreduce_ instead");
   }
-  virtual void Broadcast(void *sendrecvbuf_, size_t size, int root, const char* caller_=NULL) {
+  virtual void Broadcast(void *sendrecvbuf_, size_t size, int root) {
   }
   virtual void InitAfterException(void) {
     utils::Error("EmptyEngine is not fault tolerant");
