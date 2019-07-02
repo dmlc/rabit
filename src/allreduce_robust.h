@@ -33,8 +33,19 @@ class AllreduceRobust : public AllreduceBase {
    * \param val parameter value
    */
   virtual void SetParam(const char *name, const char *val);
-
+  /*!
+   * \brief perform immutable local cache insertion
+   * \param key unique cache key
+   * \param buf buffer of allreduce/robust payload to copy
+   * \param buflen total number of bytes
+   */
   virtual int SetCache(const std::string &key, const void *buf, const size_t buflen);
+  /*!
+   * \brief perform cache lookup if nodes in fault recovery
+   * \param key unique cache key
+   * \param buf buffer for recv allreduce/robust payload
+   * \param buflen total number of bytes
+   */
   virtual int GetCache(const std::string &key, void *buf, const size_t buflen);
   /*!
    * \brief perform in-place allreduce, on sendrecvbuf
@@ -206,7 +217,6 @@ class AllreduceRobust : public AllreduceBase {
       int code = t == SeqType::kOR ? seqcode : maxseqcode;
       return code >> 5;
     }
-    
     // whether the operation set contains a load_check
     inline bool load_check(SeqType t = SeqType::kOR) const {
       int code = t == SeqType::kOR ? seqcode : maxseqcode;
@@ -237,12 +247,13 @@ class AllreduceRobust : public AllreduceBase {
       int code = t == SeqType::kOR ? seqcode : maxseqcode;
       return code & 31;
     }
-    
-    inline void print(int rank, std::string prefix ){
+    // print flags in user friendly way
+    inline void print_flags(int rank, std::string prefix ) {
       utils::Printf("[%d] %s - |%d|%d|%d| - |%d|%d|%d|\n",
                     rank, prefix.c_str(),
                     seqno(), load_cache(), diff_seq(),
-                    seqno(SeqType::KAND), load_cache(SeqType::KAND), diff_seq(SeqType::KAND));
+                    seqno(SeqType::KAND), load_cache(SeqType::KAND),
+                    diff_seq(SeqType::KAND));
     }
     // reducer for Allreduce, get the result ActionSummary from all nodes
     inline static void Reducer(const void *src_, void *dst_,
@@ -253,15 +264,13 @@ class AllreduceRobust : public AllreduceBase {
         int min_seqno = std::min(src[i].seqno(), dst[i].seqno());
         int max_seqno = std::max(src[i].seqno(SeqType::KAND), dst[i].seqno(SeqType::KAND));
         int action_flag = src[i].flag() | dst[i].flag();
-        
         // if any node is not requester set to 0 otherwise 1
         int role_flag = src[i].flag(SeqType::KAND) & dst[i].flag(SeqType::KAND);
-        
         int min_diff_flag = src[i].seqno() != dst[i].seqno() ? kDiffSeq : 0;
-        int max_diff_flag = src[i].seqno(SeqType::KAND) != dst[i].seqno(SeqType::KAND) ? kDiffSeq : 0;
-        dst[i] = ActionSummary(action_flag | min_diff_flag, 
-                                role_flag | max_diff_flag, 
-                                min_seqno, max_seqno);
+        int max_diff_flag =
+          src[i].seqno(SeqType::KAND) != dst[i].seqno(SeqType::KAND) ? kDiffSeq : 0;
+        dst[i] = ActionSummary(action_flag | min_diff_flag,
+          role_flag | max_diff_flag, min_seqno, max_seqno);
       }
     }
 
@@ -399,8 +408,8 @@ class AllreduceRobust : public AllreduceBase {
    *           result by recovering procedure, the action is complete, no further action is needed
    *    - false means this is the lastest action that has not yet been executed, need to execute the action
    */
-  bool RecoverExec(void *buf, size_t size, int flag,
-                   int seqno = ActionSummary::kSpecialOp, int cacheseqno = ActionSummary::kSpecialOp);
+  bool RecoverExec(void *buf, size_t size, int flag, int seqno = ActionSummary::kSpecialOp,
+    int cacheseqno = ActionSummary::kSpecialOp);
   /*!
    * \brief try to load check point
    *
@@ -424,7 +433,8 @@ class AllreduceRobust : public AllreduceBase {
    * \return this function can return kSuccess/kSockError/kGetExcept, see ReturnType for details
    * \sa ReturnType
    */
-  ReturnType TryRestoreCache(bool requester, const int min_seq=ActionSummary::kSpecialOp, const int max_seq=ActionSummary::kSpecialOp);
+  ReturnType TryRestoreCache(bool requester, const int min_seq = ActionSummary::kSpecialOp,
+    const int max_seq = ActionSummary::kSpecialOp);
   /*!
    * \brief try to get the result of operation specified by seqno
    *
@@ -573,6 +583,8 @@ o   *  the input state must exactly one saved state(local state of current node)
   int cur_cache_seq;
   // result buffer of cached all reduce
   ResultBuffer cachebuf;
+  // key of each cache entry
+  ResultBuffer lookupbuf;
   // last check point global model
   std::string global_checkpoint;
   // lazy checkpoint of global model
