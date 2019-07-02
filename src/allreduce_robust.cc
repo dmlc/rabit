@@ -73,7 +73,21 @@ void AllreduceRobust::SetParam(const char *name, const char *val) {
 }
 
 int AllreduceRobust::SetCache(const std::string &key, const void *buf, size_t buflen) {
+
   utils::TCPSocket tracker = this->ConnectTracker();
+  tracker.SendStr(std::string("get"));
+  tracker.SendStr(key);
+  int index = 0;
+  tracker.Recv(&index, sizeof(int));
+  tracker.Close();
+  
+  if (index != -1) {
+    //assume all nodes are trying to set same cache with same cachebuf
+    //content of cache only fetched while GetCache called
+    utils::Assert(index == cur_cache_seq, "cache index should be same across all nodes");
+  }
+
+  tracker = this->ConnectTracker();
   
   tracker.SendStr(std::string("set"));
   tracker.SendStr(key);
@@ -773,9 +787,8 @@ AllreduceRobust::TryRecoverData(RecoverType role,
  */
 AllreduceRobust::ReturnType AllreduceRobust::TryRestoreCache(bool requester, const int min_seq, const int max_seq) {
 
-  //clear current requester and start over
-  if(requester){
-    // requester is expected to be out of dated, clear and resync
+  //if some nodes are requesters and others are not, we clear requester and rebuild from those with most cache entries
+  if (requester) {
     utils::Assert(cur_cache_seq <= max_seq, "requester is expected to have fewer cache entries");
     cachebuf.Clear();
     cur_cache_seq = 0;
