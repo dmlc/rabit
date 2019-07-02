@@ -13,6 +13,11 @@
 #include "../include/rabit/internal/engine.h"
 
 namespace rabit {
+
+namespace utils {
+  bool STOP_PROCESS_ON_ERROR = true;
+}
+
 namespace engine {
 /*! \brief EmptyEngine */
 class EmptyEngine : public IEngine {
@@ -87,10 +92,12 @@ class EmptyEngine : public IEngine {
 EmptyEngine manager;
 
 /*! \brief intiialize the synchronization module */
-void Init(int argc, char *argv[]) {
+bool Init(int argc, char *argv[]) {
+  return true;
 }
 /*! \brief finalize syncrhonization module */
-void Finalize(void) {
+bool Finalize(void) {
+  return true;
 }
 
 /*! \brief singleton method to get engine */

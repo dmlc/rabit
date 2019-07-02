@@ -73,12 +73,14 @@ struct BitOR;
  * \brief initializes rabit, call this once at the beginning of your program
  * \param argc number of arguments in argv
  * \param argv the array of input arguments
+ * \return true if initialized successfully, otherwise false
  */
-inline void Init(int argc, char *argv[]);
+inline bool Init(int argc, char *argv[]);
 /*!
  * \brief finalizes the rabit engine, call this function after you finished with all the jobs
+ * \return true if finalized successfully, otherwise false
  */
-inline void Finalize();
+inline bool Finalize();
 /*! \brief gets rank of the current process
  * \return rank number of worker*/
 inline int GetRank();
@@ -103,12 +105,16 @@ inline void TrackerPrint(const std::string &msg);
  * \brief save allreduce/braodcast cache
  * \param key unique key of cache
  * \param buf value of allreduce broadcast cache
+ * \param buflen byte size of buf to cache
+ * \return -1 if recovery cache set failed 0 otherwise
  */
 inline int SetCache(const std::string &key, const void* buf, const size_t buflen);
 /*!
  * \brief get cached allreduce/braodcast
  * \param key configuration key
  * \param buf value of allreduce broadcast cache
+ * \param buflen expected byte size of buf to fetch
+ * \return -1 if no recovery cache available 0 otherwise
  */
 inline int GetCache(const std::string &key, void* buf, const size_t buflen);
 
@@ -122,17 +128,21 @@ inline int GetCache(const std::string &key, void* buf, const size_t buflen);
  */
 inline void TrackerPrintf(const char *fmt, ...);
 /*!
- * \brief save config to tracker,
- * \param key configuration key
- * \param value value of config
+ * \brief save allreduce/braodcast cache
+ * \param key unique key of cache
+ * \param buf value of allreduce broadcast cache
+ * \param buflen byte size of buf to cache
+ * \return -1 if recovery cache set failed 0 otherwise
  */
-inline void SetCache(const char *key, const void* buf, ...);
+inline int SetCache(const char *key, const void* buf, const size_t buflen ...);
 /*!
- * \brief get config to tracker,
+ * \brief get cached allreduce/braodcast
  * \param key configuration key
- * \param value value of config
+ * \param buf value of allreduce broadcast cache
+ * \param buflen expected byte size of buf to fetch
+ * \return -1 if no recovery cache available 0 otherwise
  */
-inline void GetCache(const char *key, void* buf ...);
+inline int GetCache(const char *key, void* buf, const size_t buflen ...);
 #endif  // RABIT_STRICT_CXX98_
 /*!
  * \brief broadcasts a memory region to every node from the root

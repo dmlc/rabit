@@ -103,12 +103,12 @@ inline void Reducer(const void *src_, void *dst_, int len, const MPI::Datatype &
 }  // namespace op
 
 // intialize the rabit engine
-inline void Init(int argc, char *argv[]) {
-  engine::Init(argc, argv);
+inline bool Init(int argc, char *argv[]) {
+  return engine::Init(argc, argv);
 }
 // finalize the rabit engine
-inline void Finalize(void) {
-  engine::Finalize();
+inline bool Finalize(void) {
+  return engine::Finalize();
 }
 // get the rank of current process
 inline int GetRank(void) {
@@ -198,7 +198,7 @@ inline void TrackerPrintf(const char *fmt, ...) {
   TrackerPrint(msg);
 }
 
-inline int SetCache(const char *key, const void* buf, const size_t buflen...) {
+inline int SetCache(const char *key, const void* buf, const size_t buflen ...) {
   const int kPrintBuffer = 1 << 10;
   std::string k(kPrintBuffer, '\0'), v(kPrintBuffer, '\0');
 
@@ -210,7 +210,7 @@ inline int SetCache(const char *key, const void* buf, const size_t buflen...) {
   return engine::GetEngine()->SetCache(k, buf, buflen);
 }
 
-inline int GetCache(const char *key, void* buf, const size_t buflen...) {
+inline int GetCache(const char *key, void* buf, const size_t buflen ...) {
   const int kPrintBuffer = 1 << 10;
   std::string k(kPrintBuffer, '\0'), v(kPrintBuffer, '\0');
 

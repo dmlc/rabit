@@ -32,33 +32,40 @@ AllreduceRobust::AllreduceRobust(void) {
   env_vars.push_back("rabit_global_replica");
   env_vars.push_back("rabit_local_replica");
 }
-void AllreduceRobust::Init(int argc, char* argv[]) {
-  AllreduceBase::Init(argc, argv);
-  if (num_global_replica == 0) {
-    result_buffer_round = -1;
+bool AllreduceRobust::Init(int argc, char* argv[]) {
+  if (AllreduceBase::Init(argc, argv)) {
+    if (num_global_replica == 0) {
+      result_buffer_round = -1;
+    } else {
+      result_buffer_round = std::max(world_size / num_global_replica, 1);
+    }
+    return true;
   } else {
-    result_buffer_round = std::max(world_size / num_global_replica, 1);
+    return false;
   }
 }
 /*! \brief shutdown the engine */
-void AllreduceRobust::Shutdown(void) {
-  // need to sync the exec before we shutdown, do a pesudo check point
-  // execute checkpoint, note: when checkpoint existing, load will not happen
-  utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckPoint, ActionSummary::kSpecialOp),
-                "Shutdown: check point must return true");
-  // reset result buffer
-  resbuf.Clear(); seq_counter = 0;
-  cachebuf.Clear(); cur_cache_seq = 0;
-  lookupbuf.Clear();
-  // execute check ack step, load happens here
-  utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck, ActionSummary::kSpecialOp),
-                "Shutdown: check ack must return true");
-
+bool AllreduceRobust::Shutdown(void) {
+  try {
+    // need to sync the exec before we shutdown, do a pesudo check point
+    // execute checkpoint, note: when checkpoint existing, load will not happen
+    utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckPoint, ActionSummary::kSpecialOp),
+                  "Shutdown: check point must return true");
+    // reset result buffer
+    resbuf.Clear(); seq_counter = 0;
+    cachebuf.Clear(); cur_cache_seq = 0;
+    lookupbuf.Clear();
+    // execute check ack step, load happens here
+    utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck, ActionSummary::kSpecialOp),
+                  "Shutdown: check ack must return true");
 #if defined (__APPLE__)
-        sleep(1);
+    sleep(1);
 #endif
-
-  AllreduceBase::Shutdown();
+    return AllreduceBase::Shutdown();
+  } catch (const std::exception& e) {
+    fprintf(stderr, "%s\n", e.what());
+    return false;
+  }
 }
 /*!
  * \brief set parameters to the engine
@@ -94,7 +101,6 @@ int AllreduceRobust::SetCache(const std::string &key, const void *buf, size_t bu
   void* name = lookupbuf.AllocTemp(strlen(k.c_str()) + 1, 1);
   lookupbuf.PushTemp(cur_cache_seq, strlen(k.c_str()) + 1, 1);
   std::memcpy(name, key.c_str(), strlen(k.c_str()) + 1);
-
   cur_cache_seq += 1;
   return 0;
 }
@@ -120,8 +126,8 @@ int AllreduceRobust::GetCache(const std::string &key, void* buf, const size_t bu
   utils::Assert(cur_cache_seq > index, "cur_cache_seq is smaller than lookup cache seq index");
   utils::Assert(siz == buflen, "cache size stored expected to be same as requested");
   utils::Assert(siz > 0, "cache size should be greater than 0");
-  // TODO(chenqin): cahce is immutable, pass ref
-  buf = temp;
+  // TODO(chenqin): cahce is immutable, pass ref?
+  std::memcpy(buf, temp, buflen);
   return 0;
 }
 
