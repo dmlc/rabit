@@ -83,13 +83,12 @@ class MPIEngine : public IEngine {
     }
   }
   virtual int SetCache(const std::string &key, const void* buf, const size_t buflen) {
-    // simply print information into the tracker
-    // TODO(chen qin): figure out how to support MPI
+    // TODO(chen qin): figure out how to support set cache in MPI
     utils::Error("MPI impl doesn't support cache");
     return -1;
   }
-  virtual int GetCache(const std::string& key, void* buf) {
-    // simply print information into the tracker
+  virtual int GetCache(const std::string& key, void* buf, const size_t buflen) {
+    // TODO(chen qin): figure out how to support get cache in MPI
     utils::Error("MPI impl doesn't support cache");
     return -1;
   }
