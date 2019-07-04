@@ -87,7 +87,7 @@ class MPIEngine : public IEngine {
     utils::Error("MPI impl doesn't support cache");
     return -1;
   }
-  virtual int GetCache(const std::string& key, void* buf, const size_t buflen) {
+  virtual int GetCache(const std::string& key, void* buf, const size_t buflen, const bool byref) {
     // TODO(chen qin): figure out how to support get cache in MPI
     utils::Error("MPI impl doesn't support cache");
     return -1;

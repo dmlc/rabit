@@ -105,7 +105,8 @@ int AllreduceRobust::SetCache(const std::string &key, const void *buf, size_t bu
   return 0;
 }
 
-int AllreduceRobust::GetCache(const std::string &key, void* buf, const size_t buflen) {
+int AllreduceRobust::GetCache(const std::string &key, void* buf,
+  const size_t buflen, const bool byref) {
   // as requester sync with rest of nodes on latest cache content
   if (!RecoverExec(NULL, 0, ActionSummary::kLoadCache, seq_counter, cur_cache_seq)) return -1;
   int index = -1;
@@ -126,8 +127,14 @@ int AllreduceRobust::GetCache(const std::string &key, void* buf, const size_t bu
   utils::Assert(cur_cache_seq > index, "cur_cache_seq is smaller than lookup cache seq index");
   utils::Assert(siz == buflen, "cache size stored expected to be same as requested");
   utils::Assert(siz > 0, "cache size should be greater than 0");
-  // TODO(chenqin): cahce is immutable, pass ref?
-  std::memcpy(buf, temp, buflen);
+
+  // immutable cache, save copy time by pointer manipulation
+  if (byref) {
+    buf = temp;
+  } else {
+    std::memcpy(buf, temp, buflen);
+  }
+
   return 0;
 }
 

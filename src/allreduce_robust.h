@@ -38,6 +38,7 @@ class AllreduceRobust : public AllreduceBase {
    * \param key unique cache key
    * \param buf buffer of allreduce/robust payload to copy
    * \param buflen total number of bytes
+   * \return -1 if no recovery cache fetched otherwise 0
    */
   virtual int SetCache(const std::string &key, const void *buf, const size_t buflen);
   /*!
@@ -46,7 +47,8 @@ class AllreduceRobust : public AllreduceBase {
    * \param buf buffer for recv allreduce/robust payload
    * \param buflen total number of bytes
    */
-  virtual int GetCache(const std::string &key, void *buf, const size_t buflen);
+  virtual int GetCache(const std::string &key, void *buf, const size_t buflen,
+    const bool byref = false);
   /*!
    * \brief perform in-place allreduce, on sendrecvbuf
    *        this function is NOT thread-safe

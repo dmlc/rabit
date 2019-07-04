@@ -182,8 +182,8 @@ inline int SetCache(const std::string &key, const void* buf, const size_t buflen
   return engine::GetEngine()->SetCache(key, buf, buflen);
 }
 
-inline int GetCache(const std::string &key, void* buf, const size_t buflen) {
-  return engine::GetEngine()->GetCache(key, buf, buflen);
+inline int GetCache(const std::string &key, void* buf, const size_t buflen, const bool byref) {
+  return engine::GetEngine()->GetCache(key, buf, buflen, byref);
 }
 
 #ifndef RABIT_STRICT_CXX98_
@@ -210,7 +210,7 @@ inline int SetCache(const char *key, const void* buf, const size_t buflen ...) {
   return engine::GetEngine()->SetCache(k, buf, buflen);
 }
 
-inline int GetCache(const char *key, void* buf, const size_t buflen ...) {
+inline int GetCache(const char *key, void* buf, const size_t buflen, const bool byref ...) {
   const int kPrintBuffer = 1 << 10;
   std::string k(kPrintBuffer, '\0'), v(kPrintBuffer, '\0');
 
@@ -219,7 +219,7 @@ inline int GetCache(const char *key, void* buf, const size_t buflen ...) {
   vsnprintf(&k[0], kPrintBuffer, key, args1);
   va_end(args1);
   k.resize(strlen(k.c_str()));
-  return engine::GetEngine()->GetCache(k, buf, buflen);
+  return engine::GetEngine()->GetCache(k, buf, buflen, byref);
 }
 #endif  // RABIT_STRICT_CXX98_
 // load latest check point

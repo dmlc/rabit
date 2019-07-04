@@ -55,7 +55,8 @@ class AllreduceBase : public IEngine {
    */
   virtual void TrackerPrint(const std::string &msg);
   virtual int SetCache(const std::string &key, const void *buf, const size_t buflen);
-  virtual int GetCache(const std::string &key, void *buf, const size_t buflen);
+  virtual int GetCache(const std::string &key, void *buf, const size_t buflen,
+    const bool byref = false);
 
   /*! \brief get rank */
   virtual int GetRank(void) const {

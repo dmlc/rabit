@@ -114,9 +114,11 @@ inline int SetCache(const std::string &key, const void* buf, const size_t buflen
  * \param key configuration key
  * \param buf value of allreduce broadcast cache
  * \param buflen expected byte size of buf to fetch
+ * \param byref point to buffer to cache entry if exists
  * \return -1 if no recovery cache available 0 otherwise
  */
-inline int GetCache(const std::string &key, void* buf, const size_t buflen);
+inline int GetCache(const std::string &key, void* buf, const size_t buflen,
+  const bool byref = false);
 
 #ifndef RABIT_STRICT_CXX98_
 /*!
@@ -134,15 +136,16 @@ inline void TrackerPrintf(const char *fmt, ...);
  * \param buflen byte size of buf to cache
  * \return -1 if recovery cache set failed 0 otherwise
  */
-inline int SetCache(const char *key, const void* buf, const size_t buflen ...);
+inline int SetCache(const char *key, const void* buf, const size_t buflen, ...);
 /*!
  * \brief get cached allreduce/braodcast
  * \param key configuration key
  * \param buf value of allreduce broadcast cache
  * \param buflen expected byte size of buf to fetch
+ * \param byref point pointer buf to cache entry if exists
  * \return -1 if no recovery cache available 0 otherwise
  */
-inline int GetCache(const char *key, void* buf, const size_t buflen ...);
+inline int GetCache(const char *key, void* buf, const size_t buflen, const bool byref = false, ...);
 #endif  // RABIT_STRICT_CXX98_
 /*!
  * \brief broadcasts a memory region to every node from the root

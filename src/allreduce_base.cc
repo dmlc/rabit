@@ -163,7 +163,8 @@ int AllreduceBase::SetCache(const std::string &key, const void *buf, const size_
   return -1;
 }
 
-int AllreduceBase::GetCache(const std::string &key, void* buf, const size_t buflen) {
+int AllreduceBase::GetCache(const std::string &key, void* buf,
+  const size_t buflen, const bool byref) {
   utils::Error("base class don't support cache");
   return -1;
 }

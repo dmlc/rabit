@@ -160,7 +160,8 @@ class IEngine {
    */
   virtual void TrackerPrint(const std::string &msg) = 0;
   virtual int SetCache(const std::string &key, const void *buf, const size_t buflen) = 0;
-  virtual int GetCache(const std::string& key, void *buf, const size_t buflen) = 0;
+  virtual int GetCache(const std::string& key, void *buf, const size_t buflen,
+    const bool byref = false) = 0;
 };
 
 /*! \brief initializes the engine module */
