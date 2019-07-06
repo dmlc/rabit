@@ -282,12 +282,17 @@ class AllreduceRobust : public AllreduceBase {
     // internal sequence code max of seqno
     int maxseqcode;
   };
-  /*! \brief data structure to remember result of Bcast and Allreduce calls */
-  class ResultBuffer {
+  /*! \brief data structure to remember result of Bcast and Allreduce calls
+   * chenqin: 
+  */
+  class ResultBuffer{
    public:
     // constructor
     ResultBuffer(void) {
       this->Clear();
+    }
+    ResultBuffer(const Stream* fio) {
+      this->fio = fio;
     }
     // clear the existing record
     inline void Clear(void) {
@@ -300,7 +305,8 @@ class AllreduceRobust : public AllreduceBase {
       size_t size = type_nbytes * count;
       size_t nhop = (size + sizeof(uint64_t) - 1) / sizeof(uint64_t);
       utils::Assert(nhop != 0, "cannot allocate 0 size memory");
-      data_.resize(rptr_.back() + nhop);
+      //allocate addational nhop buffer size
+      data_.resize(rptr_.back() + nhop); 
       return BeginPtr(data_) + rptr_.back();
     }
     // push the result in temp to the
@@ -310,9 +316,11 @@ class AllreduceRobust : public AllreduceBase {
       if (seqno_.size() != 0) {
         utils::Assert(seqno_.back() < seqid, "PushTemp seqid inconsistent");
       }
+      size_t cur_ptr = rptr_.back();
       seqno_.push_back(seqid);
       rptr_.push_back(rptr_.back() + nhop);
       size_.push_back(size);
+      //fio->Write(&data_[cur_ptr], nhop*sizeof(uint64_t));
       utils::Assert(data_.size() == rptr_.back(), "PushTemp inconsistent");
     }
     // return the stored result of seqid, if any
@@ -321,6 +329,8 @@ class AllreduceRobust : public AllreduceBase {
                                     seqno_.end(), seqid) - seqno_.begin();
       if (idx == seqno_.size() || seqno_[idx] != seqid) return NULL;
       *p_size = size_[idx];
+      //void* buf;
+      //fio->Read(buf, *p_size);
       return BeginPtr(data_) + rptr_[idx];
     }
     // drop last stored result
@@ -346,6 +356,8 @@ class AllreduceRobust : public AllreduceBase {
     std::vector<size_t> size_;
     // content of the buffer
     std::vector<uint64_t> data_;
+    // file backed input and output stream
+    const Stream *fio;
   };
   /*!
    * \brief internal consistency check function,
