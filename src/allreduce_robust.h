@@ -184,11 +184,11 @@ class AllreduceRobust : public AllreduceBase {
    */
   struct ActionSummary {
     // maximumly allowed sequence id
-    static const int kSpecialOp = (1 << 26);
+    static const int kSpecialOp = (1 << 25);
     // special sequence number for local state checkpoint
-    static const int kLocalCheckPoint = (1 << 26) - 2;
+    static const int kLocalCheckPoint = (1 << 25) - 2;
     // special sequnce number for local state checkpoint ack signal
-    static const int kLocalCheckAck = (1 << 26) - 1;
+    static const int kLocalCheckAck = (1 << 25) - 1;
     //---------------------------------------------
     // The following are bit mask of flag used in
     //----------------------------------------------
@@ -250,11 +250,11 @@ class AllreduceRobust : public AllreduceBase {
       return code & 31;
     }
     // print flags in user friendly way
-    inline void print_flags(int rank, std::string prefix ) {
-      utils::Printf("[%d] %s - |%d|%d|%d| - |%d|%d|%d|\n",
+    inline void print_cache_flags(int rank, std::string prefix ) {
+      utils::Printf("[%d] %s - |%d|%d|%d|%d|%d| - |%d|%d|%d|\n",
                     rank, prefix.c_str(),
-                    seqno(), load_cache(), diff_seq(),
-                    seqno(SeqType::KAND), load_cache(SeqType::KAND),
+                    seqno(), check_point(), check_ack(), load_cache(), 
+                    diff_seq(), seqno(SeqType::KAND), load_cache(SeqType::KAND),
                     diff_seq(SeqType::KAND));
     }
     // reducer for Allreduce, get the result ActionSummary from all nodes
@@ -423,7 +423,7 @@ class AllreduceRobust : public AllreduceBase {
    *    - false means this is the lastest action that has not yet been executed, need to execute the action
    */
   bool RecoverExec(void *buf, size_t size, int flag, int seqno = ActionSummary::kSpecialOp,
-    int cacheseqno = ActionSummary::kSpecialOp);
+    int cacheseqno = ActionSummary::kSpecialOp, const char* caller = __builtin_FUNCTION());
   /*!
    * \brief try to load check point
    *

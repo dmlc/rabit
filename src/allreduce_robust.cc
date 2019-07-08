@@ -634,6 +634,9 @@ AllreduceRobust::TryDecideRouting(AllreduceRobust::RecoverType role,
           }
         }
       }
+      if(best_link == -2){
+        utils::Printf("[%d] best_link %d\n", rank, best_link);
+      }
       utils::Check(best_link != -2, "Too many nodes went down and we cannot recover..");
     } else {
       best_link = -1;
@@ -833,6 +836,7 @@ AllreduceRobust::ReturnType AllreduceRobust::TryRestoreCache(bool requester,
     ret = TryRecoverData(role, buf, cache_size, recv_link, req_in);
     if (ret != kSuccess) return ret;
   }
+  //utils::Printf("[%d cache recovery succeed\n", rank);
   return kSuccess;
 }
 
@@ -927,6 +931,9 @@ AllreduceRobust::TryGetResult(void *sendrecvbuf, size_t size, int seqno, bool re
                   "TryGetResult::Checkpoint");
     return TryRecoverLocalState(&local_rptr[new_version], &local_chkpt[new_version]);
   }
+
+  utils::Assert(seqno >= 0, "likely minimal seqno overflow");
+
   // handles normal data recovery
   RecoverType role;
   if (!requester) {
@@ -935,6 +942,9 @@ AllreduceRobust::TryGetResult(void *sendrecvbuf, size_t size, int seqno, bool re
   } else {
     role = kRequestData;
   }
+  
+  utils::Printf("[%d] role is %d in trygetresult seqno %d seq_counter %d\n", rank, role, seqno, seq_counter);
+
   int recv_link;
   std::vector<bool> req_in;
   // size of data
@@ -967,7 +977,7 @@ AllreduceRobust::TryGetResult(void *sendrecvbuf, size_t size, int seqno, bool re
  *           result by recovering procedure, the action is complete, no further action is needed
  *    - false means this is the lastest action that has not yet been executed, need to execute the action
  */
-bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, int cache_seqno) {
+bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, int cache_seqno, const char* caller) {
   // skip load cache state as we isolated with assertions
   if (flag != 0 && flag != ActionSummary::kLoadCache) {
     utils::Assert(seqno == ActionSummary::kSpecialOp, "must only set seqno for normal operations");
@@ -981,6 +991,8 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, i
     ActionSummary act = req;
     // get the reduced action
     if (!CheckAndRecover(TryAllreduce(&act, sizeof(act), 1, ActionSummary::Reducer))) continue;
+
+    utils::Printf("[%d] RecoverExec caller %s seq %d\n", rank, caller, seq_counter);
 
     if (act.check_ack()) {
       if (act.check_point()) {
@@ -1005,7 +1017,12 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, i
       if (act.check_point()) {
         if (act.diff_seq()) {
           utils::Assert(act.seqno() != ActionSummary::kSpecialOp, "min seq bug");
+          // assume requester is fallling behind
           bool requester = req.seqno() == act.seqno();
+          utils::Printf("[%d] caller %s requester %d\n", rank, caller, requester);
+
+          req.print_cache_flags(rank, "checkpoint req");
+          act.print_cache_flags(rank, "checkpoint ack");
           if (!CheckAndRecover(TryGetResult(buf, size, act.seqno(), requester))) continue;
           if (requester) return true;
         } else  {
@@ -1042,11 +1059,18 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, i
             continue;
           }
 
+          // assert no req with load cache set goes into seq catch up
+          utils::Assert(!req.load_cache(), "load cache not interacte with rest states");
+
           // no special flags, no checkpoint, check ack, load_check
           utils::Assert(act.seqno() != ActionSummary::kSpecialOp, "min seq bug");
           if (act.diff_seq()) {
+            req.print_cache_flags(rank, "send req");
+            act.print_cache_flags(rank, "recv ack");
             bool requester = req.seqno() == act.seqno();
+            utils::Printf("[%d] pre trygetresult seqno %d requester %d \n", rank, act.seqno(), requester);
             if (!CheckAndRecover(TryGetResult(buf, size, act.seqno(), requester))) continue;
+            utils::Printf("[%d] post tryget result seq_counter %d requester %d \n", rank, seq_counter, requester);
             if (requester) return true;
           } else {
             // all the request is same,
