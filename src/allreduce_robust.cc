@@ -1019,16 +1019,17 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, i
            * expect to be equal, means rest fall behind in sequence
            * use resbuf resbuf to recover
            * worker-0           worker-1
-           * checkpoint(n-1)    loadcheckpoint(n-1)
+           * checkpoint(n-1)    checkpoint(n-1)
            * allreduce          allreduce (requester) |
            * broadcast                                V
            * checkpoint(n req)
            * after catch up to checkpoint n, diff_seq will be false
            * */
+          // assume requester is falling behind
           bool requester = req.seqno() == act.seqno();
           utils::Printf("[%d] caller %s requester %d\n", rank, caller, requester);
 
-          //if not load cache state, recover allreduce/broadcast
+          //if not load cache
           if (!act.load_cache()) {
             if (!requester) {
               utils::Assert(req.check_point(), "checkpoint node should be KHaveData role");
@@ -1038,9 +1039,13 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, i
             }
             if (!CheckAndRecover(TryGetResult(buf, size, act.seqno(), requester))) continue;
           } else {
-            utils::Assert(act.seqno(SeqType::KAND) != ActionSummary::kSpecialOp,
-              "should use cur_cache_seq even in checkpoint");
-            if (TryRestoreCache(req.load_cache(), act.seqno(), act.seqno(SeqType::KAND))
+            //cache seq were set to large value, fix this
+            utils::Assert(act.seqno(SeqType::KAND) == ActionSummary::kSpecialOp, "checkpoint with large seq");
+            int max_cache_seq = cur_cache_seq;
+            if (TryAllreduce(&max_cache_seq, sizeof(max_cache_seq), 1,
+              op::Reducer<op::Max, unsigned>) != kSuccess) continue;
+
+            if (TryRestoreCache(req.load_cache(), act.seqno(), max_cache_seq)
               != kSuccess) continue;
           }
           if (requester) return true;
