@@ -359,7 +359,8 @@ void AllreduceRobust::CheckPoint_(const Serializable *global_model,
     local_chkpt_version = !local_chkpt_version;
   }
   // execute checkpoint, note: when checkpoint existing, load will not happen
-  utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckPoint, ActionSummary::kSpecialOp),
+  utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckPoint,
+    ActionSummary::kSpecialOp, cur_cache_seq),
                 "check point must return true");
   // this is the critical region where we will change all the stored models
   // increase version number
@@ -634,9 +635,6 @@ AllreduceRobust::TryDecideRouting(AllreduceRobust::RecoverType role,
           }
         }
       }
-      if(best_link == -2){
-        utils::Printf("[%d] best_link %d\n", rank, best_link);
-      }
       utils::Check(best_link != -2, "Too many nodes went down and we cannot recover..");
     } else {
       best_link = -1;
@@ -836,7 +834,6 @@ AllreduceRobust::ReturnType AllreduceRobust::TryRestoreCache(bool requester,
     ret = TryRecoverData(role, buf, cache_size, recv_link, req_in);
     if (ret != kSuccess) return ret;
   }
-  //utils::Printf("[%d cache recovery succeed\n", rank);
   return kSuccess;
 }
 
@@ -942,9 +939,7 @@ AllreduceRobust::TryGetResult(void *sendrecvbuf, size_t size, int seqno, bool re
   } else {
     role = kRequestData;
   }
-  
   utils::Printf("[%d] role is %d in trygetresult seqno %d seq_counter %d\n", rank, role, seqno, seq_counter);
-
   int recv_link;
   std::vector<bool> req_in;
   // size of data
@@ -1017,13 +1012,37 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, i
       if (act.check_point()) {
         if (act.diff_seq()) {
           utils::Assert(act.seqno() != ActionSummary::kSpecialOp, "min seq bug");
-          // assume requester is fallling behind
+          /*
+           * Chen Qin
+           * at least one hit checkpoint_ code & at least one not hitting
+           * compare with version_number of req.check_point() set true with rest
+           * expect to be equal, means rest fall behind in sequence
+           * use resbuf resbuf to recover
+           * worker-0           worker-1
+           * checkpoint(n-1)    loadcheckpoint(n-1)
+           * allreduce          allreduce (requester) |
+           * broadcast                                V
+           * checkpoint(n req)
+           * after catch up to checkpoint n, diff_seq will be false
+           * */
           bool requester = req.seqno() == act.seqno();
           utils::Printf("[%d] caller %s requester %d\n", rank, caller, requester);
 
-          req.print_cache_flags(rank, "checkpoint req");
-          act.print_cache_flags(rank, "checkpoint ack");
-          if (!CheckAndRecover(TryGetResult(buf, size, act.seqno(), requester))) continue;
+          //if not load cache state, recover allreduce/broadcast
+          if (!act.load_cache()) {
+            if (!requester) {
+              utils::Assert(req.check_point(), "checkpoint node should be KHaveData role");
+              buf = resbuf.Query(act.seqno(), &size);
+              utils::Assert(buf != NULL, "buf should have data from resbuf");
+              utils::Assert(size > 0, "buf size should be greater than 0");
+            }
+            if (!CheckAndRecover(TryGetResult(buf, size, act.seqno(), requester))) continue;
+          } else {
+            utils::Assert(act.seqno(SeqType::KAND) != ActionSummary::kSpecialOp,
+              "should use cur_cache_seq even in checkpoint");
+            if (TryRestoreCache(req.load_cache(), act.seqno(), act.seqno(SeqType::KAND))
+              != kSuccess) continue;
+          }
           if (requester) return true;
         } else  {
           // no difference in seq no, means we are free to check point
