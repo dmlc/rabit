@@ -278,9 +278,9 @@ class AllreduceRobust : public AllreduceBase {
 
    private:
     // internel sequence code min of seqno
-    int seqcode;
+    int64_t seqcode;
     // internal sequence code max of seqno
-    int maxseqcode;
+    int64_t maxseqcode;
   };
   /*! \brief data structure to remember result of Bcast and Allreduce calls */
   class ResultBuffer {
