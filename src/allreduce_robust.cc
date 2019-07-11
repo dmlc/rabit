@@ -49,15 +49,15 @@ bool AllreduceRobust::Shutdown(void) {
   try {
     // need to sync the exec before we shutdown, do a pesudo check point
     // execute checkpoint, note: when checkpoint existing, load will not happen
-    utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckPoint, ActionSummary::kSpecialOp, cur_cache_seq),
-                  "Shutdown: check point must return true");
+    utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckPoint, ActionSummary::kSpecialOp,
+      cur_cache_seq), "Shutdown: check point must return true");
     // reset result buffer
     resbuf.Clear(); seq_counter = 0;
     cachebuf.Clear(); cur_cache_seq = 0;
     lookupbuf.Clear();
     // execute check ack step, load happens here
-    utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck, ActionSummary::kSpecialOp, cur_cache_seq),
-                  "Shutdown: check ack must return true");
+    utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck,
+      ActionSummary::kSpecialOp, cur_cache_seq), "Shutdown: check ack must return true");
 #if defined (__APPLE__)
     sleep(1);
 #endif
