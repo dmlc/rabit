@@ -291,9 +291,6 @@ class AllreduceRobust : public AllreduceBase {
     ResultBuffer(void) {
       this->Clear();
     }
-    ResultBuffer(const Stream* fio) {
-      this->fio = fio;
-    }
     // clear the existing record
     inline void Clear(void) {
       seqno_.clear(); size_.clear();
@@ -320,7 +317,6 @@ class AllreduceRobust : public AllreduceBase {
       seqno_.push_back(seqid);
       rptr_.push_back(rptr_.back() + nhop);
       size_.push_back(size);
-      //fio->Write(&data_[cur_ptr], nhop*sizeof(uint64_t));
       utils::Assert(data_.size() == rptr_.back(), "PushTemp inconsistent");
     }
     // return the stored result of seqid, if any
@@ -329,8 +325,6 @@ class AllreduceRobust : public AllreduceBase {
                                     seqno_.end(), seqid) - seqno_.begin();
       if (idx == seqno_.size() || seqno_[idx] != seqid) return NULL;
       *p_size = size_[idx];
-      //void* buf;
-      //fio->Read(buf, *p_size);
       return BeginPtr(data_) + rptr_[idx];
     }
     // drop last stored result
@@ -356,8 +350,6 @@ class AllreduceRobust : public AllreduceBase {
     std::vector<size_t> size_;
     // content of the buffer
     std::vector<uint64_t> data_;
-    // file backed input and output stream
-    const Stream *fio;
   };
   /*!
    * \brief internal consistency check function,

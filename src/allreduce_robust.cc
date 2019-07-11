@@ -1039,8 +1039,8 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, i
             }
             if (!CheckAndRecover(TryGetResult(buf, size, act.seqno(), requester))) continue;
           } else {
-            //cache seq were set to large value, fix this
-            utils::Assert(act.seqno(SeqType::KAND) == ActionSummary::kSpecialOp, "checkpoint with large seq");
+            // cache seq no should be smaller than kSpecialOp
+            utils::Assert(act.seqno(SeqType::KAND) != ActionSummary::kSpecialOp, "checkpoint with kSpecialOp");
             int max_cache_seq = cur_cache_seq;
             if (TryAllreduce(&max_cache_seq, sizeof(max_cache_seq), 1,
               op::Reducer<op::Max, unsigned>) != kSuccess) continue;
