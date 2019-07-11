@@ -49,14 +49,14 @@ bool AllreduceRobust::Shutdown(void) {
   try {
     // need to sync the exec before we shutdown, do a pesudo check point
     // execute checkpoint, note: when checkpoint existing, load will not happen
-    utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckPoint, ActionSummary::kSpecialOp),
+    utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckPoint, ActionSummary::kSpecialOp, cur_cache_seq),
                   "Shutdown: check point must return true");
     // reset result buffer
     resbuf.Clear(); seq_counter = 0;
     cachebuf.Clear(); cur_cache_seq = 0;
     lookupbuf.Clear();
     // execute check ack step, load happens here
-    utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck, ActionSummary::kSpecialOp),
+    utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck, ActionSummary::kSpecialOp, cur_cache_seq),
                   "Shutdown: check ack must return true");
 #if defined (__APPLE__)
     sleep(1);
@@ -245,7 +245,7 @@ int AllreduceRobust::LoadCheckPoint(Serializable *global_model,
   }
 
   // check if we succeed
-  if (RecoverExec(NULL, 0, ActionSummary::kLoadCheck, ActionSummary::kSpecialOp)) {
+  if (RecoverExec(NULL, 0, ActionSummary::kLoadCheck, ActionSummary::kSpecialOp, cur_cache_seq)) {
     int nlocal = std::max(static_cast<int>(local_rptr[local_chkpt_version].size()) - 1, 0);
     if (local_model != NULL) {
       if (nlocal == num_local_replica + 1) {
@@ -271,7 +271,7 @@ int AllreduceRobust::LoadCheckPoint(Serializable *global_model,
                     "local model inconsistent, nlocal=%d", nlocal);
     }
     // run another phase of check ack, if recovered from data
-    utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck, ActionSummary::kSpecialOp),
+    utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck, ActionSummary::kSpecialOp, cur_cache_seq),
                   "check ack must return true");
     utils::Printf("[%d] load checkpoint global %ld version %d\n", rank,
       global_checkpoint.length(), version_number);
@@ -378,7 +378,7 @@ void AllreduceRobust::CheckPoint_(const Serializable *global_model,
   // reset result buffer
   resbuf.Clear(); seq_counter = 0;
   // execute check ack step, load happens here
-  utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck, ActionSummary::kSpecialOp),
+  utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck, ActionSummary::kSpecialOp, cur_cache_seq),
                 "check ack must return true");
 }
 /*!

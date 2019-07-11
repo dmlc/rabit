@@ -184,11 +184,11 @@ class AllreduceRobust : public AllreduceBase {
    */
   struct ActionSummary {
     // maximumly allowed sequence id
-    static const int kSpecialOp = (1 << 25);
+    static const int kSpecialOp = (1 << 20);
     // special sequence number for local state checkpoint
-    static const int kLocalCheckPoint = (1 << 25) - 2;
+    static const int kLocalCheckPoint = (1 << 20) - 2;
     // special sequnce number for local state checkpoint ack signal
-    static const int kLocalCheckAck = (1 << 25) - 1;
+    static const int kLocalCheckAck = (1 << 20) - 1;
     //---------------------------------------------
     // The following are bit mask of flag used in
     //----------------------------------------------
