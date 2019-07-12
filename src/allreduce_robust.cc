@@ -978,6 +978,11 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, i
     utils::Assert(seqno == ActionSummary::kSpecialOp, "must only set seqno for normal operations");
   }
 
+  std::string msg = std::string(caller) + " pass negative seqno "
+    + std::to_string(seqno) + " flag " + std::to_string(flag)
+    + " version " + std::to_string(version_number);
+  utils::Assert(seqno >=0, msg.c_str());
+
   ActionSummary req(flag, flag, seqno, cache_seqno);
 
   while (true) {
@@ -986,8 +991,6 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, i
     ActionSummary act = req;
     // get the reduced action
     if (!CheckAndRecover(TryAllreduce(&act, sizeof(act), 1, ActionSummary::Reducer))) continue;
-
-    //utils::Printf("[%d] RecoverExec caller %s seq %d\n", rank, caller, seq_counter);
 
     if (act.check_ack()) {
       if (act.check_point()) {
@@ -1027,8 +1030,8 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, i
            * */
           // assume requester is falling behind
           bool requester = req.seqno() == act.seqno();
-          //utils::Printf("[%d] caller %s requester %d\n", rank, caller, requester);
-
+          req.print_cache_flags(rank, "checkpoint with difference seq req");
+          act.print_cache_flags(rank, "checkpoint with difference seq ack");
           //if not load cache
           if (!act.load_cache()) {
             if(act.seqno() > 0) {
