@@ -987,7 +987,7 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, i
     // get the reduced action
     if (!CheckAndRecover(TryAllreduce(&act, sizeof(act), 1, ActionSummary::Reducer))) continue;
 
-    utils::Printf("[%d] RecoverExec caller %s seq %d\n", rank, caller, seq_counter);
+    //utils::Printf("[%d] RecoverExec caller %s seq %d\n", rank, caller, seq_counter);
 
     if (act.check_ack()) {
       if (act.check_point()) {
@@ -1027,17 +1027,19 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, i
            * */
           // assume requester is falling behind
           bool requester = req.seqno() == act.seqno();
-          utils::Printf("[%d] caller %s requester %d\n", rank, caller, requester);
+          //utils::Printf("[%d] caller %s requester %d\n", rank, caller, requester);
 
           //if not load cache
           if (!act.load_cache()) {
-            if (!requester) {
-              utils::Assert(req.check_point(), "checkpoint node should be KHaveData role");
-              buf = resbuf.Query(act.seqno(), &size);
-              utils::Assert(buf != NULL, "buf should have data from resbuf");
-              utils::Assert(size > 0, "buf size should be greater than 0");
+            if(act.seqno() > 0) {
+              if (!requester) {
+                utils::Assert(req.check_point(), "checkpoint node should be KHaveData role");
+                buf = resbuf.Query(act.seqno(), &size);
+                utils::Assert(buf != NULL, "buf should have data from resbuf");
+                utils::Assert(size > 0, "buf size should be greater than 0");
+              }
+              if (!CheckAndRecover(TryGetResult(buf, size, act.seqno(), requester))) continue;
             }
-            if (!CheckAndRecover(TryGetResult(buf, size, act.seqno(), requester))) continue;
           } else {
             // cache seq no should be smaller than kSpecialOp
             utils::Assert(act.seqno(SeqType::KAND) != ActionSummary::kSpecialOp, "checkpoint with kSpecialOp");
@@ -1092,9 +1094,9 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, i
             req.print_cache_flags(rank, "send req");
             act.print_cache_flags(rank, "recv ack");
             bool requester = req.seqno() == act.seqno();
-            utils::Printf("[%d] pre trygetresult seqno %d requester %d \n", rank, act.seqno(), requester);
+            //utils::Printf("[%d] pre trygetresult seqno %d requester %d \n", rank, act.seqno(), requester);
             if (!CheckAndRecover(TryGetResult(buf, size, act.seqno(), requester))) continue;
-            utils::Printf("[%d] post tryget result seq_counter %d requester %d \n", rank, seq_counter, requester);
+            //utils::Printf("[%d] post tryget result seq_counter %d requester %d \n", rank, seq_counter, requester);
             if (requester) return true;
           } else {
             // all the request is same,
