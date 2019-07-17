@@ -282,9 +282,7 @@ class AllreduceRobust : public AllreduceBase {
     // internal sequence code max of seqno
     int maxseqcode;
   };
-  /*! \brief data structure to remember result of Bcast and Allreduce calls
-   * chenqin: 
-  */
+  /*! \brief data structure to remember result of Bcast and Allreduce calls*/
   class ResultBuffer{
    public:
     // constructor
@@ -313,7 +311,6 @@ class AllreduceRobust : public AllreduceBase {
       if (seqno_.size() != 0) {
         utils::Assert(seqno_.back() < seqid, "PushTemp seqid inconsistent");
       }
-      size_t cur_ptr = rptr_.back();
       seqno_.push_back(seqid);
       rptr_.push_back(rptr_.back() + nhop);
       size_.push_back(size);
@@ -414,8 +411,13 @@ class AllreduceRobust : public AllreduceBase {
    *           result by recovering procedure, the action is complete, no further action is needed
    *    - false means this is the lastest action that has not yet been executed, need to execute the action
    */
+#ifdef __linux__
   bool RecoverExec(void *buf, size_t size, int flag, int seqno = ActionSummary::kSpecialOp,
     int cacheseqno = ActionSummary::kSpecialOp, const char* caller = __builtin_FUNCTION());
+#else
+  bool RecoverExec(void *buf, size_t size, int flag, int seqno = ActionSummary::kSpecialOp,
+    int cacheseqno = ActionSummary::kSpecialOp, const char* caller = "not supported in non linux");
+#endif
   /*!
    * \brief try to load check point
    *
