@@ -184,11 +184,11 @@ class AllreduceRobust : public AllreduceBase {
    */
   struct ActionSummary {
     // maximumly allowed sequence id
-    static const int kSpecialOp = (1 << 26);
+    static const int kSpecialOp = (1 << 20);
     // special sequence number for local state checkpoint
-    static const int kLocalCheckPoint = (1 << 26) - 2;
+    static const int kLocalCheckPoint = (1 << 20) - 2;
     // special sequnce number for local state checkpoint ack signal
-    static const int kLocalCheckAck = (1 << 26) - 1;
+    static const int kLocalCheckAck = (1 << 20) - 1;
     //---------------------------------------------
     // The following are bit mask of flag used in
     //----------------------------------------------
@@ -251,10 +251,10 @@ class AllreduceRobust : public AllreduceBase {
     }
     // print flags in user friendly way
     inline void print_flags(int rank, std::string prefix ) {
-      utils::Printf("[%d] %s - |%d|%d|%d| - |%d|%d|%d|\n",
+      utils::Printf("[%d] %s - |%d|%d|%d|%d|%d| - |%d|%d|%d|\n",
                     rank, prefix.c_str(),
-                    seqno(), load_cache(), diff_seq(),
-                    seqno(SeqType::KAND), load_cache(SeqType::KAND),
+                    seqno(), check_point(), check_ack(), load_cache(),
+                    diff_seq(), seqno(SeqType::KAND), load_cache(SeqType::KAND),
                     diff_seq(SeqType::KAND));
     }
     // reducer for Allreduce, get the result ActionSummary from all nodes
@@ -282,8 +282,8 @@ class AllreduceRobust : public AllreduceBase {
     // internal sequence code max of seqno
     int64_t maxseqcode;
   };
-  /*! \brief data structure to remember result of Bcast and Allreduce calls */
-  class ResultBuffer {
+  /*! \brief data structure to remember result of Bcast and Allreduce calls*/
+  class ResultBuffer{
    public:
     // constructor
     ResultBuffer(void) {
@@ -300,6 +300,7 @@ class AllreduceRobust : public AllreduceBase {
       size_t size = type_nbytes * count;
       size_t nhop = (size + sizeof(uint64_t) - 1) / sizeof(uint64_t);
       utils::Assert(nhop != 0, "cannot allocate 0 size memory");
+      // allocate addational nhop buffer size
       data_.resize(rptr_.back() + nhop);
       return BeginPtr(data_) + rptr_.back();
     }
@@ -410,8 +411,13 @@ class AllreduceRobust : public AllreduceBase {
    *           result by recovering procedure, the action is complete, no further action is needed
    *    - false means this is the lastest action that has not yet been executed, need to execute the action
    */
+#ifdef __linux__
   bool RecoverExec(void *buf, size_t size, int flag, int seqno = ActionSummary::kSpecialOp,
-    int cacheseqno = ActionSummary::kSpecialOp);
+    int cacheseqno = ActionSummary::kSpecialOp, const char* caller = __builtin_FUNCTION());
+#else
+  bool RecoverExec(void *buf, size_t size, int flag, int seqno = ActionSummary::kSpecialOp,
+    int cacheseqno = ActionSummary::kSpecialOp, const char* caller = "not supported in non linux");
+#endif
   /*!
    * \brief try to load check point
    *
