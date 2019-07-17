@@ -250,10 +250,10 @@ class AllreduceRobust : public AllreduceBase {
       return code & 31;
     }
     // print flags in user friendly way
-    inline void print_cache_flags(int rank, std::string prefix ) {
+    inline void print_flags(int rank, std::string prefix ) {
       utils::Printf("[%d] %s - |%d|%d|%d|%d|%d| - |%d|%d|%d|\n",
                     rank, prefix.c_str(),
-                    seqno(), check_point(), check_ack(), load_cache(), 
+                    seqno(), check_point(), check_ack(), load_cache(),
                     diff_seq(), seqno(SeqType::KAND), load_cache(SeqType::KAND),
                     diff_seq(SeqType::KAND));
     }
@@ -302,8 +302,8 @@ class AllreduceRobust : public AllreduceBase {
       size_t size = type_nbytes * count;
       size_t nhop = (size + sizeof(uint64_t) - 1) / sizeof(uint64_t);
       utils::Assert(nhop != 0, "cannot allocate 0 size memory");
-      //allocate addational nhop buffer size
-      data_.resize(rptr_.back() + nhop); 
+      // allocate addational nhop buffer size
+      data_.resize(rptr_.back() + nhop);
       return BeginPtr(data_) + rptr_.back();
     }
     // push the result in temp to the

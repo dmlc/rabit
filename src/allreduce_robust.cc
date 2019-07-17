@@ -271,8 +271,8 @@ int AllreduceRobust::LoadCheckPoint(Serializable *global_model,
                     "local model inconsistent, nlocal=%d", nlocal);
     }
     // run another phase of check ack, if recovered from data
-    utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck, ActionSummary::kSpecialOp, cur_cache_seq),
-                  "check ack must return true");
+    utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck,
+      ActionSummary::kSpecialOp, cur_cache_seq), "check ack must return true");
     utils::Printf("[%d] load checkpoint global %ld version %d\n", rank,
       global_checkpoint.length(), version_number);
 
@@ -378,8 +378,8 @@ void AllreduceRobust::CheckPoint_(const Serializable *global_model,
   // reset result buffer
   resbuf.Clear(); seq_counter = 0;
   // execute check ack step, load happens here
-  utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck, ActionSummary::kSpecialOp, cur_cache_seq),
-                "check ack must return true");
+  utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck,
+    ActionSummary::kSpecialOp, cur_cache_seq), "check ack must return true");
 }
 /*!
  * \brief reset the all the existing links by sending Out-of-Band message marker
@@ -939,7 +939,6 @@ AllreduceRobust::TryGetResult(void *sendrecvbuf, size_t size, int seqno, bool re
   } else {
     role = kRequestData;
   }
-  utils::Printf("[%d] role is %d in trygetresult seqno %d seq_counter %d\n", rank, role, seqno, seq_counter);
   int recv_link;
   std::vector<bool> req_in;
   // size of data
@@ -972,7 +971,8 @@ AllreduceRobust::TryGetResult(void *sendrecvbuf, size_t size, int seqno, bool re
  *           result by recovering procedure, the action is complete, no further action is needed
  *    - false means this is the lastest action that has not yet been executed, need to execute the action
  */
-bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, int cache_seqno, const char* caller) {
+bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno,
+                                  int cache_seqno, const char* caller) {
   // skip load cache state as we isolated with assertions
   if (flag != 0 && flag != ActionSummary::kLoadCache) {
     utils::Assert(seqno == ActionSummary::kSpecialOp, "must only set seqno for normal operations");
@@ -1030,11 +1030,9 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, i
            * */
           // assume requester is falling behind
           bool requester = req.seqno() == act.seqno();
-          req.print_cache_flags(rank, "checkpoint with difference seq req");
-          act.print_cache_flags(rank, "checkpoint with difference seq ack");
-          //if not load cache
+          // if not load cache
           if (!act.load_cache()) {
-            if(act.seqno() > 0) {
+            if (act.seqno() > 0) {
               if (!requester) {
                 utils::Assert(req.check_point(), "checkpoint node should be KHaveData role");
                 buf = resbuf.Query(act.seqno(), &size);
@@ -1045,7 +1043,8 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, i
             }
           } else {
             // cache seq no should be smaller than kSpecialOp
-            utils::Assert(act.seqno(SeqType::KAND) != ActionSummary::kSpecialOp, "checkpoint with kSpecialOp");
+            utils::Assert(act.seqno(SeqType::KAND) != ActionSummary::kSpecialOp,
+              "checkpoint with kSpecialOp");
             int max_cache_seq = cur_cache_seq;
             if (TryAllreduce(&max_cache_seq, sizeof(max_cache_seq), 1,
               op::Reducer<op::Max, unsigned>) != kSuccess) continue;
@@ -1094,12 +1093,8 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno, i
           // no special flags, no checkpoint, check ack, load_check
           utils::Assert(act.seqno() != ActionSummary::kSpecialOp, "min seq bug");
           if (act.diff_seq()) {
-            req.print_cache_flags(rank, "send req");
-            act.print_cache_flags(rank, "recv ack");
             bool requester = req.seqno() == act.seqno();
-            //utils::Printf("[%d] pre trygetresult seqno %d requester %d \n", rank, act.seqno(), requester);
             if (!CheckAndRecover(TryGetResult(buf, size, act.seqno(), requester))) continue;
-            //utils::Printf("[%d] post tryget result seq_counter %d requester %d \n", rank, seq_counter, requester);
             if (requester) return true;
           } else {
             // all the request is same,
