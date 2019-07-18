@@ -165,6 +165,13 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
   }
   double start = utils::GetTime();
   bool recovered = RecoverExec(sendrecvbuf_, type_nbytes * count, 0, seq_counter, cur_cache_seq);
+
+  if (resbuf.LastSeqNo() != -1 &&
+    (result_buffer_round == -1 ||
+      resbuf.LastSeqNo() % result_buffer_round != rank % result_buffer_round)) {
+    resbuf.DropLast();
+  }
+
   if (!recovered && prepare_fun != NULL) prepare_fun(prepare_arg);
   void *temp = resbuf.AllocTemp(type_nbytes, count);
   while (true) {
