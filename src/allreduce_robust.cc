@@ -958,8 +958,6 @@ AllreduceRobust::TryGetResult(void *sendrecvbuf, size_t size, int seqno, bool re
     return TryRecoverLocalState(&local_rptr[new_version], &local_chkpt[new_version]);
   }
 
-  utils::Assert(seqno >= 0, "likely minimal seqno overflow");
-
   // handles normal data recovery
   RecoverType role;
   if (!requester) {
