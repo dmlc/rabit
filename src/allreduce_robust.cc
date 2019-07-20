@@ -93,7 +93,7 @@ int AllreduceRobust::SetCache(const std::string &key, const void *buf, size_t bu
     }
   }
   utils::Assert(index == -1, "immutable cache key already exists");
-
+  utils::Assert(buflen > 0, "can't set empty cache");
   void* temp = cachebuf.AllocTemp(buflen, 1);
   cachebuf.PushTemp(cur_cache_seq, buflen, 1);
   std::memcpy(temp, buf, buflen);
@@ -110,6 +110,7 @@ int AllreduceRobust::GetCache(const std::string &key, void* buf,
   const size_t buflen, const bool byref) {
   // as requester sync with rest of nodes on latest cache content
   if (!RecoverExec(NULL, 0, ActionSummary::kLoadCache, seq_counter, cur_cache_seq)) return -1;
+
   int index = -1;
   for (int i = 0 ; i < cur_cache_seq; i++) {
     size_t nsize = 0;
@@ -157,12 +158,23 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
                                 size_t count,
                                 ReduceFunction reducer,
                                 PreprocFunction prepare_fun,
-                                void *prepare_arg) {
+                                void *prepare_arg,
+                                bool is_bootstrap,
+                                const char* _file,
+                                const int _line,
+                                const char* _caller) {
   // skip action in single node
   if (world_size == 1 || world_size == -1) {
     if (prepare_fun != NULL) prepare_fun(prepare_arg);
     return;
   }
+
+  // genreate unique allreduce signature
+  std::string key = std::string(_file) + "::" + std::to_string(_line) + "::"
+    + std::string(_caller) + "#" +std::to_string(type_nbytes) + "x" + std::to_string(count);
+  // try fetch bootstrap allreduce results from cache
+  if (is_bootstrap && GetCache(key, sendrecvbuf_, type_nbytes*count, false) != -1) return;
+
   double start = utils::GetTime();
   bool recovered = RecoverExec(sendrecvbuf_, type_nbytes * count, 0, seq_counter, cur_cache_seq);
 
@@ -188,11 +200,15 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
   }
   double delta = utils::GetTime() - start;
   // log allreduce latency
-  utils::HandleLogInfo("[%d] allreduce finished version %d, seq %d, take %f seconds\n",
-    rank, version_number, seq_counter, delta);
-
-  resbuf.PushTemp(seq_counter, type_nbytes, count);
-  seq_counter += 1;
+  utils::HandleLogInfo("[%d] allreduce (%s) finished version %d, seq %d, take %f seconds\n",
+    rank, key.c_str(), version_number, seq_counter, delta);
+  // if bootstrap allreduce, store and fetch through cache
+  if (!is_bootstrap) {
+    resbuf.PushTemp(seq_counter, type_nbytes, count);
+    seq_counter += 1;
+  } else {
+    SetCache(key, sendrecvbuf_, type_nbytes*count);
+  }
 }
 /*!
  * \brief broadcast data from root to all nodes
@@ -406,7 +422,7 @@ void AllreduceRobust::CheckPoint_(const Serializable *global_model,
                        rank, global_checkpoint.length(), version_number, seq_counter, delta);
 
   start = utils::GetTime();
-  // reset result buffer
+  // reset result buffer, mark boostrap phase complete
   resbuf.Clear(); seq_counter = 0;
   // execute check ack step, load happens here
   utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck,
@@ -870,6 +886,7 @@ AllreduceRobust::ReturnType AllreduceRobust::TryRestoreCache(bool requester,
     ret = TryRecoverData(role, buf, cache_size, recv_link, req_in);
     if (ret != kSuccess) return ret;
   }
+
   return kSuccess;
 }
 

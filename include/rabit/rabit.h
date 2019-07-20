@@ -101,24 +101,6 @@ inline std::string GetProcessorName();
  * \param msg the message to be printed
  */
 inline void TrackerPrint(const std::string &msg);
-/*!
- * \brief save allreduce/braodcast cache
- * \param key unique key of cache
- * \param buf value of allreduce broadcast cache
- * \param buflen byte size of buf to cache
- * \return -1 if recovery cache set failed 0 otherwise
- */
-inline int SetCache(const std::string &key, const void* buf, const size_t buflen);
-/*!
- * \brief get cached allreduce/braodcast
- * \param key configuration key
- * \param buf value of allreduce broadcast cache
- * \param buflen expected byte size of buf to fetch
- * \param byref point to buffer to cache entry if exists
- * \return -1 if no recovery cache available 0 otherwise
- */
-inline int GetCache(const std::string &key, void* buf, const size_t buflen,
-  const bool byref = false);
 
 #ifndef RABIT_STRICT_CXX98_
 /*!
@@ -129,23 +111,6 @@ inline int GetCache(const std::string &key, void* buf, const size_t buflen,
  * \param fmt the format string
  */
 inline void TrackerPrintf(const char *fmt, ...);
-/*!
- * \brief save allreduce/braodcast cache
- * \param key unique key of cache
- * \param buf value of allreduce broadcast cache
- * \param buflen byte size of buf to cache
- * \return -1 if recovery cache set failed 0 otherwise
- */
-inline int SetCache(const char *key, const void* buf, const size_t buflen, ...);
-/*!
- * \brief get cached allreduce/braodcast
- * \param key configuration key
- * \param buf value of allreduce broadcast cache
- * \param buflen expected byte size of buf to fetch
- * \param byref point pointer buf to cache entry if exists
- * \return -1 if no recovery cache available 0 otherwise
- */
-inline int GetCache(const char *key, void* buf, const size_t buflen, const bool byref = false, ...);
 #endif  // RABIT_STRICT_CXX98_
 /*!
  * \brief broadcasts a memory region to every node from the root
@@ -191,13 +156,27 @@ inline void Broadcast(std::string *sendrecv_data, int root);
  *                    will be called by the function before performing Allreduce in order to initialize the data in sendrecvbuf.
  *                     If the result of Allreduce can be recovered directly, then prepare_func will NOT be called
  * \param prepare_arg argument used to pass into the lazy preprocessing function
+ * \param is_bootstrap if result should be cached in other nodes to bootstrap failed node restart
+ * \param _file caller file name used to generate unique cache key
+ * \param _line caller line number used to generate unique cache key
+ * \param _caller caller function name used to generate unique cache key
  * \tparam OP see namespace op, reduce operator
  * \tparam DType data type
  */
 template<typename OP, typename DType>
 inline void Allreduce(DType *sendrecvbuf, size_t count,
                       void (*prepare_fun)(void *) = NULL,
-                      void *prepare_arg = NULL);
+                      void *prepare_arg = NULL,
+                      bool is_bootstrap = false,
+#ifdef __linux__
+                      const char* _file = __builtin_FILE(),
+                      const int _line = __builtin_LINE(),
+                      const char* _caller = __builtin_FUNCTION());
+#else
+                      const char* _file = "N/A",
+                      const int _line = "N/A",
+                      const char* _caller = "N/A");
+#endif  // __linux__
 // C++11 support for lambda prepare function
 #if DMLC_USE_CXX11
 /*!

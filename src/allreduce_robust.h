@@ -13,6 +13,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <bitset>
 #include "../include/rabit/internal/engine.h"
 #include "./allreduce_base.h"
 
@@ -40,14 +41,14 @@ class AllreduceRobust : public AllreduceBase {
    * \param buflen total number of bytes
    * \return -1 if no recovery cache fetched otherwise 0
    */
-  virtual int SetCache(const std::string &key, const void *buf, const size_t buflen);
+  int SetCache(const std::string &key, const void *buf, const size_t buflen);
   /*!
    * \brief perform cache lookup if nodes in fault recovery
    * \param key unique cache key
    * \param buf buffer for recv allreduce/robust payload
    * \param buflen total number of bytes
    */
-  virtual int GetCache(const std::string &key, void *buf, const size_t buflen,
+  int GetCache(const std::string &key, void *buf, const size_t buflen,
     const bool byref = false);
   /*!
    * \brief perform in-place allreduce, on sendrecvbuf
@@ -61,13 +62,27 @@ class AllreduceRobust : public AllreduceBase {
    *                     If the result of Allreduce can be recovered directly, then prepare_func will NOT be called
    * \param prepare_arg argument used to passed into the lazy preprocessing function
    * \param prepare_arg argument used to passed into the lazy preprocessing function
+   * \param is_bootstrap if result should be cached in other nodes to bootstrap failed node restart
+   * \param _file caller file name used to generate unique cache key
+   * \param _line caller line number used to generate unique cache key
+   * \param _caller caller function name used to generate unique cache key
    */
   virtual void Allreduce(void *sendrecvbuf_,
                          size_t type_nbytes,
                          size_t count,
                          ReduceFunction reducer,
                          PreprocFunction prepare_fun = NULL,
-                         void *prepare_arg = NULL);
+                         void *prepare_arg = NULL,
+                         bool is_bootstrap = false,
+#ifdef __linux__
+                         const char* _file = __builtin_FILE(),
+                         const int _line = __builtin_LINE(),
+                         const char* _caller = __builtin_FUNCTION());
+#else
+                         const char* _file = "N/A",
+                         const int _line = "N/A",
+                         const char* _caller = "N/A");
+#endif  // __linux__
   /*!
    * \brief broadcast data from root to all nodes
    * \param sendrecvbuf_ buffer for both sending and recving data
@@ -411,12 +426,13 @@ class AllreduceRobust : public AllreduceBase {
    *           result by recovering procedure, the action is complete, no further action is needed
    *    - false means this is the lastest action that has not yet been executed, need to execute the action
    */
+  bool RecoverExec(void *buf, size_t size, int flag,
+    int seqno = ActionSummary::kSpecialOp,
+    int cacheseqno = ActionSummary::kSpecialOp,
 #ifdef __linux__
-  bool RecoverExec(void *buf, size_t size, int flag, int seqno = ActionSummary::kSpecialOp,
-    int cacheseqno = ActionSummary::kSpecialOp, const char* caller = __builtin_FUNCTION());
+    const char* caller = __builtin_FUNCTION());
 #else
-  bool RecoverExec(void *buf, size_t size, int flag, int seqno = ActionSummary::kSpecialOp,
-    int cacheseqno = ActionSummary::kSpecialOp, const char* caller = "not supported in non linux");
+    const char* caller = "N/A");
 #endif
   /*!
    * \brief try to load check point

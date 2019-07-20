@@ -156,9 +156,14 @@ inline void Broadcast(std::string *sendrecv_data, int root) {
 template<typename OP, typename DType>
 inline void Allreduce(DType *sendrecvbuf, size_t count,
                       void (*prepare_fun)(void *arg),
-                      void *prepare_arg) {
+                      void *prepare_arg,
+                      bool is_bootstrap,
+                      const char* _file,
+                      const int _line,
+                      const char* _caller) {
   engine::Allreduce_(sendrecvbuf, sizeof(DType), count, op::Reducer<OP, DType>,
-                     engine::mpi::GetType<DType>(), OP::kType, prepare_fun, prepare_arg);
+                     engine::mpi::GetType<DType>(), OP::kType, prepare_fun, prepare_arg,
+                     is_bootstrap, _file, _line, _caller);
 }
 
 // C++11 support for lambda prepare function
@@ -177,15 +182,6 @@ inline void Allreduce(DType *sendrecvbuf, size_t count, std::function<void()> pr
 inline void TrackerPrint(const std::string &msg) {
   engine::GetEngine()->TrackerPrint(msg);
 }
-
-inline int SetCache(const std::string &key, const void* buf, const size_t buflen) {
-  return engine::GetEngine()->SetCache(key, buf, buflen);
-}
-
-inline int GetCache(const std::string &key, void* buf, const size_t buflen, const bool byref) {
-  return engine::GetEngine()->GetCache(key, buf, buflen, byref);
-}
-
 #ifndef RABIT_STRICT_CXX98_
 inline void TrackerPrintf(const char *fmt, ...) {
   const int kPrintBuffer = 1 << 10;
@@ -198,29 +194,6 @@ inline void TrackerPrintf(const char *fmt, ...) {
   TrackerPrint(msg);
 }
 
-inline int SetCache(const char *key, const void* buf, const size_t buflen ...) {
-  const int kPrintBuffer = 1 << 10;
-  std::string k(kPrintBuffer, '\0'), v(kPrintBuffer, '\0');
-
-  va_list args1;
-  va_start(args1, key);
-  vsnprintf(&k[0], kPrintBuffer, key, args1);
-  va_end(args1);
-  k.resize(strlen(k.c_str()));
-  return engine::GetEngine()->SetCache(k, buf, buflen);
-}
-
-inline int GetCache(const char *key, void* buf, const size_t buflen, const bool byref ...) {
-  const int kPrintBuffer = 1 << 10;
-  std::string k(kPrintBuffer, '\0'), v(kPrintBuffer, '\0');
-
-  va_list args1;
-  va_start(args1, key);
-  vsnprintf(&k[0], kPrintBuffer, key, args1);
-  va_end(args1);
-  k.resize(strlen(k.c_str()));
-  return engine::GetEngine()->GetCache(k, buf, buflen, byref);
-}
 #endif  // RABIT_STRICT_CXX98_
 // load latest check point
 inline int LoadCheckPoint(Serializable *global_model,

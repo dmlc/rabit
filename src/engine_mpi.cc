@@ -82,16 +82,6 @@ class MPIEngine : public IEngine {
       utils::Printf("%s", msg.c_str());
     }
   }
-  virtual int SetCache(const std::string &key, const void* buf, const size_t buflen) {
-    // TODO(chen qin): figure out how to support set cache in MPI
-    utils::Error("MPI impl doesn't support cache");
-    return -1;
-  }
-  virtual int GetCache(const std::string& key, void* buf, const size_t buflen, const bool byref) {
-    // TODO(chen qin): figure out how to support get cache in MPI
-    utils::Error("MPI impl doesn't support cache");
-    return -1;
-  }
 
  private:
   int version_number;

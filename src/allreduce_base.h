@@ -54,9 +54,6 @@ class AllreduceBase : public IEngine {
    * \param msg message to be printed in the tracker
    */
   virtual void TrackerPrint(const std::string &msg);
-  virtual int SetCache(const std::string &key, const void *buf, const size_t buflen);
-  virtual int GetCache(const std::string &key, void *buf, const size_t buflen,
-    const bool byref = false);
 
   /*! \brief get rank */
   virtual int GetRank(void) const {
@@ -86,13 +83,28 @@ class AllreduceBase : public IEngine {
    *                     will be called by the function before performing Allreduce, to intialize the data in sendrecvbuf_.
    *                     If the result of Allreduce can be recovered directly, then prepare_func will NOT be called
    * \param prepare_arg argument used to passed into the lazy preprocessing function
+   * \param is_bootstrap if result should be cached in other nodes to bootstrap failed node restart
+   * \param _file caller file name used to generate unique cache key
+   * \param _line caller line number used to generate unique cache key
+   * \param _caller caller function name used to generate unique cache key
    */
   virtual void Allreduce(void *sendrecvbuf_,
                          size_t type_nbytes,
                          size_t count,
                          ReduceFunction reducer,
                          PreprocFunction prepare_fun = NULL,
-                         void *prepare_arg = NULL) {
+                         void *prepare_arg = NULL,
+                         bool is_bootstrap = false,
+#ifdef __linux__
+                         const char* _file = __builtin_FILE(),
+                         const int _line = __builtin_LINE(),
+                         const char* _caller = __builtin_FUNCTION())
+#else
+                         const char* _file = "N/A",
+                         const int _line = "N/A",
+                         const char* _caller = "N/A")
+#endif  // __linux__
+{
     if (prepare_fun != NULL) prepare_fun(prepare_arg);
     if (world_size == 1 || world_size == -1) return;
     utils::Assert(TryAllreduce(sendrecvbuf_,
