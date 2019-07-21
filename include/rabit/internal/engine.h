@@ -78,7 +78,17 @@ class IEngine {
    * \param size the size of the data to be broadcasted
    * \param root the root worker id to broadcast the data
    */
-  virtual void Broadcast(void *sendrecvbuf_, size_t size, int root) = 0;
+  virtual void Broadcast(void *sendrecvbuf_, size_t size, int root,
+                         bool is_bootstrap = false,
+#ifdef __linux__
+                         const char* _file = __builtin_FILE(),
+                         const int _line = __builtin_LINE(),
+                         const char* _caller = __builtin_FUNCTION()) = 0;
+#else
+                         const char* _file = "N/A",
+                         const int _line = "N/A",
+                         const char* _caller = "N/A") = 0;
+#endif  // __linux__
   /*!
    * \brief explicitly re-initialize everything before calling LoadCheckPoint
    *    call this function when IEngine throws an exception,

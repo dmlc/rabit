@@ -217,9 +217,18 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
  * \param size the size of the data to be broadcasted
  * \param root the root worker id to broadcast the data
  */
-void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root) {
+void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root,
+                                bool is_bootstrap,
+                                const char* _file,
+                                const int _line,
+                                const char* _caller) {
   // skip action in single node
   if (world_size == 1 || world_size == -1) return;
+  // genreate unique cache signature
+  std::string key = std::string(_file) + "::" + std::to_string(_line) + "::"
+    + std::string(_caller) + "#" +std::to_string(total_size) + "@" + std::to_string(root);
+  // try fetch bootstrap allreduce results from cache
+  if (is_bootstrap && GetCache(key, sendrecvbuf_, total_size, false) != -1) return;
 
   double start = utils::GetTime();
   bool recovered = RecoverExec(sendrecvbuf_, total_size, 0, seq_counter, cur_cache_seq);
@@ -246,8 +255,13 @@ void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root)
   // log broadcast latency
   utils::HandleLogInfo("[%d] broadcast root %d finished version %d, seq %d, take %f seconds\n",
                        rank, root, version_number, seq_counter, delta);
-  resbuf.PushTemp(seq_counter, 1, total_size);
-  seq_counter += 1;
+  // if bootstrap broadcast, store and fetch through cache
+  if (!is_bootstrap) {
+    resbuf.PushTemp(seq_counter, 1, total_size);
+    seq_counter += 1;
+  } else {
+    SetCache(key, sendrecvbuf_, total_size);
+  }
 }
 /*!
  * \brief load latest check point

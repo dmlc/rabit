@@ -127,28 +127,43 @@ inline std::string GetProcessorName(void) {
   return engine::GetEngine()->GetHost();
 }
 // broadcast data to all other nodes from root
-inline void Broadcast(void *sendrecv_data, size_t size, int root) {
-  engine::GetEngine()->Broadcast(sendrecv_data, size, root);
+inline void Broadcast(void *sendrecv_data, size_t size, int root,
+                      bool is_bootstrap,
+                      const char* _file,
+                      const int _line,
+                      const char* _caller) {
+  engine::GetEngine()->Broadcast(sendrecv_data, size, root,
+  is_bootstrap, _file, _line, _caller);
 }
 template<typename DType>
-inline void Broadcast(std::vector<DType> *sendrecv_data, int root) {
+inline void Broadcast(std::vector<DType> *sendrecv_data, int root,
+                      bool is_bootstrap,
+                      const char* _file,
+                      const int _line,
+                      const char* _caller) {
   size_t size = sendrecv_data->size();
   Broadcast(&size, sizeof(size), root);
   if (sendrecv_data->size() != size) {
     sendrecv_data->resize(size);
   }
   if (size != 0) {
-    Broadcast(&(*sendrecv_data)[0], size * sizeof(DType), root);
+    Broadcast(&(*sendrecv_data)[0], size * sizeof(DType), root,
+    is_bootstrap, _file, _line, _caller);
   }
 }
-inline void Broadcast(std::string *sendrecv_data, int root) {
+inline void Broadcast(std::string *sendrecv_data, int root,
+                      bool is_bootstrap,
+                      const char* _file,
+                      const int _line,
+                      const char* _caller) {
   size_t size = sendrecv_data->length();
   Broadcast(&size, sizeof(size), root);
   if (sendrecv_data->length() != size) {
     sendrecv_data->resize(size);
   }
   if (size != 0) {
-    Broadcast(&(*sendrecv_data)[0], size * sizeof(char), root);
+    Broadcast(&(*sendrecv_data)[0], size * sizeof(char), root,
+    is_bootstrap, _file, _line, _caller);
   }
 }
 

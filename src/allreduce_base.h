@@ -117,7 +117,18 @@ class AllreduceBase : public IEngine {
    * \param size the size of the data to be broadcasted
    * \param root the root worker id to broadcast the data
    */
-  virtual void Broadcast(void *sendrecvbuf_, size_t total_size, int root) {
+  virtual void Broadcast(void *sendrecvbuf_, size_t total_size, int root,
+                           bool is_bootstrap = false,
+#ifdef __linux__
+                         const char* _file = __builtin_FILE(),
+                         const int _line = __builtin_LINE(),
+                         const char* _caller = __builtin_FUNCTION())
+#else
+                         const char* _file = "N/A",
+                         const int _line = "N/A",
+                         const char* _caller = "N/A")
+#endif  // __linux__
+{
     if (world_size == 1 || world_size == -1) return;
     utils::Assert(TryBroadcast(sendrecvbuf_, total_size, root) == kSuccess,
                   "Broadcast failed");

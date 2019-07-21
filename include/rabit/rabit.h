@@ -120,7 +120,17 @@ inline void TrackerPrintf(const char *fmt, ...);
  * \param size the data size
  * \param root the process root
  */
-inline void Broadcast(void *sendrecv_data, size_t size, int root);
+inline void Broadcast(void *sendrecv_data, size_t size, int root,
+                      bool is_bootstrap = false,
+#ifdef __linux__
+                      const char* _file = __builtin_FILE(),
+                      const int _line = __builtin_LINE(),
+                      const char* _caller = __builtin_FUNCTION());
+#else
+                      const char* _file = "N/A",
+                      const int _line = "N/A",
+                      const char* _caller = "N/A");
+#endif  // __linux__
 /*!
  * \brief broadcasts an std::vector<DType> to every node from root
  * \param sendrecv_data the pointer to send/receive vector,
@@ -130,14 +140,34 @@ inline void Broadcast(void *sendrecv_data, size_t size, int root);
  *               that can be directly transmitted by sending the sizeof(DType)
  */
 template<typename DType>
-inline void Broadcast(std::vector<DType> *sendrecv_data, int root);
+inline void Broadcast(std::vector<DType> *sendrecv_data, int root,
+                      bool is_bootstrap = false,
+#ifdef __linux__
+                      const char* _file = __builtin_FILE(),
+                      const int _line = __builtin_LINE(),
+                      const char* _caller = __builtin_FUNCTION());
+#else
+                      const char* _file = "N/A",
+                      const int _line = "N/A",
+                      const char* _caller = "N/A");
+#endif  // __linux__
 /*!
  * \brief broadcasts a std::string to every node from the root
  * \param sendrecv_data the pointer to the send/receive buffer,
  *        for the receiver, the vector does not need to be pre-allocated
  * \param root the process root
  */
-inline void Broadcast(std::string *sendrecv_data, int root);
+inline void Broadcast(std::string *sendrecv_data, int root,
+                      bool is_bootstrap = false,
+#ifdef __linux__
+                      const char* _file = __builtin_FILE(),
+                      const int _line = __builtin_LINE(),
+                      const char* _caller = __builtin_FUNCTION());
+#else
+                      const char* _file = "N/A",
+                      const int _line = "N/A",
+                      const char* _caller = "N/A");
+#endif  // __linux__
 /*!
  * \brief performs in-place Allreduce on sendrecvbuf
  *        this function is NOT thread-safe
