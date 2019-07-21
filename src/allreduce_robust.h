@@ -41,15 +41,16 @@ class AllreduceRobust : public AllreduceBase {
    * \param buflen total number of bytes
    * \return -1 if no recovery cache fetched otherwise 0
    */
-  int SetCache(const std::string &key, const void *buf, const size_t buflen);
+  int SetCache(const std::string &key, const void *buf,
+    const size_t type_nbytes, const size_t count);
   /*!
    * \brief perform cache lookup if nodes in fault recovery
    * \param key unique cache key
    * \param buf buffer for recv allreduce/robust payload
    * \param buflen total number of bytes
    */
-  int GetCache(const std::string &key, void *buf, const size_t buflen,
-    const bool byref = false);
+  int GetCache(const std::string &key, void *buf, const size_t type_nbytes,
+    const size_t count, const bool byref = false);
   /*!
    * \brief perform in-place allreduce, on sendrecvbuf
    *        this function is NOT thread-safe

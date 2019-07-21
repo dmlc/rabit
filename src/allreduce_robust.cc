@@ -81,7 +81,8 @@ void AllreduceRobust::SetParam(const char *name, const char *val) {
   }
 }
 
-int AllreduceRobust::SetCache(const std::string &key, const void *buf, size_t buflen) {
+int AllreduceRobust::SetCache(const std::string &key, const void *buf,
+  const size_t type_nbytes, const size_t count) {
   int index = -1;
   for (int i = 0 ; i < cur_cache_seq; i++) {
     size_t nsize = 0;
@@ -94,10 +95,10 @@ int AllreduceRobust::SetCache(const std::string &key, const void *buf, size_t bu
   }
   if (index != -1) return 0;
   utils::Assert(index == -1, "immutable cache key already exists");
-  utils::Assert(buflen > 0, "can't set empty cache");
-  void* temp = cachebuf.AllocTemp(buflen, 1);
-  cachebuf.PushTemp(cur_cache_seq, buflen, 1);
-  std::memcpy(temp, buf, buflen);
+  utils::Assert(type_nbytes*count > 0, "can't set empty cache");
+  void* temp = cachebuf.AllocTemp(type_nbytes, count);
+  cachebuf.PushTemp(cur_cache_seq, type_nbytes, count);
+  std::memcpy(temp, buf, type_nbytes*count);
 
   std::string k(key);
   void* name = lookupbuf.AllocTemp(strlen(k.c_str()) + 1, 1);
@@ -108,7 +109,7 @@ int AllreduceRobust::SetCache(const std::string &key, const void *buf, size_t bu
 }
 
 int AllreduceRobust::GetCache(const std::string &key, void* buf,
-  const size_t buflen, const bool byref) {
+  const size_t type_nbytes, const size_t count, const bool byref) {
   // as requester sync with rest of nodes on latest cache content
   if (!RecoverExec(NULL, 0, ActionSummary::kLoadCache, seq_counter, cur_cache_seq)) return -1;
 
@@ -128,14 +129,14 @@ int AllreduceRobust::GetCache(const std::string &key, void* buf,
   size_t siz = 0;
   void* temp = cachebuf.Query(index, &siz);
   utils::Assert(cur_cache_seq > index, "cur_cache_seq is smaller than lookup cache seq index");
-  utils::Assert(siz == buflen, "cache size stored expected to be same as requested");
+  utils::Assert(siz == type_nbytes*count, "cache size stored expected to be same as requested");
   utils::Assert(siz > 0, "cache size should be greater than 0");
 
   // immutable cache, save copy time by pointer manipulation
   if (byref) {
     buf = temp;
   } else {
-    std::memcpy(buf, temp, buflen);
+    std::memcpy(buf, temp, type_nbytes*count);
   }
 
   return 0;
@@ -174,7 +175,7 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
   std::string key = std::string(_file) + "::" + std::to_string(_line) + "::"
     + std::string(_caller) + "#" +std::to_string(type_nbytes) + "x" + std::to_string(count);
   // try fetch bootstrap allreduce results from cache
-  if (is_bootstrap && GetCache(key, sendrecvbuf_, type_nbytes*count, false) != -1) return;
+  if (is_bootstrap && GetCache(key, sendrecvbuf_, type_nbytes, count, true) != -1) return;
 
   double start = utils::GetTime();
   bool recovered = RecoverExec(sendrecvbuf_, type_nbytes * count, 0, seq_counter, cur_cache_seq);
@@ -208,7 +209,7 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
     resbuf.PushTemp(seq_counter, type_nbytes, count);
     seq_counter += 1;
   } else {
-    SetCache(key, sendrecvbuf_, type_nbytes*count);
+    SetCache(key, sendrecvbuf_, type_nbytes, count);
   }
 }
 /*!
@@ -228,7 +229,7 @@ void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root,
   std::string key = std::string(_file) + "::" + std::to_string(_line) + "::"
     + std::string(_caller) + "#" +std::to_string(total_size) + "@" + std::to_string(root);
   // try fetch bootstrap allreduce results from cache
-  if (is_bootstrap && GetCache(key, sendrecvbuf_, total_size, false) != -1) return;
+  if (is_bootstrap && GetCache(key, sendrecvbuf_, total_size, 1, true) != -1) return;
 
   double start = utils::GetTime();
   bool recovered = RecoverExec(sendrecvbuf_, total_size, 0, seq_counter, cur_cache_seq);
@@ -253,14 +254,14 @@ void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root,
 
   double delta = utils::GetTime() - start;
   // log broadcast latency
-  utils::HandleLogInfo("[%d] broadcast root %d finished version %d, seq %d, take %f seconds\n",
-                       rank, root, version_number, seq_counter, delta);
+  utils::HandleLogInfo("[%d] broadcast (%s) root %d finished version %d, seq %d, take %f seconds\n",
+                       rank, key.c_str(), root, version_number, seq_counter, delta);
   // if bootstrap broadcast, store and fetch through cache
   if (!is_bootstrap) {
     resbuf.PushTemp(seq_counter, 1, total_size);
     seq_counter += 1;
   } else {
-    SetCache(key, sendrecvbuf_, total_size);
+    SetCache(key, sendrecvbuf_, total_size, 1);
   }
 }
 /*!
