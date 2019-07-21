@@ -83,7 +83,7 @@ class AllreduceBase : public IEngine {
    *                     will be called by the function before performing Allreduce, to intialize the data in sendrecvbuf_.
    *                     If the result of Allreduce can be recovered directly, then prepare_func will NOT be called
    * \param prepare_arg argument used to passed into the lazy preprocessing function
-   * \param is_bootstrap if result should be cached in other nodes to bootstrap failed node restart
+   * \param is_bootstrap  if this allreduce is needed to bootstrap filed node
    * \param _file caller file name used to generate unique cache key
    * \param _line caller line number used to generate unique cache key
    * \param _caller caller function name used to generate unique cache key
@@ -116,6 +116,10 @@ class AllreduceBase : public IEngine {
    * \param sendrecvbuf_ buffer for both sending and recving data
    * \param size the size of the data to be broadcasted
    * \param root the root worker id to broadcast the data
+   * \param is_bootstrap  if this broadcast is needed to bootstrap filed node
+   * \param _file caller file name used to generate unique cache key
+   * \param _line caller line number used to generate unique cache key
+   * \param _caller caller function name used to generate unique cache key
    */
   virtual void Broadcast(void *sendrecvbuf_, size_t total_size, int root,
                            bool is_bootstrap = false,

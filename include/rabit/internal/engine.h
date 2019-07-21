@@ -54,7 +54,10 @@ class IEngine {
    *                     will be called by the function before performing Allreduce in order to initialize the data in sendrecvbuf.
    *                     If the result of Allreduce can be recovered directly, then prepare_func will NOT be called
    * \param prepare_arg argument used to pass into the lazy preprocessing function
-   * \param cache_seq argument used to pass into or fetch cached allreduce seq_no
+   * \param is_bootstrap if this allreduce is needed to bootstrap failed node
+   * \param _file caller file name used to generate unique cache key
+   * \param _line caller line number used to generate unique cache key
+   * \param _caller caller function name used to generate unique cache key
    */
   virtual void Allreduce(void *sendrecvbuf_,
                          size_t type_nbytes,
@@ -77,6 +80,10 @@ class IEngine {
    * \param sendrecvbuf_ buffer for both sending and receiving data
    * \param size the size of the data to be broadcasted
    * \param root the root worker id to broadcast the data
+   * \param is_bootstrap if this broadcast is needed to bootstrap failed node
+   * \param _file caller file name used to generate unique cache key
+   * \param _line caller line number used to generate unique cache key
+   * \param _caller caller function name used to generate unique cache key
    */
   virtual void Broadcast(void *sendrecvbuf_, size_t size, int root,
                          bool is_bootstrap = false,
@@ -225,7 +232,7 @@ enum DataType {
  *                     will be called by the function before performing Allreduce, to initialize the data in sendrecvbuf_.
  *                     If the result of Allreduce can be recovered directly, then prepare_func will NOT be called
  * \param prepare_arg argument used to pass into the lazy preprocessing function.
- * \param is_bootstrap if result should be cached in other nodes to bootstrap failed node restart
+ * \param is_bootstrap if this allreduce is needed to bootstrap failed node
  * \param _file caller file name used to generate unique cache key
  * \param _line caller line number used to generate unique cache key
  * \param _caller caller function name used to generate unique cache key
@@ -273,6 +280,10 @@ class ReduceHandle {
    *                     will be called by the function before performing Allreduce in order to initialize the data in sendrecvbuf_.
    *                     If the result of Allreduce can be recovered directly, then prepare_func will NOT be called
    * \param prepare_arg argument used to pass into the lazy preprocessing function
+   * \param is_bootstrap if this allreduce is needed to bootstrap failed node
+   * \param _file caller file name used to generate unique cache key
+   * \param _line caller line number used to generate unique cache key
+   * \param _caller caller function name used to generate unique cache key
    */
   void Allreduce(void *sendrecvbuf,
                  size_t type_nbytes,

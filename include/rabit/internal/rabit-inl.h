@@ -133,7 +133,7 @@ inline void Broadcast(void *sendrecv_data, size_t size, int root,
                       const int _line,
                       const char* _caller) {
   engine::GetEngine()->Broadcast(sendrecv_data, size, root,
-  is_bootstrap, _file, _line, _caller);
+    is_bootstrap, _file, _line, _caller);
 }
 template<typename DType>
 inline void Broadcast(std::vector<DType> *sendrecv_data, int root,
@@ -351,14 +351,24 @@ inline void SerializeReducer<DType>::Allreduce(DType *sendrecvobj,
 #if DMLC_USE_CXX11
 template<typename DType, void (*freduce)(DType &dst, const DType &src)>  // NOLINT(*)g
 inline void Reducer<DType, freduce>::Allreduce(DType *sendrecvbuf, size_t count,
-                                               std::function<void()> prepare_fun) {
-  this->Allreduce(sendrecvbuf, count, InvokeLambda_, &prepare_fun);
+                                               std::function<void()> prepare_fun,
+                                               bool is_bootstrap,
+                                               const char* _file,
+                                               const int _line,
+                                               const char* _caller) {
+  this->Allreduce(sendrecvbuf, count, InvokeLambda_, &prepare_fun,
+    is_bootstrap, _file, _line, _caller);
 }
 template<typename DType>
 inline void SerializeReducer<DType>::Allreduce(DType *sendrecvobj,
                                                size_t max_nbytes, size_t count,
-                                               std::function<void()> prepare_fun) {
-  this->Allreduce(sendrecvobj, max_nbytes, count, InvokeLambda_, &prepare_fun);
+                                               std::function<void()> prepare_fun,
+                                               bool is_bootstrap,
+                                               const char* _file,
+                                               const int _line,
+                                               const char* _caller) {
+  this->Allreduce(sendrecvobj, max_nbytes, count, InvokeLambda_, &prepare_fun,
+    is_bootstrap, _file, _line, _caller);
 }
 #endif  // DMLC_USE_CXX11
 }  // namespace rabit

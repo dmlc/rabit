@@ -59,9 +59,6 @@ bool AllreduceRobust::Shutdown(void) {
     // execute check ack step, load happens here
     utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck,
       ActionSummary::kSpecialOp, cur_cache_seq), "Shutdown: check ack must return true");
-#if defined (__APPLE__)
-    sleep(1);
-#endif
     return AllreduceBase::Shutdown();
   } catch (const std::exception& e) {
     fprintf(stderr, "%s\n", e.what());
@@ -154,6 +151,10 @@ int AllreduceRobust::GetCache(const std::string &key, void* buf,
  *                     will be called by the function before performing Allreduce, to intialize the data in sendrecvbuf_.
  *                     If the result of Allreduce can be recovered directly, then prepare_func will NOT be called
  * \param prepare_arg argument used to passed into the lazy preprocessing function
+ * \param is_bootstrap  if this allreduce is needed to bootstrap filed node
+ * \param _file caller file name used to generate unique cache key
+ * \param _line caller line number used to generate unique cache key
+ * \param _caller caller function name used to generate unique cache key
  */
 void AllreduceRobust::Allreduce(void *sendrecvbuf_,
                                 size_t type_nbytes,
@@ -217,6 +218,10 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
  * \param sendrecvbuf_ buffer for both sending and recving data
  * \param size the size of the data to be broadcasted
  * \param root the root worker id to broadcast the data
+ * \param is_bootstrap  if this allreduce is needed to bootstrap filed node
+ * \param _file caller file name used to generate unique cache key
+ * \param _line caller line number used to generate unique cache key
+ * \param _caller caller function name used to generate unique cache key
  */
 void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root,
                                 bool is_bootstrap,
