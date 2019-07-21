@@ -69,7 +69,7 @@ class IEngine {
                          const char* _caller = __builtin_FUNCTION()) = 0;
 #else
                          const char* _file = "N/A",
-                         const int _line = "N/A",
+                         const int _line = -1,
                          const char* _caller = "N/A") = 0;
 #endif  // __linux__
   /*!
@@ -86,7 +86,7 @@ class IEngine {
                          const char* _caller = __builtin_FUNCTION()) = 0;
 #else
                          const char* _file = "N/A",
-                         const int _line = "N/A",
+                         const int _line = -1,
                          const char* _caller = "N/A") = 0;
 #endif  // __linux__
   /*!
@@ -245,7 +245,7 @@ void Allreduce_(void *sendrecvbuf,
                 const char* _caller = __builtin_FUNCTION());
 #else
                 const char* _file = "N/A",
-                const int _line = "N/A",
+                const int _line = -1,
                 const char* _caller = "N/A");
 #endif  // __linux__
 /*!
@@ -286,7 +286,7 @@ class ReduceHandle {
                  const char* _caller = __builtin_FUNCTION());
 #else
                  const char* _file = "N/A",
-                 const int _line = "N/A",
+                 const int _line = -1,
                  const char* _caller = "N/A");
 #endif  // __linux__
   /*! \return the number of bytes occupied by the type */

@@ -81,7 +81,7 @@ class AllreduceRobust : public AllreduceBase {
                          const char* _caller = __builtin_FUNCTION());
 #else
                          const char* _file = "N/A",
-                         const int _line = "N/A",
+                         const int _line = -1,
                          const char* _caller = "N/A");
 #endif  // __linux__
   /*!
@@ -98,7 +98,7 @@ class AllreduceRobust : public AllreduceBase {
                          const char* _caller = __builtin_FUNCTION());
 #else
                          const char* _file = "N/A",
-                         const int _line = "N/A",
+                         const int _line = -1,
                          const char* _caller = "N/A");
 #endif  // __linux__
   /*!
