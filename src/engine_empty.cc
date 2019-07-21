@@ -73,6 +73,7 @@ class EmptyEngine : public IEngine {
     // simply print information into the tracker
     utils::Printf("%s", msg.c_str());
   }
+
  private:
   int version_number;
 };

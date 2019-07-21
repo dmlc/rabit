@@ -172,9 +172,15 @@ inline void InvokeLambda_(void *fun) {
   (*static_cast<std::function<void()>*>(fun))();
 }
 template<typename OP, typename DType>
-inline void Allreduce(DType *sendrecvbuf, size_t count, std::function<void()> prepare_fun) {
+inline void Allreduce(DType *sendrecvbuf, size_t count,
+                      std::function<void()> prepare_fun,
+                      bool is_bootstrap,
+                      const char* _file,
+                      const int _line,
+                      const char* _caller) {
   engine::Allreduce_(sendrecvbuf, sizeof(DType), count, op::Reducer<OP, DType>,
-                     engine::mpi::GetType<DType>(), OP::kType, InvokeLambda_, &prepare_fun);
+                     engine::mpi::GetType<DType>(), OP::kType, InvokeLambda_, &prepare_fun,
+                     is_bootstrap, _file, _line, _caller);
 }
 #endif  // C++11
 
@@ -253,8 +259,13 @@ inline Reducer<DType, freduce>::Reducer(void) {
 template<typename DType, void (*freduce)(DType &dst, const DType &src)> // NOLINT(*)
 inline void Reducer<DType, freduce>::Allreduce(DType *sendrecvbuf, size_t count,
                                                void (*prepare_fun)(void *arg),
-                                               void *prepare_arg) {
-  handle_.Allreduce(sendrecvbuf, sizeof(DType), count, prepare_fun, prepare_arg);
+                                               void *prepare_arg,
+                                               bool is_bootstrap,
+                                               const char* _file,
+                                               const int _line,
+                                               const char* _caller) {
+  handle_.Allreduce(sendrecvbuf, sizeof(DType), count, prepare_fun,
+    prepare_arg, is_bootstrap, _file, _line, _caller);
 }
 // function to perform reduction for SerializeReducer
 template<typename DType>
@@ -302,7 +313,11 @@ template<typename DType>
 inline void SerializeReducer<DType>::Allreduce(DType *sendrecvobj,
                                                size_t max_nbyte, size_t count,
                                                void (*prepare_fun)(void *arg),
-                                               void *prepare_arg) {
+                                               void *prepare_arg,
+                                               bool is_bootstrap,
+                                               const char* _file,
+                                               const int _line,
+                                               const char* _caller) {
   buffer_.resize(max_nbyte * count);
   // setup closure
   SerializeReduceClosure<DType> c;
@@ -310,7 +325,8 @@ inline void SerializeReducer<DType>::Allreduce(DType *sendrecvobj,
   c.prepare_fun = prepare_fun; c.prepare_arg = prepare_arg; c.p_buffer = &buffer_;
   // invoke here
   handle_.Allreduce(BeginPtr(buffer_), max_nbyte, count,
-                    SerializeReduceClosure<DType>::Invoke, &c);
+                    SerializeReduceClosure<DType>::Invoke, &c,
+                    is_bootstrap, _file, _line, _caller);
   for (size_t i = 0; i < count; ++i) {
     utils::MemoryFixSizeBuffer fs(BeginPtr(buffer_) + i * max_nbyte, max_nbyte);
     sendrecvobj[i].Load(fs);

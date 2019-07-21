@@ -268,7 +268,17 @@ class ReduceHandle {
                  size_t type_nbytes,
                  size_t count,
                  IEngine::PreprocFunction prepare_fun = NULL,
-                 void *prepare_arg = NULL);
+                 void *prepare_arg = NULL,
+                 bool is_bootstrap = false,
+#ifdef __linux__
+                 const char* _file = __builtin_FILE(),
+                 const int _line = __builtin_LINE(),
+                 const char* _caller = __builtin_FUNCTION());
+#else
+                 const char* _file = "N/A",
+                 const int _line = "N/A",
+                 const char* _caller = "N/A");
+#endif  // __linux__
   /*! \return the number of bytes occupied by the type */
   static int TypeSize(const MPI::Datatype &dtype);
 

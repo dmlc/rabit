@@ -205,7 +205,17 @@ inline void Allreduce(DType *sendrecvbuf, size_t count,
  */
 template<typename OP, typename DType>
 inline void Allreduce(DType *sendrecvbuf, size_t count,
-                      std::function<void()> prepare_fun);
+                      std::function<void()> prepare_fun,
+                      bool is_bootstrap = false,
+#ifdef __linux__
+                      const char* _file = __builtin_FILE(),
+                      const int _line = __builtin_LINE(),
+                      const char* _caller = __builtin_FUNCTION());
+#else
+                      const char* _file = "N/A",
+                      const int _line = "N/A",
+                      const char* _caller = "N/A");
+#endif  // __linux__
 #endif  // C++11
 /*!
  * \brief loads the latest check point
@@ -304,7 +314,17 @@ class Reducer {
    */
   inline void Allreduce(DType *sendrecvbuf, size_t count,
                         void (*prepare_fun)(void *) = NULL,
-                        void *prepare_arg = NULL);
+                        void *prepare_arg = NULL,
+                        bool is_bootstrap = false,
+#ifdef __linux__
+                        const char* _file = __builtin_FILE(),
+                        const int _line = __builtin_LINE(),
+                        const char* _caller = __builtin_FUNCTION());
+#else
+                        const char* _file = "N/A",
+                        const int _line = "N/A",
+                        const char* _caller = "N/A");
+#endif  // __linux__
 #if DMLC_USE_CXX11
   /*!
    * \brief customized in-place all reduce operation, with lambda function as preprocessor
@@ -348,7 +368,17 @@ class SerializeReducer {
   inline void Allreduce(DType *sendrecvobj,
                         size_t max_nbyte, size_t count,
                         void (*prepare_fun)(void *) = NULL,
-                        void *prepare_arg = NULL);
+                        void *prepare_arg = NULL,
+                        bool is_bootstrap = false,
+#ifdef __linux__
+                        const char* _file = __builtin_FILE(),
+                        const int _line = __builtin_LINE(),
+                        const char* _caller = __builtin_FUNCTION());
+#else
+                        const char* _file = "N/A",
+                        const int _line = "N/A",
+                        const char* _caller = "N/A");
+#endif  // __linux__
 // C++11 support for lambda prepare function
 #if DMLC_USE_CXX11
   /*!
