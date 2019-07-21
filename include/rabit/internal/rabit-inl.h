@@ -142,7 +142,7 @@ inline void Broadcast(std::vector<DType> *sendrecv_data, int root,
                       const int _line,
                       const char* _caller) {
   size_t size = sendrecv_data->size();
-  Broadcast(&size, sizeof(size), root);
+  Broadcast(&size, sizeof(size), root, is_bootstrap, _file, _line, _caller);
   if (sendrecv_data->size() != size) {
     sendrecv_data->resize(size);
   }
@@ -157,7 +157,7 @@ inline void Broadcast(std::string *sendrecv_data, int root,
                       const int _line,
                       const char* _caller) {
   size_t size = sendrecv_data->length();
-  Broadcast(&size, sizeof(size), root);
+  Broadcast(&size, sizeof(size), root, is_bootstrap, _file, _line, _caller);
   if (sendrecv_data->length() != size) {
     sendrecv_data->resize(size);
   }
