@@ -175,6 +175,7 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
   // genreate unique allreduce signature
   std::string key = std::string(_file) + "::" + std::to_string(_line) + "::"
     + std::string(_caller) + "#" +std::to_string(type_nbytes) + "x" + std::to_string(count);
+
   // try fetch bootstrap allreduce results from cache
   if (is_bootstrap && GetCache(key, sendrecvbuf_, type_nbytes, count, true) != -1) return;
 

@@ -132,7 +132,7 @@ inline void Broadcast(void *sendrecv_data, size_t size, int root,
                       const char* _caller = __builtin_FUNCTION());
 #else
                       const char* _file = "N/A",
-                      const int _line = "N/A",
+                      const int _line = -1,
                       const char* _caller = "N/A");
 #endif  // __linux__
 /*!
@@ -156,7 +156,7 @@ inline void Broadcast(std::vector<DType> *sendrecv_data, int root,
                       const char* _caller = __builtin_FUNCTION());
 #else
                       const char* _file = "N/A",
-                      const int _line = "N/A",
+                      const int _line = -1,
                       const char* _caller = "N/A");
 #endif  // __linux__
 /*!
@@ -177,7 +177,7 @@ inline void Broadcast(std::string *sendrecv_data, int root,
                       const char* _caller = __builtin_FUNCTION());
 #else
                       const char* _file = "N/A",
-                      const int _line = "N/A",
+                      const int _line = -1,
                       const char* _caller = "N/A");
 #endif  // __linux__
 /*!
@@ -216,7 +216,7 @@ inline void Allreduce(DType *sendrecvbuf, size_t count,
                       const char* _caller = __builtin_FUNCTION());
 #else
                       const char* _file = "N/A",
-                      const int _line = "N/A",
+                      const int _line = -1,
                       const char* _caller = "N/A");
 #endif  // __linux__
 // C++11 support for lambda prepare function
@@ -259,7 +259,7 @@ inline void Allreduce(DType *sendrecvbuf, size_t count,
                       const char* _caller = __builtin_FUNCTION());
 #else
                       const char* _file = "N/A",
-                      const int _line = "N/A",
+                      const int _line = -1,
                       const char* _caller = "N/A");
 #endif  // __linux__
 #endif  // C++11
@@ -372,7 +372,7 @@ class Reducer {
                         const char* _caller = __builtin_FUNCTION());
 #else
                         const char* _file = "N/A",
-                        const int _line = "N/A",
+                        const int _line = -1,
                         const char* _caller = "N/A");
 #endif  // __linux__
 #if DMLC_USE_CXX11
@@ -395,7 +395,7 @@ class Reducer {
                         const char* _caller = __builtin_FUNCTION());
 #else
                         const char* _file = "N/A",
-                        const int _line = "N/A",
+                        const int _line = -1,
                         const char* _caller = "N/A");
 #endif  // __linux__
 #endif  // DMLC_USE_CXX11
@@ -444,7 +444,7 @@ class SerializeReducer {
                         const char* _caller = __builtin_FUNCTION());
 #else
                         const char* _file = "N/A",
-                        const int _line = "N/A",
+                        const int _line = -1,
                         const char* _caller = "N/A");
 #endif  // __linux__
 // C++11 support for lambda prepare function
@@ -471,7 +471,7 @@ class SerializeReducer {
                         const char* _caller = __builtin_FUNCTION());
 #else
                         const char* _file = "N/A",
-                        const int _line = "N/A",
+                        const int _line = -1,
                         const char* _caller = "N/A");
 #endif  // __linux__
 #endif  // DMLC_USE_CXX11
