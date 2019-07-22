@@ -93,7 +93,7 @@ int AllreduceRobust::SetCache(const std::string &key, const void *buf,
       break;
     }
   }
-  if (index != -1) return 0;
+  
   utils::Assert(index == -1, "immutable cache key already exists");
   utils::Assert(type_nbytes*count > 0, "can't set empty cache");
   void* temp = cachebuf.AllocTemp(type_nbytes, count);
@@ -1091,6 +1091,8 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno,
       if (act.check_point()) {
         if (act.diff_seq()) {
           utils::Assert(act.seqno() != ActionSummary::kSpecialOp, "min seq bug");
+          req.print_flags(rank, "checkpoint req");
+          act.print_flags(rank, "checkpoint act");
           /*
            * Chen Qin
            * at least one hit checkpoint_ code & at least one not hitting
