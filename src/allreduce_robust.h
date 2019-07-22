@@ -75,15 +75,9 @@ class AllreduceRobust : public AllreduceBase {
                          PreprocFunction prepare_fun = NULL,
                          void *prepare_arg = NULL,
                          bool is_bootstrap = false,
-#ifdef __linux__
-                         const char* _file = __builtin_FILE(),
-                         const int _line = __builtin_LINE(),
-                         const char* _caller = __builtin_FUNCTION());
-#else
-                         const char* _file = "N/A",
-                         const int _line = -1,
-                         const char* _caller = "N/A");
-#endif  // __linux__
+                         const char* _file = _FILE,
+                         const int _line = _LINE,
+                         const char* _caller = _CALLER);
   /*!
    * \brief broadcast data from root to all nodes
    * \param sendrecvbuf_ buffer for both sending and recving data
@@ -96,15 +90,9 @@ class AllreduceRobust : public AllreduceBase {
    */
   virtual void Broadcast(void *sendrecvbuf_, size_t total_size, int root,
                          bool is_bootstrap = false,
-#ifdef __linux__
-                         const char* _file = __builtin_FILE(),
-                         const int _line = __builtin_LINE(),
-                         const char* _caller = __builtin_FUNCTION());
-#else
-                         const char* _file = "N/A",
-                         const int _line = -1,
-                         const char* _caller = "N/A");
-#endif  // __linux__
+                         const char* _file = _FILE,
+                         const int _line = _LINE,
+                         const char* _caller = _CALLER);
   /*!
    * \brief load latest check point
    * \param global_model pointer to the globally shared model/state

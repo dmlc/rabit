@@ -59,6 +59,9 @@ bool AllreduceRobust::Shutdown(void) {
     // execute check ack step, load happens here
     utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck,
       ActionSummary::kSpecialOp, cur_cache_seq), "Shutdown: check ack must return true");
+#if defined (__APPLE__)
+    sleep(1);
+#endif
     return AllreduceBase::Shutdown();
   } catch (const std::exception& e) {
     fprintf(stderr, "%s\n", e.what());

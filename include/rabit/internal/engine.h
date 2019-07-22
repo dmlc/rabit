@@ -66,15 +66,9 @@ class IEngine {
                          PreprocFunction prepare_fun = NULL,
                          void *prepare_arg = NULL,
                          bool is_bootstrap = false,
-#ifdef __linux__
-                         const char* _file = __builtin_FILE(),
-                         const int _line = __builtin_LINE(),
-                         const char* _caller = __builtin_FUNCTION()) = 0;
-#else
-                         const char* _file = "N/A",
-                         const int _line = -1,
-                         const char* _caller = "N/A") = 0;
-#endif  // __linux__
+                         const char* _file = _FILE,
+                         const int _line = _LINE,
+                         const char* _caller = _CALLER) = 0;
   /*!
    * \brief broadcasts data from root to every other node
    * \param sendrecvbuf_ buffer for both sending and receiving data
@@ -87,15 +81,9 @@ class IEngine {
    */
   virtual void Broadcast(void *sendrecvbuf_, size_t size, int root,
                          bool is_bootstrap = false,
-#ifdef __linux__
-                         const char* _file = __builtin_FILE(),
-                         const int _line = __builtin_LINE(),
-                         const char* _caller = __builtin_FUNCTION()) = 0;
-#else
-                         const char* _file = "N/A",
-                         const int _line = -1,
-                         const char* _caller = "N/A") = 0;
-#endif  // __linux__
+                         const char* _file = _FILE,
+                         const int _line = _LINE,
+                         const char* _caller = _CALLER) = 0;
   /*!
    * \brief explicitly re-initialize everything before calling LoadCheckPoint
    *    call this function when IEngine throws an exception,
@@ -246,15 +234,9 @@ void Allreduce_(void *sendrecvbuf,
                 IEngine::PreprocFunction prepare_fun = NULL,
                 void *prepare_arg = NULL,
                 bool is_bootstrap = false,
-#ifdef __linux__
-                const char* _file = __builtin_FILE(),
-                const int _line = __builtin_LINE(),
-                const char* _caller = __builtin_FUNCTION());
-#else
-                const char* _file = "N/A",
-                const int _line = -1,
-                const char* _caller = "N/A");
-#endif  // __linux__
+                const char* _file = _FILE,
+                const int _line = _LINE,
+                const char* _caller = _CALLER);
 /*!
  * \brief handle for customized reducer, used to handle customized reduce
  *  this class is mainly created for compatiblity issues with MPI's customized reduce
@@ -291,15 +273,9 @@ class ReduceHandle {
                  IEngine::PreprocFunction prepare_fun = NULL,
                  void *prepare_arg = NULL,
                  bool is_bootstrap = false,
-#ifdef __linux__
-                 const char* _file = __builtin_FILE(),
-                 const int _line = __builtin_LINE(),
-                 const char* _caller = __builtin_FUNCTION());
-#else
-                 const char* _file = "N/A",
-                 const int _line = -1,
-                 const char* _caller = "N/A");
-#endif  // __linux__
+                 const char* _file = _FILE,
+                 const int _line = _LINE,
+                 const char* _caller = _CALLER);
   /*! \return the number of bytes occupied by the type */
   static int TypeSize(const MPI::Datatype &dtype);
 

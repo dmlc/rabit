@@ -95,16 +95,9 @@ class AllreduceBase : public IEngine {
                          PreprocFunction prepare_fun = NULL,
                          void *prepare_arg = NULL,
                          bool is_bootstrap = false,
-#ifdef __linux__
-                         const char* _file = __builtin_FILE(),
-                         const int _line = __builtin_LINE(),
-                         const char* _caller = __builtin_FUNCTION())
-#else
-                         const char* _file = "N/A",
-                         const int _line = -1,
-                         const char* _caller = "N/A")
-#endif  // __linux__
-{
+                         const char* _file = _FILE,
+                         const int _line = _LINE,
+                         const char* _caller = _CALLER) {
     if (prepare_fun != NULL) prepare_fun(prepare_arg);
     if (world_size == 1 || world_size == -1) return;
     utils::Assert(TryAllreduce(sendrecvbuf_,
@@ -122,17 +115,8 @@ class AllreduceBase : public IEngine {
    * \param _caller caller function name used to generate unique cache key
    */
   virtual void Broadcast(void *sendrecvbuf_, size_t total_size, int root,
-                           bool is_bootstrap = false,
-#ifdef __linux__
-                         const char* _file = __builtin_FILE(),
-                         const int _line = __builtin_LINE(),
-                         const char* _caller = __builtin_FUNCTION())
-#else
-                         const char* _file = "N/A",
-                         const int _line = -1,
-                         const char* _caller = "N/A")
-#endif  // __linux__
-{
+                         bool is_bootstrap = false, const char* _file = _FILE,
+                         const int _line = _LINE, const char* _caller = _CALLER) {
     if (world_size == 1 || world_size == -1) return;
     utils::Assert(TryBroadcast(sendrecvbuf_, total_size, root) == kSuccess,
                   "Broadcast failed");

@@ -22,6 +22,22 @@
 #endif  // defined(__GXX_EXPERIMENTAL_CXX0X__) || defined(_MSC_VER)
 #endif  // DMLC_USE_CXX11
 
+// keeps rabit api caller signature
+#ifndef RABIT_API_CALLER_SIGNATURE
+#define RABIT_API_CALLER_SIGNATURE
+
+#ifdef __linux__
+#define _FILE  __builtin_FILE()
+#define _LINE  __builtin_LINE()
+#define _CALLER  __builtin_FUNCTION()
+#else
+#define _FILE  "N/A"
+#define _LINE  -1
+#define _CALLER  "N/A"
+#endif  // __linux__
+
+#endif  // RABIT_API_CALLER_SIGNATURE
+
 // optionally support of lambda functions in C++11, if available
 #if DMLC_USE_CXX11
 #include <functional>
@@ -126,15 +142,10 @@ inline void TrackerPrintf(const char *fmt, ...);
  */
 inline void Broadcast(void *sendrecv_data, size_t size, int root,
                       bool is_bootstrap = false,
-#ifdef __linux__
-                      const char* _file = __builtin_FILE(),
-                      const int _line = __builtin_LINE(),
-                      const char* _caller = __builtin_FUNCTION());
-#else
-                      const char* _file = "N/A",
-                      const int _line = -1,
-                      const char* _caller = "N/A");
-#endif  // __linux__
+                      const char* _file = _FILE,
+                      const int _line = _LINE,
+                      const char* _caller = _CALLER);
+
 /*!
  * \brief broadcasts an std::vector<DType> to every node from root
  * \param sendrecv_data the pointer to send/receive vector,
@@ -150,15 +161,9 @@ inline void Broadcast(void *sendrecv_data, size_t size, int root,
 template<typename DType>
 inline void Broadcast(std::vector<DType> *sendrecv_data, int root,
                       bool is_bootstrap = false,
-#ifdef __linux__
-                      const char* _file = __builtin_FILE(),
-                      const int _line = __builtin_LINE(),
-                      const char* _caller = __builtin_FUNCTION());
-#else
-                      const char* _file = "N/A",
-                      const int _line = -1,
-                      const char* _caller = "N/A");
-#endif  // __linux__
+                      const char* _file = _FILE,
+                      const int _line = _LINE,
+                      const char* _caller = _CALLER);
 /*!
  * \brief broadcasts a std::string to every node from the root
  * \param sendrecv_data the pointer to the send/receive buffer,
@@ -171,15 +176,9 @@ inline void Broadcast(std::vector<DType> *sendrecv_data, int root,
  */
 inline void Broadcast(std::string *sendrecv_data, int root,
                       bool is_bootstrap = false,
-#ifdef __linux__
-                      const char* _file = __builtin_FILE(),
-                      const int _line = __builtin_LINE(),
-                      const char* _caller = __builtin_FUNCTION());
-#else
-                      const char* _file = "N/A",
-                      const int _line = -1,
-                      const char* _caller = "N/A");
-#endif  // __linux__
+                      const char* _file = _FILE,
+                      const int _line = _LINE,
+                      const char* _caller = _CALLER);
 /*!
  * \brief performs in-place Allreduce on sendrecvbuf
  *        this function is NOT thread-safe
@@ -210,15 +209,10 @@ inline void Allreduce(DType *sendrecvbuf, size_t count,
                       void (*prepare_fun)(void *) = NULL,
                       void *prepare_arg = NULL,
                       bool is_bootstrap = false,
-#ifdef __linux__
-                      const char* _file = __builtin_FILE(),
-                      const int _line = __builtin_LINE(),
-                      const char* _caller = __builtin_FUNCTION());
-#else
-                      const char* _file = "N/A",
-                      const int _line = -1,
-                      const char* _caller = "N/A");
-#endif  // __linux__
+                      const char* _file = _FILE,
+                      const int _line = _LINE,
+                      const char* _caller = _CALLER);
+
 // C++11 support for lambda prepare function
 #if DMLC_USE_CXX11
 /*!
@@ -253,15 +247,9 @@ template<typename OP, typename DType>
 inline void Allreduce(DType *sendrecvbuf, size_t count,
                       std::function<void()> prepare_fun,
                       bool is_bootstrap = false,
-#ifdef __linux__
-                      const char* _file = __builtin_FILE(),
-                      const int _line = __builtin_LINE(),
-                      const char* _caller = __builtin_FUNCTION());
-#else
-                      const char* _file = "N/A",
-                      const int _line = -1,
-                      const char* _caller = "N/A");
-#endif  // __linux__
+                      const char* _file = _FILE,
+                      const int _line = _LINE,
+                      const char* _caller = _CALLER);
 #endif  // C++11
 /*!
  * \brief loads the latest check point
@@ -366,15 +354,9 @@ class Reducer {
                         void (*prepare_fun)(void *) = NULL,
                         void *prepare_arg = NULL,
                         bool is_bootstrap = false,
-#ifdef __linux__
-                        const char* _file = __builtin_FILE(),
-                        const int _line = __builtin_LINE(),
-                        const char* _caller = __builtin_FUNCTION());
-#else
-                        const char* _file = "N/A",
-                        const int _line = -1,
-                        const char* _caller = "N/A");
-#endif  // __linux__
+                        const char* _file = _FILE,
+                        const int _line = _LINE,
+                        const char* _caller = _CALLER);
 #if DMLC_USE_CXX11
   /*!
    * \brief customized in-place all reduce operation, with lambda function as preprocessor
@@ -389,15 +371,9 @@ class Reducer {
   inline void Allreduce(DType *sendrecvbuf, size_t count,
                         std::function<void()> prepare_fun,
                         bool is_bootstrap = false,
-#ifdef __linux__
-                        const char* _file = __builtin_FILE(),
-                        const int _line = __builtin_LINE(),
-                        const char* _caller = __builtin_FUNCTION());
-#else
-                        const char* _file = "N/A",
-                        const int _line = -1,
-                        const char* _caller = "N/A");
-#endif  // __linux__
+                        const char* _file = _FILE,
+                        const int _line = _LINE,
+                        const char* _caller = _CALLER);
 #endif  // DMLC_USE_CXX11
 
  private:
@@ -438,15 +414,9 @@ class SerializeReducer {
                         void (*prepare_fun)(void *) = NULL,
                         void *prepare_arg = NULL,
                         bool is_bootstrap = false,
-#ifdef __linux__
-                        const char* _file = __builtin_FILE(),
-                        const int _line = __builtin_LINE(),
-                        const char* _caller = __builtin_FUNCTION());
-#else
-                        const char* _file = "N/A",
-                        const int _line = -1,
-                        const char* _caller = "N/A");
-#endif  // __linux__
+                        const char* _file = _FILE,
+                        const int _line = _LINE,
+                        const char* _caller = _CALLER);
 // C++11 support for lambda prepare function
 #if DMLC_USE_CXX11
   /*!
@@ -465,15 +435,9 @@ class SerializeReducer {
                         size_t max_nbyte, size_t count,
                         std::function<void()> prepare_fun,
                         bool is_bootstrap = false,
-#ifdef __linux__
-                        const char* _file = __builtin_FILE(),
-                        const int _line = __builtin_LINE(),
-                        const char* _caller = __builtin_FUNCTION());
-#else
-                        const char* _file = "N/A",
-                        const int _line = -1,
-                        const char* _caller = "N/A");
-#endif  // __linux__
+                        const char* _file = _FILE,
+                        const int _line = _LINE,
+                        const char* _caller = _CALLER);
 #endif  // DMLC_USE_CXX11
 
  private:
