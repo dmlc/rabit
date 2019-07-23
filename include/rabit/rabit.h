@@ -22,6 +22,22 @@
 #endif  // defined(__GXX_EXPERIMENTAL_CXX0X__) || defined(_MSC_VER)
 #endif  // DMLC_USE_CXX11
 
+// keeps rabit api caller signature
+#ifndef RABIT_API_CALLER_SIGNATURE
+#define RABIT_API_CALLER_SIGNATURE
+
+#ifdef __linux__
+#define _FILE  __builtin_FILE()
+#define _LINE  __builtin_LINE()
+#define _CALLER  __builtin_FUNCTION()
+#else
+#define _FILE  "N/A"
+#define _LINE  -1
+#define _CALLER  "N/A"
+#endif  // __linux__
+
+#endif  // RABIT_API_CALLER_SIGNATURE
+
 // optionally support of lambda functions in C++11, if available
 #if DMLC_USE_CXX11
 #include <functional>
@@ -101,24 +117,6 @@ inline std::string GetProcessorName();
  * \param msg the message to be printed
  */
 inline void TrackerPrint(const std::string &msg);
-/*!
- * \brief save allreduce/braodcast cache
- * \param key unique key of cache
- * \param buf value of allreduce broadcast cache
- * \param buflen byte size of buf to cache
- * \return -1 if recovery cache set failed 0 otherwise
- */
-inline int SetCache(const std::string &key, const void* buf, const size_t buflen);
-/*!
- * \brief get cached allreduce/braodcast
- * \param key configuration key
- * \param buf value of allreduce broadcast cache
- * \param buflen expected byte size of buf to fetch
- * \param byref point to buffer to cache entry if exists
- * \return -1 if no recovery cache available 0 otherwise
- */
-inline int GetCache(const std::string &key, void* buf, const size_t buflen,
-  const bool byref = false);
 
 #ifndef RABIT_STRICT_CXX98_
 /*!
@@ -129,23 +127,6 @@ inline int GetCache(const std::string &key, void* buf, const size_t buflen,
  * \param fmt the format string
  */
 inline void TrackerPrintf(const char *fmt, ...);
-/*!
- * \brief save allreduce/braodcast cache
- * \param key unique key of cache
- * \param buf value of allreduce broadcast cache
- * \param buflen byte size of buf to cache
- * \return -1 if recovery cache set failed 0 otherwise
- */
-inline int SetCache(const char *key, const void* buf, const size_t buflen, ...);
-/*!
- * \brief get cached allreduce/braodcast
- * \param key configuration key
- * \param buf value of allreduce broadcast cache
- * \param buflen expected byte size of buf to fetch
- * \param byref point pointer buf to cache entry if exists
- * \return -1 if no recovery cache available 0 otherwise
- */
-inline int GetCache(const char *key, void* buf, const size_t buflen, const bool byref = false, ...);
 #endif  // RABIT_STRICT_CXX98_
 /*!
  * \brief broadcasts a memory region to every node from the root
@@ -154,25 +135,50 @@ inline int GetCache(const char *key, void* buf, const size_t buflen, const bool 
  * \param sendrecv_data the pointer to the send/receive buffer,
  * \param size the data size
  * \param root the process root
+ * \param is_bootstrap if this allreduce is needed to bootstrap failed node
+ * \param _file caller file name used to generate unique cache key
+ * \param _line caller line number used to generate unique cache key
+ * \param _caller caller function name used to generate unique cache key
  */
-inline void Broadcast(void *sendrecv_data, size_t size, int root);
+inline void Broadcast(void *sendrecv_data, size_t size, int root,
+                      bool is_bootstrap = false,
+                      const char* _file = _FILE,
+                      const int _line = _LINE,
+                      const char* _caller = _CALLER);
+
 /*!
  * \brief broadcasts an std::vector<DType> to every node from root
  * \param sendrecv_data the pointer to send/receive vector,
  *        for the receiver, the vector does not need to be pre-allocated
  * \param root the process root
+ * \param is_bootstrap if this allreduce is needed to bootstrap failed node
+ * \param _file caller file name used to generate unique cache key
+ * \param _line caller line number used to generate unique cache key
+ * \param _caller caller function name used to generate unique cache key
  * \tparam DType the data type stored in the vector, has to be a simple data type
  *               that can be directly transmitted by sending the sizeof(DType)
  */
 template<typename DType>
-inline void Broadcast(std::vector<DType> *sendrecv_data, int root);
+inline void Broadcast(std::vector<DType> *sendrecv_data, int root,
+                      bool is_bootstrap = false,
+                      const char* _file = _FILE,
+                      const int _line = _LINE,
+                      const char* _caller = _CALLER);
 /*!
  * \brief broadcasts a std::string to every node from the root
  * \param sendrecv_data the pointer to the send/receive buffer,
  *        for the receiver, the vector does not need to be pre-allocated
+ * \param is_bootstrap if this allreduce is needed to bootstrap failed node
+ * \param _file caller file name used to generate unique cache key
+ * \param _line caller line number used to generate unique cache key
+ * \param _caller caller function name used to generate unique cache key
  * \param root the process root
  */
-inline void Broadcast(std::string *sendrecv_data, int root);
+inline void Broadcast(std::string *sendrecv_data, int root,
+                      bool is_bootstrap = false,
+                      const char* _file = _FILE,
+                      const int _line = _LINE,
+                      const char* _caller = _CALLER);
 /*!
  * \brief performs in-place Allreduce on sendrecvbuf
  *        this function is NOT thread-safe
@@ -191,13 +197,22 @@ inline void Broadcast(std::string *sendrecv_data, int root);
  *                    will be called by the function before performing Allreduce in order to initialize the data in sendrecvbuf.
  *                     If the result of Allreduce can be recovered directly, then prepare_func will NOT be called
  * \param prepare_arg argument used to pass into the lazy preprocessing function
+ * \param is_bootstrap if this allreduce is needed to bootstrap filed node
+ * \param _file caller file name used to generate unique cache key
+ * \param _line caller line number used to generate unique cache key
+ * \param _caller caller function name used to generate unique cache key
  * \tparam OP see namespace op, reduce operator
  * \tparam DType data type
  */
 template<typename OP, typename DType>
 inline void Allreduce(DType *sendrecvbuf, size_t count,
                       void (*prepare_fun)(void *) = NULL,
-                      void *prepare_arg = NULL);
+                      void *prepare_arg = NULL,
+                      bool is_bootstrap = false,
+                      const char* _file = _FILE,
+                      const int _line = _LINE,
+                      const char* _caller = _CALLER);
+
 // C++11 support for lambda prepare function
 #if DMLC_USE_CXX11
 /*!
@@ -221,12 +236,20 @@ inline void Allreduce(DType *sendrecvbuf, size_t count,
  * \param prepare_fun  Lazy lambda preprocessing function, prepare_fun() will be invoked
  *                     by the function before performing Allreduce in order to initialize the data in sendrecvbuf.
  *                     If the result of Allreduce can be recovered directly, then prepare_func will NOT be called
+ * \param is_bootstrap if this allreduce is needed to bootstrap failed node
+ * \param _file caller file name used to generate unique cache key
+ * \param _line caller line number used to generate unique cache key
+ * \param _caller caller function name used to generate unique cache key
  * \tparam OP see namespace op, reduce operator
  * \tparam DType data type
  */
 template<typename OP, typename DType>
 inline void Allreduce(DType *sendrecvbuf, size_t count,
-                      std::function<void()> prepare_fun);
+                      std::function<void()> prepare_fun,
+                      bool is_bootstrap = false,
+                      const char* _file = _FILE,
+                      const int _line = _LINE,
+                      const char* _caller = _CALLER);
 #endif  // C++11
 /*!
  * \brief loads the latest check point
@@ -322,19 +345,35 @@ class Reducer {
    *                     will be called by the function before performing Allreduce, to initialize the data in sendrecvbuf.
    *                     If the result of Allreduce can be recovered directly, then prepare_func will NOT be called
    * \param prepare_arg argument used to pass into the lazy preprocessing function
+   * \param is_bootstrap  if this allreduce is needed to bootstrap filed node
+   * \param _file caller file name used to generate unique cache key
+   * \param _line caller line number used to generate unique cache key
+   * \param _caller caller function name used to generate unique cache key
    */
   inline void Allreduce(DType *sendrecvbuf, size_t count,
                         void (*prepare_fun)(void *) = NULL,
-                        void *prepare_arg = NULL);
+                        void *prepare_arg = NULL,
+                        bool is_bootstrap = false,
+                        const char* _file = _FILE,
+                        const int _line = _LINE,
+                        const char* _caller = _CALLER);
 #if DMLC_USE_CXX11
   /*!
    * \brief customized in-place all reduce operation, with lambda function as preprocessor
    * \param sendrecvbuf pointer to the array of objects to be reduced
    * \param count number of elements to be reduced
    * \param prepare_fun lambda function executed to prepare the data, if necessary
+   * \param is_bootstrap  if this allreduce is needed to bootstrap filed node
+   * \param _file caller file name used to generate unique cache key
+   * \param _line caller line number used to generate unique cache key
+   * \param _caller caller function name used to generate unique cache key
    */
   inline void Allreduce(DType *sendrecvbuf, size_t count,
-                        std::function<void()> prepare_fun);
+                        std::function<void()> prepare_fun,
+                        bool is_bootstrap = false,
+                        const char* _file = _FILE,
+                        const int _line = _LINE,
+                        const char* _caller = _CALLER);
 #endif  // DMLC_USE_CXX11
 
  private:
@@ -365,11 +404,19 @@ class SerializeReducer {
    *                     will be called by the function before performing Allreduce, to initialize the data in sendrecvbuf.
    *                     If the result of Allreduce can be recovered directly, then the prepare_func will NOT be called
    * \param prepare_arg argument used to pass into the lazy preprocessing function
+   * \param is_bootstrap if this allreduce is needed to bootstrap failed node
+   * \param _file caller file name used to generate unique cache key
+   * \param _line caller line number used to generate unique cache key
+   * \param _caller caller function name used to generate unique cache key
    */
   inline void Allreduce(DType *sendrecvobj,
                         size_t max_nbyte, size_t count,
                         void (*prepare_fun)(void *) = NULL,
-                        void *prepare_arg = NULL);
+                        void *prepare_arg = NULL,
+                        bool is_bootstrap = false,
+                        const char* _file = _FILE,
+                        const int _line = _LINE,
+                        const char* _caller = _CALLER);
 // C++11 support for lambda prepare function
 #if DMLC_USE_CXX11
   /*!
@@ -379,10 +426,18 @@ class SerializeReducer {
    *        this includes budget limit for intermediate and final result
    * \param count number of elements to be reduced
    * \param prepare_fun lambda function executed to prepare the data, if necessary
+   * \param is_bootstrap if this allreduce is needed to bootstrap failed node
+   * \param _file caller file name used to generate unique cache key
+   * \param _line caller line number used to generate unique cache key
+   * \param _caller caller function name used to generate unique cache key
    */
   inline void Allreduce(DType *sendrecvobj,
                         size_t max_nbyte, size_t count,
-                        std::function<void()> prepare_fun);
+                        std::function<void()> prepare_fun,
+                        bool is_bootstrap = false,
+                        const char* _file = _FILE,
+                        const int _line = _LINE,
+                        const char* _caller = _CALLER);
 #endif  // DMLC_USE_CXX11
 
  private:

@@ -158,17 +158,6 @@ void AllreduceBase::TrackerPrint(const std::string &msg) {
   tracker.Close();
 }
 
-int AllreduceBase::SetCache(const std::string &key, const void *buf, const size_t buflen) {
-  utils::Error("base class don't support cache");
-  return -1;
-}
-
-int AllreduceBase::GetCache(const std::string &key, void* buf,
-  const size_t buflen, const bool byref) {
-  utils::Error("base class don't support cache");
-  return -1;
-}
-
 // util to parse data with unit suffix
 inline size_t ParseUnit(const char *name, const char *val) {
   char unit;

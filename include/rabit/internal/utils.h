@@ -40,6 +40,22 @@
 #define fopen64 std::fopen
 #endif  // __APPLE__
 
+// keeps rabit api caller signature
+#ifndef RABIT_API_CALLER_SIGNATURE
+#define RABIT_API_CALLER_SIGNATURE
+
+#ifdef __linux__
+#define _FILE  __builtin_FILE()
+#define _LINE  __builtin_LINE()
+#define _CALLER  __builtin_FUNCTION()
+#else
+#define _FILE  "N/A"
+#define _LINE  -1
+#define _CALLER  "N/A"
+#endif  // __linux__
+
+#endif  // RABIT_API_CALLER_SIGNATURE
+
 extern "C" {
 #include <sys/types.h>
 }
