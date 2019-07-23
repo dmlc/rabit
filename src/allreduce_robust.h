@@ -269,7 +269,7 @@ class AllreduceRobust : public AllreduceBase {
     }
     // print flags in user friendly way
     inline void print_flags(int rank, std::string prefix ) {
-      utils::Printf("[%d] %s - |%d|%d|%d|%d|%d| - |%d|%d|%d|\n",
+      utils::Printf("[%d] %s - |%ud|%d|%d|%d|%d| - |%ud|%d|%d|\n",
                     rank, prefix.c_str(),
                     seqno(), check_point(), check_ack(), load_cache(),
                     diff_seq(), seqno(SeqType::KAND), load_cache(SeqType::KAND),
