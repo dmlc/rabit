@@ -192,8 +192,10 @@ class AllreduceRobust : public AllreduceBase {
   };
 
   enum SeqType {
-    kOR = 0,
-    KAND = 1
+    /*! \brief apply to rabit seq code */
+    kSeq = 0,
+    /*! \brief apply to rabit cache seq code */
+    kCache = 1
   };
   /*!
    * \brief summary of actions proposed in all nodes
@@ -226,54 +228,54 @@ class AllreduceRobust : public AllreduceBase {
     // constructor
     ActionSummary(void) {}
     // constructor of action
-    explicit ActionSummary(int action_flag, int role_diff_flag = 0,
+    explicit ActionSummary(int seqno_flag, int cache_flag = 0,
       u_int32_t minseqno = kSpecialOp, u_int32_t maxseqno = kSpecialOp) {
-      seqcode = (minseqno << 5) | action_flag;
-      maxseqcode = (maxseqno << 5) | role_diff_flag;
+      seqcode = (minseqno << 5) | seqno_flag;
+      maxseqcode = (maxseqno << 5) | cache_flag;
     }
     // minimum number of all operations by default
     // maximum number of all cache operations otherwise
-    inline u_int32_t seqno(SeqType t = SeqType::kOR) const {
-      int code = t == SeqType::kOR ? seqcode : maxseqcode;
+    inline u_int32_t seqno(SeqType t = SeqType::kSeq) const {
+      int code = t == SeqType::kSeq ? seqcode : maxseqcode;
       return code >> 5;
     }
     // whether the operation set contains a load_check
-    inline bool load_check(SeqType t = SeqType::kOR) const {
-      int code = t == SeqType::kOR ? seqcode : maxseqcode;
+    inline bool load_check(SeqType t = SeqType::kSeq) const {
+      int code = t == SeqType::kSeq ? seqcode : maxseqcode;
       return (code & kLoadCheck) != 0;
     }
     // whether the operation set contains a load_cache
-    inline bool load_cache(SeqType t = SeqType::kOR) const {
-      int code = t == SeqType::kOR ? seqcode : maxseqcode;
+    inline bool load_cache(SeqType t = SeqType::kSeq) const {
+      int code = t == SeqType::kSeq ? seqcode : maxseqcode;
       return (code & kLoadCache) != 0;
     }
     // whether the operation set contains a check point
-    inline bool check_point(SeqType t = SeqType::kOR) const {
-      int code = t == SeqType::kOR ? seqcode : maxseqcode;
+    inline bool check_point(SeqType t = SeqType::kSeq) const {
+      int code = t == SeqType::kSeq ? seqcode : maxseqcode;
       return (code & kCheckPoint) != 0;
     }
     // whether the operation set contains a check ack
-    inline bool check_ack(SeqType t = SeqType::kOR) const {
-      int code = t == SeqType::kOR ? seqcode : maxseqcode;
+    inline bool check_ack(SeqType t = SeqType::kSeq) const {
+      int code = t == SeqType::kSeq ? seqcode : maxseqcode;
       return (code & kCheckAck) != 0;
     }
     // whether the operation set contains different sequence number
-    inline bool diff_seq(SeqType t = SeqType::kOR) const {
-      int code = t == SeqType::kOR ? seqcode : maxseqcode;
+    inline bool diff_seq(SeqType t = SeqType::kSeq) const {
+      int code = t == SeqType::kSeq ? seqcode : maxseqcode;
       return (code & kDiffSeq) != 0;
     }
     // returns the operation flag of the result
-    inline int flag(SeqType t = SeqType::kOR) const {
-      int code = t == SeqType::kOR ? seqcode : maxseqcode;
+    inline int flag(SeqType t = SeqType::kSeq) const {
+      int code = t == SeqType::kSeq ? seqcode : maxseqcode;
       return code & 31;
     }
     // print flags in user friendly way
     inline void print_flags(int rank, std::string prefix ) {
-      utils::Printf("[%d] %s - |%ud|%d|%d|%d|%d| - |%ud|%d|%d|\n",
+      utils::Printf("[%d] %s - |%lu|%d|%d|%d|%d| - |%lu|%d|%d|\n",
                     rank, prefix.c_str(),
                     seqno(), check_point(), check_ack(), load_cache(),
-                    diff_seq(), seqno(SeqType::KAND), load_cache(SeqType::KAND),
-                    diff_seq(SeqType::KAND));
+                    diff_seq(), seqno(SeqType::kCache), load_cache(SeqType::kCache),
+                    diff_seq(SeqType::kCache));
     }
     // reducer for Allreduce, get the result ActionSummary from all nodes
     inline static void Reducer(const void *src_, void *dst_,
@@ -282,22 +284,26 @@ class AllreduceRobust : public AllreduceBase {
       ActionSummary *dst = reinterpret_cast<ActionSummary*>(dst_);
       for (int i = 0; i < len; ++i) {
         u_int32_t min_seqno = std::min(src[i].seqno(), dst[i].seqno());
-        u_int32_t max_seqno = std::max(src[i].seqno(SeqType::KAND), dst[i].seqno(SeqType::KAND));
+        u_int32_t max_seqno = std::max(src[i].seqno(SeqType::kCache),
+          dst[i].seqno(SeqType::kCache));
         int action_flag = src[i].flag() | dst[i].flag();
         // if any node is not requester set to 0 otherwise 1
-        int role_flag = src[i].flag(SeqType::KAND) & dst[i].flag(SeqType::KAND);
-        int min_diff_flag = src[i].seqno() != dst[i].seqno() ? kDiffSeq : 0;
-        int max_diff_flag =
-          src[i].seqno(SeqType::KAND) != dst[i].seqno(SeqType::KAND) ? kDiffSeq : 0;
-        dst[i] = ActionSummary(action_flag | min_diff_flag,
-          role_flag | max_diff_flag, min_seqno, max_seqno);
+        int role_flag = src[i].flag(SeqType::kCache) & dst[i].flag(SeqType::kCache);
+        // if seqno is different in src and destination
+        int seq_diff_flag = src[i].seqno() != dst[i].seqno() ? kDiffSeq : 0;
+        // if cache seqno is different in src and destination
+        int cache_diff_flag =
+          src[i].seqno(SeqType::kCache) != dst[i].seqno(SeqType::kCache) ? kDiffSeq : 0;
+        // apply or to both seq diff flag as well as cache seq diff flag
+        dst[i] = ActionSummary(action_flag | seq_diff_flag,
+          role_flag | cache_diff_flag, min_seqno, max_seqno);
       }
     }
 
    private:
-    // internel sequence code min of seqno
+    // internel sequence code min of rabit seqno
     u_int32_t seqcode;
-    // internal sequence code max of seqno
+    // internal sequence code max of cache seqno
     u_int32_t maxseqcode;
   };
   /*! \brief data structure to remember result of Bcast and Allreduce calls*/

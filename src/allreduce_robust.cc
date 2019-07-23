@@ -92,7 +92,7 @@ int AllreduceRobust::SetCache(const std::string &key, const void *buf,
       index = i;
       break;
     }
-  } 
+  }
   utils::Assert(index == -1, "immutable cache key already exists");
   utils::Assert(type_nbytes*count > 0, "can't set empty cache");
   void* temp = cachebuf.AllocTemp(type_nbytes, count);
@@ -1120,7 +1120,7 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno,
             }
           } else {
             // cache seq no should be smaller than kSpecialOp
-            utils::Assert(act.seqno(SeqType::KAND) != ActionSummary::kSpecialOp,
+            utils::Assert(act.seqno(SeqType::kCache) != ActionSummary::kSpecialOp,
               "checkpoint with kSpecialOp");
             int max_cache_seq = cur_cache_seq;
             if (TryAllreduce(&max_cache_seq, sizeof(max_cache_seq), 1,
@@ -1155,10 +1155,14 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno,
               "load cache state expect no nodes doing checkpoint ack");
 
             // if all nodes are requester in load cache, skip
-            if (act.load_cache(SeqType::KAND)) return false;
-            // if restore cache failed, retry from what's left
-            if (TryRestoreCache(req.load_cache(), act.seqno(), act.seqno(SeqType::KAND))
-              != kSuccess) continue;
+            if (act.load_cache(SeqType::kCache)) return false;
+
+            // only restore when at least one pair of max_seq are different
+            if (act.diff_seq(SeqType::kCache)) {
+              // if restore cache failed, retry from what's left
+              if (TryRestoreCache(req.load_cache(), act.seqno(), act.seqno(SeqType::kCache))
+                != kSuccess) continue;
+            }
             // if requested load cache, then mission complete
             if (req.load_cache()) return true;
             continue;
