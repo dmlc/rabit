@@ -92,8 +92,7 @@ int AllreduceRobust::SetCache(const std::string &key, const void *buf,
       index = i;
       break;
     }
-  }
-  
+  } 
   utils::Assert(index == -1, "immutable cache key already exists");
   utils::Assert(type_nbytes*count > 0, "can't set empty cache");
   void* temp = cachebuf.AllocTemp(type_nbytes, count);
