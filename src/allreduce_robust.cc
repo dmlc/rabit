@@ -81,7 +81,8 @@ void AllreduceRobust::SetParam(const char *name, const char *val) {
   }
 }
 
-int AllreduceRobust::SetCache(const std::string &key, const void *buf, size_t buflen) {
+int AllreduceRobust::SetCache(const std::string &key, const void *buf,
+  const size_t type_nbytes, const size_t count) {
   int index = -1;
   for (int i = 0 ; i < cur_cache_seq; i++) {
     size_t nsize = 0;
@@ -93,10 +94,10 @@ int AllreduceRobust::SetCache(const std::string &key, const void *buf, size_t bu
     }
   }
   utils::Assert(index == -1, "immutable cache key already exists");
-
-  void* temp = cachebuf.AllocTemp(buflen, 1);
-  cachebuf.PushTemp(cur_cache_seq, buflen, 1);
-  std::memcpy(temp, buf, buflen);
+  utils::Assert(type_nbytes*count > 0, "can't set empty cache");
+  void* temp = cachebuf.AllocTemp(type_nbytes, count);
+  cachebuf.PushTemp(cur_cache_seq, type_nbytes, count);
+  std::memcpy(temp, buf, type_nbytes*count);
 
   std::string k(key);
   void* name = lookupbuf.AllocTemp(strlen(k.c_str()) + 1, 1);
@@ -107,9 +108,10 @@ int AllreduceRobust::SetCache(const std::string &key, const void *buf, size_t bu
 }
 
 int AllreduceRobust::GetCache(const std::string &key, void* buf,
-  const size_t buflen, const bool byref) {
+  const size_t type_nbytes, const size_t count, const bool byref) {
   // as requester sync with rest of nodes on latest cache content
   if (!RecoverExec(NULL, 0, ActionSummary::kLoadCache, seq_counter, cur_cache_seq)) return -1;
+
   int index = -1;
   for (int i = 0 ; i < cur_cache_seq; i++) {
     size_t nsize = 0;
@@ -126,14 +128,14 @@ int AllreduceRobust::GetCache(const std::string &key, void* buf,
   size_t siz = 0;
   void* temp = cachebuf.Query(index, &siz);
   utils::Assert(cur_cache_seq > index, "cur_cache_seq is smaller than lookup cache seq index");
-  utils::Assert(siz == buflen, "cache size stored expected to be same as requested");
+  utils::Assert(siz == type_nbytes*count, "cache size stored expected to be same as requested");
   utils::Assert(siz > 0, "cache size should be greater than 0");
 
   // immutable cache, save copy time by pointer manipulation
   if (byref) {
     buf = temp;
   } else {
-    std::memcpy(buf, temp, buflen);
+    std::memcpy(buf, temp, type_nbytes*count);
   }
 
   return 0;
@@ -151,18 +153,34 @@ int AllreduceRobust::GetCache(const std::string &key, void* buf,
  *                     will be called by the function before performing Allreduce, to intialize the data in sendrecvbuf_.
  *                     If the result of Allreduce can be recovered directly, then prepare_func will NOT be called
  * \param prepare_arg argument used to passed into the lazy preprocessing function
+ * \param is_bootstrap  if this allreduce is needed to bootstrap filed node
+ * \param _file caller file name used to generate unique cache key
+ * \param _line caller line number used to generate unique cache key
+ * \param _caller caller function name used to generate unique cache key
  */
 void AllreduceRobust::Allreduce(void *sendrecvbuf_,
                                 size_t type_nbytes,
                                 size_t count,
                                 ReduceFunction reducer,
                                 PreprocFunction prepare_fun,
-                                void *prepare_arg) {
+                                void *prepare_arg,
+                                bool is_bootstrap,
+                                const char* _file,
+                                const int _line,
+                                const char* _caller) {
   // skip action in single node
   if (world_size == 1 || world_size == -1) {
     if (prepare_fun != NULL) prepare_fun(prepare_arg);
     return;
   }
+
+  // genreate unique allreduce signature
+  std::string key = std::string(_file) + "::" + std::to_string(_line) + "::"
+    + std::string(_caller) + "#" +std::to_string(type_nbytes) + "x" + std::to_string(count);
+
+  // try fetch bootstrap allreduce results from cache
+  if (is_bootstrap && GetCache(key, sendrecvbuf_, type_nbytes, count, true) != -1) return;
+
   double start = utils::GetTime();
   bool recovered = RecoverExec(sendrecvbuf_, type_nbytes * count, 0, seq_counter, cur_cache_seq);
 
@@ -188,21 +206,38 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
   }
   double delta = utils::GetTime() - start;
   // log allreduce latency
-  utils::HandleLogInfo("[%d] allreduce finished version %d, seq %d, take %f seconds\n",
-    rank, version_number, seq_counter, delta);
-
-  resbuf.PushTemp(seq_counter, type_nbytes, count);
-  seq_counter += 1;
+  utils::HandleLogInfo("[%d] allreduce (%s) finished version %d, seq %d, take %f seconds\n",
+    rank, key.c_str(), version_number, seq_counter, delta);
+  // if bootstrap allreduce, store and fetch through cache
+  if (!is_bootstrap) {
+    resbuf.PushTemp(seq_counter, type_nbytes, count);
+    seq_counter += 1;
+  } else {
+    SetCache(key, sendrecvbuf_, type_nbytes, count);
+  }
 }
 /*!
  * \brief broadcast data from root to all nodes
  * \param sendrecvbuf_ buffer for both sending and recving data
  * \param size the size of the data to be broadcasted
  * \param root the root worker id to broadcast the data
+ * \param is_bootstrap  if this allreduce is needed to bootstrap filed node
+ * \param _file caller file name used to generate unique cache key
+ * \param _line caller line number used to generate unique cache key
+ * \param _caller caller function name used to generate unique cache key
  */
-void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root) {
+void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root,
+                                bool is_bootstrap,
+                                const char* _file,
+                                const int _line,
+                                const char* _caller) {
   // skip action in single node
   if (world_size == 1 || world_size == -1) return;
+  // genreate unique cache signature
+  std::string key = std::string(_file) + "::" + std::to_string(_line) + "::"
+    + std::string(_caller) + "#" +std::to_string(total_size) + "@" + std::to_string(root);
+  // try fetch bootstrap allreduce results from cache
+  if (is_bootstrap && GetCache(key, sendrecvbuf_, total_size, 1, true) != -1) return;
 
   double start = utils::GetTime();
   bool recovered = RecoverExec(sendrecvbuf_, total_size, 0, seq_counter, cur_cache_seq);
@@ -227,10 +262,15 @@ void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root)
 
   double delta = utils::GetTime() - start;
   // log broadcast latency
-  utils::HandleLogInfo("[%d] broadcast root %d finished version %d, seq %d, take %f seconds\n",
-                       rank, root, version_number, seq_counter, delta);
-  resbuf.PushTemp(seq_counter, 1, total_size);
-  seq_counter += 1;
+  utils::HandleLogInfo("[%d] broadcast (%s) root %d finished version %d, seq %d, take %f seconds\n",
+                       rank, key.c_str(), root, version_number, seq_counter, delta);
+  // if bootstrap broadcast, store and fetch through cache
+  if (!is_bootstrap) {
+    resbuf.PushTemp(seq_counter, 1, total_size);
+    seq_counter += 1;
+  } else {
+    SetCache(key, sendrecvbuf_, total_size, 1);
+  }
 }
 /*!
  * \brief load latest check point
@@ -406,7 +446,7 @@ void AllreduceRobust::CheckPoint_(const Serializable *global_model,
                        rank, global_checkpoint.length(), version_number, seq_counter, delta);
 
   start = utils::GetTime();
-  // reset result buffer
+  // reset result buffer, mark boostrap phase complete
   resbuf.Clear(); seq_counter = 0;
   // execute check ack step, load happens here
   utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck,
@@ -870,6 +910,7 @@ AllreduceRobust::ReturnType AllreduceRobust::TryRestoreCache(bool requester,
     ret = TryRecoverData(role, buf, cache_size, recv_link, req_in);
     if (ret != kSuccess) return ret;
   }
+
   return kSuccess;
 }
 
@@ -1049,6 +1090,8 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno,
       if (act.check_point()) {
         if (act.diff_seq()) {
           utils::Assert(act.seqno() != ActionSummary::kSpecialOp, "min seq bug");
+          req.print_flags(rank, "checkpoint req");
+          act.print_flags(rank, "checkpoint act");
           /*
            * Chen Qin
            * at least one hit checkpoint_ code & at least one not hitting
@@ -1077,7 +1120,7 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno,
             }
           } else {
             // cache seq no should be smaller than kSpecialOp
-            utils::Assert(act.seqno(SeqType::KAND) != ActionSummary::kSpecialOp,
+            utils::Assert(act.seqno(SeqType::kCache) != ActionSummary::kSpecialOp,
               "checkpoint with kSpecialOp");
             int max_cache_seq = cur_cache_seq;
             if (TryAllreduce(&max_cache_seq, sizeof(max_cache_seq), 1,
@@ -1112,10 +1155,14 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno,
               "load cache state expect no nodes doing checkpoint ack");
 
             // if all nodes are requester in load cache, skip
-            if (act.load_cache(SeqType::KAND)) return false;
-            // if restore cache failed, retry from what's left
-            if (TryRestoreCache(req.load_cache(), act.seqno(), act.seqno(SeqType::KAND))
-              != kSuccess) continue;
+            if (act.load_cache(SeqType::kCache)) return false;
+
+            // only restore when at least one pair of max_seq are different
+            if (act.diff_seq(SeqType::kCache)) {
+              // if restore cache failed, retry from what's left
+              if (TryRestoreCache(req.load_cache(), act.seqno(), act.seqno(SeqType::kCache))
+                != kSuccess) continue;
+            }
             // if requested load cache, then mission complete
             if (req.load_cache()) return true;
             continue;

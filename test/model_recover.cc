@@ -95,12 +95,8 @@ int main(int argc, char *argv[]) {
   int nproc = rabit::GetWorldSize();
   std::string name = rabit::GetProcessorName();
 
-  // cache should work before load checkpoint
   int max_rank = rank;
-  if (rabit::GetCache("bootstrap_allreduce", &max_rank, sizeof(int)) == -1) {
-    rabit::Allreduce<op::Max>(&max_rank, sizeof(int));
-    rabit::SetCache("bootstrap_allreduce", &max_rank, sizeof(int));
-  }
+  rabit::Allreduce<op::Max>(&max_rank, sizeof(int), NULL, NULL, true);
   utils::Check(max_rank == nproc - 1, "max rank is world size-1");
 
   Model model;
@@ -124,27 +120,6 @@ int main(int argc, char *argv[]) {
       TestBcast(n, i, ntrial, r);
     }
     printf("[%d] !!!TestBcast pass, iter=%d\n", rank, r);
-
-    if(r == 0){
-      std::string key("one_off_broadcast_iter_2");
-      int min_broadcast_rank = rank;
-      if (rabit::GetCache(key, &min_broadcast_rank, sizeof(int)) == -1) {
-        rabit::Broadcast(&min_broadcast_rank, sizeof(int), r);
-        rabit::SetCache(key, &min_broadcast_rank, sizeof(int));
-      }
-      utils::Check(min_broadcast_rank == r, "min rank expects same as current iter");
-    }
-
-    // cache should works within iterative training
-    if(r == 1) {
-      std::string key("one_off_allreduce_iter_1");
-      int min_rank = rank;
-      if (rabit::GetCache(key, &min_rank, sizeof(int)) == -1) {
-        rabit::Allreduce<op::Min>(&min_rank, sizeof(int));
-        rabit::SetCache(key, &min_rank, sizeof(int));
-      }
-      utils::Check(min_rank == 0, "min rank expects 0");
-    }
 
     TestSum(&model, ntrial, r);
     printf("[%d] !!!TestSum pass, iter=%d\n", rank, r);

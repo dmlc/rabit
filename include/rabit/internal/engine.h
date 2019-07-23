@@ -54,21 +54,36 @@ class IEngine {
    *                     will be called by the function before performing Allreduce in order to initialize the data in sendrecvbuf.
    *                     If the result of Allreduce can be recovered directly, then prepare_func will NOT be called
    * \param prepare_arg argument used to pass into the lazy preprocessing function
-   * \param cache_seq argument used to pass into or fetch cached allreduce seq_no
+   * \param is_bootstrap if this allreduce is needed to bootstrap failed node
+   * \param _file caller file name used to generate unique cache key
+   * \param _line caller line number used to generate unique cache key
+   * \param _caller caller function name used to generate unique cache key
    */
   virtual void Allreduce(void *sendrecvbuf_,
                          size_t type_nbytes,
                          size_t count,
                          ReduceFunction reducer,
                          PreprocFunction prepare_fun = NULL,
-                         void *prepare_arg = NULL) = 0;
+                         void *prepare_arg = NULL,
+                         bool is_bootstrap = false,
+                         const char* _file = _FILE,
+                         const int _line = _LINE,
+                         const char* _caller = _CALLER) = 0;
   /*!
    * \brief broadcasts data from root to every other node
    * \param sendrecvbuf_ buffer for both sending and receiving data
    * \param size the size of the data to be broadcasted
    * \param root the root worker id to broadcast the data
+   * \param is_bootstrap if this broadcast is needed to bootstrap failed node
+   * \param _file caller file name used to generate unique cache key
+   * \param _line caller line number used to generate unique cache key
+   * \param _caller caller function name used to generate unique cache key
    */
-  virtual void Broadcast(void *sendrecvbuf_, size_t size, int root) = 0;
+  virtual void Broadcast(void *sendrecvbuf_, size_t size, int root,
+                         bool is_bootstrap = false,
+                         const char* _file = _FILE,
+                         const int _line = _LINE,
+                         const char* _caller = _CALLER) = 0;
   /*!
    * \brief explicitly re-initialize everything before calling LoadCheckPoint
    *    call this function when IEngine throws an exception,
@@ -159,9 +174,6 @@ class IEngine {
    * \param msg message to be printed in the tracker
    */
   virtual void TrackerPrint(const std::string &msg) = 0;
-  virtual int SetCache(const std::string &key, const void *buf, const size_t buflen) = 0;
-  virtual int GetCache(const std::string& key, void *buf, const size_t buflen,
-    const bool byref = false) = 0;
 };
 
 /*! \brief initializes the engine module */
@@ -208,6 +220,10 @@ enum DataType {
  *                     will be called by the function before performing Allreduce, to initialize the data in sendrecvbuf_.
  *                     If the result of Allreduce can be recovered directly, then prepare_func will NOT be called
  * \param prepare_arg argument used to pass into the lazy preprocessing function.
+ * \param is_bootstrap if this allreduce is needed to bootstrap failed node
+ * \param _file caller file name used to generate unique cache key
+ * \param _line caller line number used to generate unique cache key
+ * \param _caller caller function name used to generate unique cache key
  */
 void Allreduce_(void *sendrecvbuf,
                 size_t type_nbytes,
@@ -216,8 +232,11 @@ void Allreduce_(void *sendrecvbuf,
                 mpi::DataType dtype,
                 mpi::OpType op,
                 IEngine::PreprocFunction prepare_fun = NULL,
-                void *prepare_arg = NULL);
-
+                void *prepare_arg = NULL,
+                bool is_bootstrap = false,
+                const char* _file = _FILE,
+                const int _line = _LINE,
+                const char* _caller = _CALLER);
 /*!
  * \brief handle for customized reducer, used to handle customized reduce
  *  this class is mainly created for compatiblity issues with MPI's customized reduce
@@ -243,12 +262,20 @@ class ReduceHandle {
    *                     will be called by the function before performing Allreduce in order to initialize the data in sendrecvbuf_.
    *                     If the result of Allreduce can be recovered directly, then prepare_func will NOT be called
    * \param prepare_arg argument used to pass into the lazy preprocessing function
+   * \param is_bootstrap if this allreduce is needed to bootstrap failed node
+   * \param _file caller file name used to generate unique cache key
+   * \param _line caller line number used to generate unique cache key
+   * \param _caller caller function name used to generate unique cache key
    */
   void Allreduce(void *sendrecvbuf,
                  size_t type_nbytes,
                  size_t count,
                  IEngine::PreprocFunction prepare_fun = NULL,
-                 void *prepare_arg = NULL);
+                 void *prepare_arg = NULL,
+                 bool is_bootstrap = false,
+                 const char* _file = _FILE,
+                 const int _line = _LINE,
+                 const char* _caller = _CALLER);
   /*! \return the number of bytes occupied by the type */
   static int TypeSize(const MPI::Datatype &dtype);
 
