@@ -540,6 +540,8 @@ class AllreduceBase : public IEngine {
   utils::TCPSocket sock_listen;
   // backdoor port
   int port = 0;
+  // enable bootstrap cache 0 false 1 true
+  int rabit_cache = 0;
 };
 }  // namespace engine
 }  // namespace rabit

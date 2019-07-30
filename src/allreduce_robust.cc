@@ -179,7 +179,8 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
     + std::string(_caller) + "#" +std::to_string(type_nbytes) + "x" + std::to_string(count);
 
   // try fetch bootstrap allreduce results from cache
-  if (is_bootstrap && GetCache(key, sendrecvbuf_, type_nbytes, count, true) != -1) return;
+  if (is_bootstrap && rabit_cache &&
+    GetCache(key, sendrecvbuf_, type_nbytes, count, true) != -1) return;
 
   double start = utils::GetTime();
   bool recovered = RecoverExec(sendrecvbuf_, type_nbytes * count, 0, seq_counter, cur_cache_seq);
@@ -209,7 +210,7 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
   // utils::HandleLogInfo("[%d] allreduce (%s) finished version %d, seq %d, take %f seconds\n",
   //  rank, key.c_str(), version_number, seq_counter, delta);
   // if bootstrap allreduce, store and fetch through cache
-  if (!is_bootstrap) {
+  if (!is_bootstrap || !rabit_cache) {
     resbuf.PushTemp(seq_counter, type_nbytes, count);
     seq_counter += 1;
   } else {
@@ -237,7 +238,8 @@ void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root,
   std::string key = std::string(_file) + "::" + std::to_string(_line) + "::"
     + std::string(_caller) + "#" +std::to_string(total_size) + "@" + std::to_string(root);
   // try fetch bootstrap allreduce results from cache
-  if (is_bootstrap && GetCache(key, sendrecvbuf_, total_size, 1, true) != -1) return;
+  if (is_bootstrap && rabit_cache &&
+    GetCache(key, sendrecvbuf_, total_size, 1, true) != -1) return;
 
   double start = utils::GetTime();
   bool recovered = RecoverExec(sendrecvbuf_, total_size, 0, seq_counter, cur_cache_seq);
@@ -265,7 +267,7 @@ void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root,
   // utils::HandleLogInfo("[%d] broadcast (%s) root %d finished version %d, seq %d,
   // take %f seconds\n", rank, key.c_str(), root, version_number, seq_counter, delta);
   // if bootstrap broadcast, store and fetch through cache
-  if (!is_bootstrap) {
+  if (!is_bootstrap || !rabit_cache) {
     resbuf.PushTemp(seq_counter, 1, total_size);
     seq_counter += 1;
   } else {

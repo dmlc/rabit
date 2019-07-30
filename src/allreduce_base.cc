@@ -46,6 +46,7 @@ AllreduceBase::AllreduceBase(void) {
   env_vars.push_back("rabit_reduce_ring_mincount");
   env_vars.push_back("rabit_tracker_uri");
   env_vars.push_back("rabit_tracker_port");
+  env_vars.push_back("rabit_cache");
   // also include dmlc support direct variables
   env_vars.push_back("DMLC_TASK_ID");
   env_vars.push_back("DMLC_ROLE");
@@ -212,6 +213,9 @@ void AllreduceBase::SetParam(const char *name, const char *val) {
     } else {
       throw std::runtime_error("invalid value of DMLC_WORKER_STOP_PROCESS_ON_ERROR");
     }
+  }
+  if (!strcmp(name, "rabit_cache")) {
+    rabit_cache = atoi(val);
   }
 }
 /*!
