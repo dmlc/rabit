@@ -206,8 +206,8 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
   }
   double delta = utils::GetTime() - start;
   // log allreduce latency
-  utils::HandleLogInfo("[%d] allreduce (%s) finished version %d, seq %d, take %f seconds\n",
-    rank, key.c_str(), version_number, seq_counter, delta);
+  // utils::HandleLogInfo("[%d] allreduce (%s) finished version %d, seq %d, take %f seconds\n",
+  //  rank, key.c_str(), version_number, seq_counter, delta);
   // if bootstrap allreduce, store and fetch through cache
   if (!is_bootstrap) {
     resbuf.PushTemp(seq_counter, type_nbytes, count);
@@ -262,8 +262,8 @@ void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root,
 
   double delta = utils::GetTime() - start;
   // log broadcast latency
-  utils::HandleLogInfo("[%d] broadcast (%s) root %d finished version %d, seq %d, take %f seconds\n",
-                       rank, key.c_str(), root, version_number, seq_counter, delta);
+  // utils::HandleLogInfo("[%d] broadcast (%s) root %d finished version %d, seq %d,
+  // take %f seconds\n", rank, key.c_str(), root, version_number, seq_counter, delta);
   // if bootstrap broadcast, store and fetch through cache
   if (!is_bootstrap) {
     resbuf.PushTemp(seq_counter, 1, total_size);
