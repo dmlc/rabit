@@ -35,6 +35,9 @@ AllreduceRobust::AllreduceRobust(void) {
 }
 bool AllreduceRobust::Init(int argc, char* argv[]) {
   if (AllreduceBase::Init(argc, argv)) {
+    // chenqin: alert user opted in experimental feature.
+    if (rabit_cache) utils::HandleLogInfo(
+      "[EXPERIMENTAL] rabit bootstrap cache has been enbabled\n");
     if (num_global_replica == 0) {
       result_buffer_round = -1;
     } else {
