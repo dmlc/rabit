@@ -542,6 +542,8 @@ class AllreduceBase : public IEngine {
   int port = 0;
   // enable bootstrap cache 0 false 1 true
   int rabit_cache = 0;
+  // enable detailed logging
+  int rabit_debug = 0;
 };
 }  // namespace engine
 }  // namespace rabit

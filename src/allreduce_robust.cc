@@ -210,8 +210,11 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
   }
   double delta = utils::GetTime() - start;
   // log allreduce latency
-  // utils::HandleLogInfo("[%d] allreduce (%s) finished version %d, seq %d, take %f seconds\n",
-  //  rank, key.c_str(), version_number, seq_counter, delta);
+  if (rabit_debug) {
+    utils::HandleLogInfo("[%d] allreduce (%s) finished version %d, seq %d, take %f seconds\n",
+      rank, key.c_str(), version_number, seq_counter, delta);
+  }
+
   // if bootstrap allreduce, store and fetch through cache
   if (!is_bootstrap || !rabit_cache) {
     resbuf.PushTemp(seq_counter, type_nbytes, count);
@@ -267,8 +270,11 @@ void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root,
 
   double delta = utils::GetTime() - start;
   // log broadcast latency
-  // utils::HandleLogInfo("[%d] broadcast (%s) root %d finished version %d, seq %d,
-  // take %f seconds\n", rank, key.c_str(), root, version_number, seq_counter, delta);
+  if (rabit_debug) {
+    utils::HandleLogInfo(
+      "[%d] broadcast (%s) root %d finished version %d,seq %d, take %f seconds\n",
+      rank, key.c_str(), root, version_number, seq_counter, delta);
+  }
   // if bootstrap broadcast, store and fetch through cache
   if (!is_bootstrap || !rabit_cache) {
     resbuf.PushTemp(seq_counter, 1, total_size);
@@ -343,11 +349,14 @@ int AllreduceRobust::LoadCheckPoint(Serializable *global_model,
       utils::Printf("no need to load cache\n");
     }
     double delta = utils::GetTime() - start;
+
     // log broadcast latency
-    utils::HandleLogInfo("[%d] loadcheckpoint size %ld finished version %d, "
+    if (rabit_debug) {
+      utils::HandleLogInfo("[%d] loadcheckpoint size %ld finished version %d, "
                          "seq %d, take %f seconds\n",
                          rank, global_checkpoint.length(),
                          version_number, seq_counter, delta);
+    }
     return version_number;
   } else {
     // reset result buffer
@@ -447,9 +456,12 @@ void AllreduceRobust::CheckPoint_(const Serializable *global_model,
   }
   double delta = utils::GetTime() - start;
   // log checkpoint latency
-  utils::HandleLogInfo("[%d] checkpoint size %ld finished version %d, seq %d, take %f seconds\n",
-                       rank, global_checkpoint.length(), version_number, seq_counter, delta);
-
+  if (rabit_debug) {
+    utils::HandleLogInfo(
+      "[%d] checkpoint size %ld finished version %d,seq %d, take %f seconds\n",
+      rank, global_checkpoint.length(),
+      version_number, seq_counter, delta);
+  }
   start = utils::GetTime();
   // reset result buffer, mark boostrap phase complete
   resbuf.Clear(); seq_counter = 0;
@@ -459,8 +471,10 @@ void AllreduceRobust::CheckPoint_(const Serializable *global_model,
 
   delta = utils::GetTime() - start;
   // log checkpoint ack latency
-  utils::HandleLogInfo("[%d] checkpoint ack finished version %d, take %f seconds\n",
-                       rank, version_number, delta);
+  if (rabit_debug) {
+    utils::HandleLogInfo("[%d] checkpoint ack finished version %d, take %f seconds\n",
+    rank, version_number, delta);
+  }
 }
 /*!
  * \brief reset the all the existing links by sending Out-of-Band message marker

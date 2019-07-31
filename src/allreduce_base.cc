@@ -47,6 +47,7 @@ AllreduceBase::AllreduceBase(void) {
   env_vars.push_back("rabit_tracker_uri");
   env_vars.push_back("rabit_tracker_port");
   env_vars.push_back("rabit_cache");
+  env_vars.push_back("rabit_debug");
   // also include dmlc support direct variables
   env_vars.push_back("DMLC_TASK_ID");
   env_vars.push_back("DMLC_ROLE");
@@ -216,6 +217,9 @@ void AllreduceBase::SetParam(const char *name, const char *val) {
   }
   if (!strcmp(name, "rabit_cache")) {
     rabit_cache = atoi(val);
+  }
+  if (!strcmp(name, "rabit_debug")) {
+    rabit_debug = atoi(val);
   }
 }
 /*!
