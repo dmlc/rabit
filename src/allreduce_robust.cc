@@ -37,7 +37,7 @@ bool AllreduceRobust::Init(int argc, char* argv[]) {
   if (AllreduceBase::Init(argc, argv)) {
     // chenqin: alert user opted in experimental feature.
     if (rabit_cache) utils::HandleLogInfo(
-      "[EXPERIMENTAL] rabit bootstrap cache has been enbabled\n");
+      "[EXPERIMENTAL] rabit bootstrap cache has been enabled\n");
     if (num_global_replica == 0) {
       result_buffer_round = -1;
     } else {
@@ -359,6 +359,9 @@ int AllreduceRobust::LoadCheckPoint(Serializable *global_model,
     }
     return version_number;
   } else {
+    // log job fresh start
+    if (rabit_debug) utils::HandleLogInfo("[%d] loadcheckpoint reset\n", rank);
+
     // reset result buffer
     resbuf.Clear(); seq_counter = 0; version_number = 0;
     // nothing loaded, a fresh start, everyone init model
@@ -1109,8 +1112,11 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno,
       if (act.check_point()) {
         if (act.diff_seq()) {
           utils::Assert(act.seqno() != ActionSummary::kSpecialOp, "min seq bug");
-          req.print_flags(rank, "checkpoint req");
-          act.print_flags(rank, "checkpoint act");
+          // print checkpoint consensus flag if user turn on debug
+          if (rabit_debug) {
+            req.print_flags(rank, "checkpoint req");
+            act.print_flags(rank, "checkpoint act");
+          }
           /*
            * Chen Qin
            * at least one hit checkpoint_ code & at least one not hitting
@@ -1165,6 +1171,11 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno,
         } else {
           // run all nodes in a isolated cache restore logic
           if (act.load_cache()) {
+            // print checkpoint consensus flag if user turn on debug
+            if (rabit_debug) {
+              req.print_flags(rank, "loadcache req");
+              act.print_flags(rank, "loadcache act");
+            }
             // load cache should not running in parralel with other states
             utils::Assert(!act.load_check(),
               "load cache state expect no nodes doing load checkpoint");
