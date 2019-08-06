@@ -293,6 +293,10 @@ bool AllreduceBase::ReConnectLinks(const char *cmd) {
     Assert(rank == -1 || newrank == rank,
            "must keep rank to same if the node already have one");
     rank = newrank;
+    // if user get -1 rank, better restart
+    if (rank == -1) {
+      exit(-1);
+    }
     Assert(tracker.RecvAll(&num_neighbors, sizeof(num_neighbors)) == \
          sizeof(num_neighbors), "ReConnectLink failure 4");
     for (int i = 0; i < num_neighbors; ++i) {
