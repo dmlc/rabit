@@ -13,7 +13,6 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include <bitset>
 #include "../include/rabit/internal/engine.h"
 #include "./allreduce_base.h"
 

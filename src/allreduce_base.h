@@ -544,6 +544,8 @@ class AllreduceBase : public IEngine {
   int rabit_cache = 0;
   // enable detailed logging
   int rabit_debug = 0;
+  // used to parallel reducer
+  int rabit_thread_num = 1;
 };
 }  // namespace engine
 }  // namespace rabit

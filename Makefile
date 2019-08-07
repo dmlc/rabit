@@ -11,7 +11,6 @@ export LDFLAGS =-Llib
 
 MPICXX=./mpich/bin/mpicxx
 
-export CXX = g++6
 export CXX = g++
 
 
@@ -35,6 +34,15 @@ endif
 ifndef LINT_LANG
 	LINT_LANG="all"
 endif
+
+OPENMP_FLAGS =
+ifeq ($(USE_OPENMP), 1)
+	OPENMP_FLAGS = -fopenmp
+else
+	OPENMP_FLAGS = -DDISABLE_OPENMP
+endif
+CFLAGS += $(OPENMP_FLAGS)
+
 
 ifeq ($(RABIT_BUILD_DMLC),1)
     DMLC=dmlc-core
