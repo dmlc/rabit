@@ -461,9 +461,8 @@ void AllreduceRobust::CheckPoint_(const Serializable *global_model,
   // log checkpoint latency
   if (rabit_debug) {
     utils::HandleLogInfo(
-      "[%d] checkpoint size %ld finished version %d,seq %d, take %f seconds\n",
-      rank, global_checkpoint.length(),
-      version_number, seq_counter, delta);
+      "[%d] checkpoint finished version %d,seq %d, take %f seconds\n",
+      rank, version_number, seq_counter, delta);
   }
   start = utils::GetTime();
   // reset result buffer, mark boostrap phase complete
@@ -1070,7 +1069,8 @@ AllreduceRobust::TryGetResult(void *sendrecvbuf, size_t size, int seqno, bool re
  */
 bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno,
                                   int cache_seqno, const char* caller) {
-  // skip load cache state as we isolated with assertions
+  // kLoadCache should be treated similar as allreduce
+  // when loadcheck/check/checkack runs in other nodes
   if (flag != 0 && flag != ActionSummary::kLoadCache) {
     utils::Assert(seqno == ActionSummary::kSpecialOp, "must only set seqno for normal operations");
   }
