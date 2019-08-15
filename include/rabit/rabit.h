@@ -46,6 +46,12 @@
 #define _CALLER  "N/A"
 #endif  // __has_builtin(__builtin_FUNCTION)
 
+#else
+
+#define _FILE  "N/A"
+#define _LINE  -1
+#define _CALLER  "N/A"
+
 #endif  // __has_builtin
 
 #endif  // RABIT_API_CALLER_SIGNATURE
