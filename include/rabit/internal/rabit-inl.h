@@ -101,7 +101,7 @@ inline void Reducer(const void *src_, void *dst_, int len, const MPI::Datatype &
   const DType *src = (const DType*)src_;
   DType *dst = (DType*)dst_;  // NOLINT(*)
 
-  #pragma omp parallel for schedule(guided)
+  #pragma omp parallel for default(none) shared(dst, len, src) schedule(guided)
   for (int i = 0; i < len; ++i) {
     OP::Reduce(dst[i], src[i]);
   }
@@ -249,9 +249,9 @@ inline void ReducerSafe_(const void *src_, void *dst_, int len_, const MPI::Data
   const size_t kUnit = sizeof(DType);
   const char *psrc = reinterpret_cast<const char*>(src_);
   char *pdst = reinterpret_cast<char*>(dst_);
-  DType tdst, tsrc;
-  #pragma omp parallel for schedule(guided)
+
   for (int i = 0; i < len_; ++i) {
+    DType tdst, tsrc;
     // use memcpy to avoid alignment issue
     std::memcpy(&tdst, pdst + i * kUnit, sizeof(tdst));
     std::memcpy(&tsrc, psrc + i * kUnit, sizeof(tsrc));
@@ -265,7 +265,7 @@ inline void ReducerAlign_(const void *src_, void *dst_,
                           int len_, const MPI::Datatype &dtype) {
   const DType *psrc = reinterpret_cast<const DType*>(src_);
   DType *pdst = reinterpret_cast<DType*>(dst_);
-  #pragma omp parallel for schedule(guided)
+  #pragma omp parallel for default(none) shared(psrc, pdst) schedule(guided)
   for (int i = 0; i < len_; ++i) {
     freduce(pdst[i], psrc[i]);
   }
@@ -296,9 +296,8 @@ inline void SerializeReducerFunc_(const void *src_, void *dst_,
                                   int len_, const MPI::Datatype &dtype) {
   int nbytes = engine::ReduceHandle::TypeSize(dtype);
   // temp space
-  DType tsrc, tdst;
-  #pragma omp parallel for schedule(guided)
   for (int i = 0; i < len_; ++i) {
+    DType tsrc, tdst;
     utils::MemoryFixSizeBuffer fsrc((char*)(src_) + i * nbytes, nbytes); // NOLINT(*)
     utils::MemoryFixSizeBuffer fdst((char*)(dst_) + i * nbytes, nbytes); // NOLINT(*)
     tsrc.Load(fsrc);
@@ -324,7 +323,6 @@ struct SerializeReduceClosure {
   // invoke the closure
   inline void Run(void) {
     if (prepare_fun != NULL) prepare_fun(prepare_arg);
-    #pragma omp parallel for schedule(guided)
     for (size_t i = 0; i < count; ++i) {
       utils::MemoryFixSizeBuffer fs(BeginPtr(*p_buffer) + i * max_nbyte, max_nbyte);
       sendrecvobj[i].Save(fs);
@@ -352,7 +350,6 @@ inline void SerializeReducer<DType>::Allreduce(DType *sendrecvobj,
   handle_.Allreduce(BeginPtr(buffer_), max_nbyte, count,
                     SerializeReduceClosure<DType>::Invoke, &c,
                     is_bootstrap, _file, _line, _caller);
-  #pragma omp parallel for schedule(guided)
   for (size_t i = 0; i < count; ++i) {
     utils::MemoryFixSizeBuffer fs(BeginPtr(buffer_) + i * max_nbyte, max_nbyte);
     sendrecvobj[i].Load(fs);
