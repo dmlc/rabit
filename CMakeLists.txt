@@ -2,6 +2,14 @@ cmake_minimum_required(VERSION 3.3)
 
 project(rabit VERSION 0.3)
 
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+if(COMPILER_SUPPORTS_CXX11)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+else()
+  message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+endif()
+
 option(RABIT_BUILD_TESTS "Build rabit tests" OFF)
 option(RABIT_BUILD_MPI "Build MPI" OFF)
 option(RABIT_BUILD_DMLC "Include DMLC_CORE in build" ON)
@@ -42,6 +50,7 @@ else()
 endif()
 
 if(RABIT_BUILD_TESTS)
+<<<<<<< HEAD
   list(REMOVE_ITEM rabit_libs "rabit_mock_static") # remove here to avoid installing it
   set(tests lazy_recover local_recover model_recover)
 
@@ -49,6 +58,13 @@ if(RABIT_BUILD_TESTS)
     add_executable(${test} test/${test}.cc)
     target_link_libraries(${test} rabit_mock_static)
     set_target_properties(${test}  PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED ON)
+=======
+  list(REMOVE_ITEM rabit_libs rabit_mock) # remove here to avoid installing it
+  set(tests speed_test lazy_recover local_recover model_recover)
+  foreach(test ${tests})
+    add_executable(${test} test/${test}.cc)
+    target_link_libraries(${test} rabit_mock)
+>>>>>>> misc, add c++ check in CMakeFile
     install(TARGETS ${test} DESTINATION test)
   endforeach()
   if(RABIT_BUILD_MPI)
@@ -65,7 +81,11 @@ endif()
 #   * <prefix>/lib/
 #   * <prefix>/include/
 set(CMAKE_INSTALL_PREFIX "../")
+<<<<<<< HEAD
 set(config_install_dir "cmake/${PROJECT_NAME}")
+=======
+set(config_install_dir "lib/cmake/${PROJECT_NAME}")
+>>>>>>> misc, add c++ check in CMakeFile
 set(include_install_dir "include")
 
 set(generated_dir "${CMAKE_CURRENT_BINARY_DIR}/generated")
