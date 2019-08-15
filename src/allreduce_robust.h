@@ -34,21 +34,21 @@ class AllreduceRobust : public AllreduceBase {
    */
   virtual void SetParam(const char *name, const char *val);
   /*!
-   * \brief perform immutable local cache insertion
+   * \brief perform immutable local bootstrap cache insertion
    * \param key unique cache key
    * \param buf buffer of allreduce/robust payload to copy
    * \param buflen total number of bytes
    * \return -1 if no recovery cache fetched otherwise 0
    */
-  int SetCache(const std::string &key, const void *buf,
+  int SetBootstrapCache(const std::string &key, const void *buf,
     const size_t type_nbytes, const size_t count);
   /*!
-   * \brief perform cache lookup if nodes in fault recovery
+   * \brief perform bootstrap cache lookup if nodes in fault recovery
    * \param key unique cache key
    * \param buf buffer for recv allreduce/robust payload
    * \param buflen total number of bytes
    */
-  int GetCache(const std::string &key, void *buf, const size_t type_nbytes,
+  int GetBootstrapCache(const std::string &key, void *buf, const size_t type_nbytes,
     const size_t count, const bool byref = false);
   /*!
    * \brief perform in-place allreduce, on sendrecvbuf

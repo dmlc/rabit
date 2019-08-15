@@ -44,15 +44,27 @@
 #ifndef RABIT_API_CALLER_SIGNATURE
 #define RABIT_API_CALLER_SIGNATURE
 
-#ifdef __linux__
+#ifdef __has_builtin
+
+#if __has_builtin(__builtin_FILE)
 #define _FILE  __builtin_FILE()
-#define _LINE  __builtin_LINE()
-#define _CALLER  __builtin_FUNCTION()
 #else
 #define _FILE  "N/A"
+#endif  // __has_builtin(__builtin_FILE)
+
+#if __has_builtin(__builtin_LINE)
+#define _LINE  __builtin_LINE()
+#else
 #define _LINE  -1
+#endif  // __has_builtin(__builtin_LINE)
+
+#if __has_builtin(__builtin_FUNCTION)
+#define _CALLER  __builtin_FUNCTION()
+#else
 #define _CALLER  "N/A"
-#endif  // __linux__
+#endif  // __has_builtin(__builtin_FUNCTION)
+
+#endif  // __has_builtin
 
 #endif  // RABIT_API_CALLER_SIGNATURE
 

@@ -31,10 +31,6 @@ ifeq ($(WITH_FPIC), 1)
 	CFLAGS += -fPIC
 endif
 
-ifeq ($(USE_OPENMP), 1)
-    CFLAGS += -fopenmp
-endif
-
 CFLAGS += -I../include -I $(DMLC)/include -std=c++11
 
 # specify tensor path

@@ -101,7 +101,6 @@ inline void Reducer(const void *src_, void *dst_, int len, const MPI::Datatype &
   const DType *src = (const DType*)src_;
   DType *dst = (DType*)dst_;  // NOLINT(*)
 
-  #pragma omp parallel for default(none) shared(dst, len, src) schedule(guided)
   for (int i = 0; i < len; ++i) {
     OP::Reduce(dst[i], src[i]);
   }
@@ -249,7 +248,6 @@ inline void ReducerSafe_(const void *src_, void *dst_, int len_, const MPI::Data
   const size_t kUnit = sizeof(DType);
   const char *psrc = reinterpret_cast<const char*>(src_);
   char *pdst = reinterpret_cast<char*>(dst_);
-
   for (int i = 0; i < len_; ++i) {
     DType tdst, tsrc;
     // use memcpy to avoid alignment issue

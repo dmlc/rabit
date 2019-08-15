@@ -35,10 +35,6 @@ ifndef LINT_LANG
 	LINT_LANG="all"
 endif
 
-ifeq ($(USE_OPENMP), 1)
-    CFLAGS += -fopenmp
-endif
-
 ifeq ($(RABIT_BUILD_DMLC),1)
     DMLC=dmlc-core
 else

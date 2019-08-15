@@ -36,7 +36,7 @@ AllreduceRobust::AllreduceRobust(void) {
 bool AllreduceRobust::Init(int argc, char* argv[]) {
   if (AllreduceBase::Init(argc, argv)) {
     // chenqin: alert user opted in experimental feature.
-    if (rabit_cache) utils::HandleLogInfo(
+    if (rabit_bootstrap_cache) utils::HandleLogInfo(
       "[EXPERIMENTAL] rabit bootstrap cache has been enabled\n");
     if (num_global_replica == 0) {
       result_buffer_round = -1;
@@ -84,7 +84,7 @@ void AllreduceRobust::SetParam(const char *name, const char *val) {
   }
 }
 
-int AllreduceRobust::SetCache(const std::string &key, const void *buf,
+int AllreduceRobust::SetBootstrapCache(const std::string &key, const void *buf,
   const size_t type_nbytes, const size_t count) {
   int index = -1;
   for (int i = 0 ; i < cur_cache_seq; i++) {
@@ -110,7 +110,7 @@ int AllreduceRobust::SetCache(const std::string &key, const void *buf,
   return 0;
 }
 
-int AllreduceRobust::GetCache(const std::string &key, void* buf,
+int AllreduceRobust::GetBootstrapCache(const std::string &key, void* buf,
   const size_t type_nbytes, const size_t count, const bool byref) {
   // as requester sync with rest of nodes on latest cache content
   if (!RecoverExec(NULL, 0, ActionSummary::kLoadCache, seq_counter, cur_cache_seq)) return -1;
@@ -182,8 +182,8 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
     + std::string(_caller) + "#" +std::to_string(type_nbytes) + "x" + std::to_string(count);
 
   // try fetch bootstrap allreduce results from cache
-  if (is_bootstrap && rabit_cache &&
-    GetCache(key, sendrecvbuf_, type_nbytes, count, true) != -1) return;
+  if (is_bootstrap && rabit_bootstrap_cache &&
+    GetBootstrapCache(key, sendrecvbuf_, type_nbytes, count, true) != -1) return;
 
   double start = utils::GetTime();
   bool recovered = RecoverExec(sendrecvbuf_, type_nbytes * count, 0, seq_counter, cur_cache_seq);
@@ -216,11 +216,11 @@ void AllreduceRobust::Allreduce(void *sendrecvbuf_,
   }
 
   // if bootstrap allreduce, store and fetch through cache
-  if (!is_bootstrap || !rabit_cache) {
+  if (!is_bootstrap || !rabit_bootstrap_cache) {
     resbuf.PushTemp(seq_counter, type_nbytes, count);
     seq_counter += 1;
   } else {
-    SetCache(key, sendrecvbuf_, type_nbytes, count);
+    SetBootstrapCache(key, sendrecvbuf_, type_nbytes, count);
   }
 }
 /*!
@@ -244,8 +244,8 @@ void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root,
   std::string key = std::string(_file) + "::" + std::to_string(_line) + "::"
     + std::string(_caller) + "#" +std::to_string(total_size) + "@" + std::to_string(root);
   // try fetch bootstrap allreduce results from cache
-  if (is_bootstrap && rabit_cache &&
-    GetCache(key, sendrecvbuf_, total_size, 1, true) != -1) return;
+  if (is_bootstrap && rabit_bootstrap_cache &&
+    GetBootstrapCache(key, sendrecvbuf_, total_size, 1, true) != -1) return;
 
   double start = utils::GetTime();
   bool recovered = RecoverExec(sendrecvbuf_, total_size, 0, seq_counter, cur_cache_seq);
@@ -276,11 +276,11 @@ void AllreduceRobust::Broadcast(void *sendrecvbuf_, size_t total_size, int root,
       rank, key.c_str(), root, version_number, seq_counter, delta);
   }
   // if bootstrap broadcast, store and fetch through cache
-  if (!is_bootstrap || !rabit_cache) {
+  if (!is_bootstrap || !rabit_bootstrap_cache) {
     resbuf.PushTemp(seq_counter, 1, total_size);
     seq_counter += 1;
   } else {
-    SetCache(key, sendrecvbuf_, total_size, 1);
+    SetBootstrapCache(key, sendrecvbuf_, total_size, 1);
   }
 }
 /*!
