@@ -91,7 +91,7 @@ int AllreduceRobust::SetBootstrapCache(const std::string &key, const void *buf,
     size_t nsize = 0;
     void* name = lookupbuf.Query(i, &nsize);
     if (nsize == key.length() + 1
-      && strcmp(reinterpret_cast<char*>(name), key.c_str()) == 0) {
+      && strcmp(static_cast<const char*>(name), key.c_str()) == 0) {
       index = i;
       break;
     }
