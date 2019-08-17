@@ -14,10 +14,11 @@ endif()
 add_library(rabit src/allreduce_base.cc src/allreduce_robust.cc src/engine.cc src/c_api.cc)
 add_library(rabit_base src/allreduce_base.cc src/engine_base.cc src/c_api.cc)
 add_library(rabit_empty src/engine_empty.cc src/c_api.cc)
+add_library(rabit_mock_static src/allreduce_base.cc src/allreduce_robust.cc src/engine_mock.cc src/c_api.cc)
+add_library(rabit_mock SHARED src/allreduce_base.cc src/allreduce_robust.cc src/engine_mock.cc src/c_api.cc)
 
-set(rabit_libs rabit rabit_base rabit_empty)
-
-set_target_properties(rabit rabit_base rabit_empty PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED ON)
+set(rabit_libs rabit rabit_base rabit_empty rabit_mock rabit_mock_static)
+set_target_properties(rabit rabit_base rabit_empty rabit_mock rabit_mock_static PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED ON)
 
 if(RABIT_BUILD_MPI)
   find_package(MPI REQUIRED)
@@ -26,11 +27,6 @@ if(RABIT_BUILD_MPI)
   list(APPEND rabit_libs rabit_mpi)
 endif()
 
-if(RABIT_BUILD_TESTS)
-  # Use static so that rabit_mock won't be installed when building shared libraries.
-  add_library(rabit_mock STATIC src/allreduce_base.cc src/allreduce_robust.cc src/engine_mock.cc src/c_api.cc)
-  list(APPEND rabit_libs rabit_mock) # add to list to apply build settings, then remove
-endif()
 
 if(RABIT_BUILD_DMLC)
   foreach(lib ${rabit_libs})
@@ -51,17 +47,17 @@ else()
 endif()
 
 if(RABIT_BUILD_TESTS)
-  list(REMOVE_ITEM rabit_libs "rabit_mock") # remove here to avoid installing it
+  list(REMOVE_ITEM rabit_libs "rabit_mock_static") # remove here to avoid installing it
   set(tests speed_test lazy_recover local_recover model_recover)
   foreach(test ${tests})
     add_executable(${test} test/${test}.cc)
-    target_link_libraries(${test} rabit_mock)
-    install(TARGETS ${test} DESTINATION bin)
+    target_link_libraries(${test} rabit_mock_static)
+    install(TARGETS ${test} DESTINATION test)
   endforeach()
   if(RABIT_BUILD_MPI)
     add_executable(speed_test_mpi test/speed_test.cc)
     target_link_libraries(speed_test_mpi rabit_mpi)
-    install(TARGETS speed_test_mpi DESTINATION bin)
+    install(TARGETS speed_test_mpi DESTINATION test)
   endif()
 endif()
 
@@ -71,7 +67,8 @@ endif()
 #   * <prefix>/lib/cmake/<PROJECT-NAME>
 #   * <prefix>/lib/
 #   * <prefix>/include/
-set(config_install_dir "lib/cmake/${PROJECT_NAME}")
+set(CMAKE_INSTALL_PREFIX "../")
+set(config_install_dir "cmake/${PROJECT_NAME}")
 set(include_install_dir "include")
 
 set(generated_dir "${CMAKE_CURRENT_BINARY_DIR}/generated")
