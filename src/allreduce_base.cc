@@ -38,9 +38,6 @@ AllreduceBase::AllreduceBase(void) {
   version_number = 0;
   // 32 K items
   reduce_ring_mincount = 32 << 10;
-#ifdef _OPENMP
-  rabit_thread_num = omp_get_num_threads();
-#endif  // _OPENMP
   // tracker URL
   task_id = "NULL";
   err_link = NULL;
@@ -53,9 +50,8 @@ AllreduceBase::AllreduceBase(void) {
   env_vars.push_back("rabit_reduce_ring_mincount");
   env_vars.push_back("rabit_tracker_uri");
   env_vars.push_back("rabit_tracker_port");
-  env_vars.push_back("rabit_cache");
+  env_vars.push_back("rabit_bootstrap_cache");
   env_vars.push_back("rabit_debug");
-  env_vars.push_back("rabit_thread_num");
   // also include dmlc support direct variables
   env_vars.push_back("DMLC_TASK_ID");
   env_vars.push_back("DMLC_ROLE");
@@ -124,10 +120,6 @@ bool AllreduceBase::Init(int argc, char* argv[]) {
             ", quit this program by exit 0\n");
     exit(0);
   }
-
-  #ifdef _OPENMP
-  omp_set_num_threads(rabit_thread_num);
-  #endif  // _OPENMP
 
   // clear the setting before start reconnection
   this->rank = -1;
@@ -228,14 +220,11 @@ void AllreduceBase::SetParam(const char *name, const char *val) {
       throw std::runtime_error("invalid value of DMLC_WORKER_STOP_PROCESS_ON_ERROR");
     }
   }
-  if (!strcmp(name, "rabit_cache")) {
-    rabit_cache = atoi(val);
+  if (!strcmp(name, "rabit_bootstrap_cache")) {
+    rabit_bootstrap_cache = atoi(val);
   }
   if (!strcmp(name, "rabit_debug")) {
     rabit_debug = atoi(val);
-  }
-  if (!strcmp(name, "rabit_thread_num")) {
-    rabit_thread_num = atoi(val);
   }
 }
 /*!

@@ -541,11 +541,9 @@ class AllreduceBase : public IEngine {
   // backdoor port
   int port = 0;
   // enable bootstrap cache 0 false 1 true
-  int rabit_cache = 0;
+  int rabit_bootstrap_cache = 0;
   // enable detailed logging
   int rabit_debug = 0;
-  // used to parallel reducer
-  int rabit_thread_num = 1;
 };
 }  // namespace engine
 }  // namespace rabit

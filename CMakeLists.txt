@@ -1,15 +1,10 @@
 cmake_minimum_required(VERSION 3.3)
 
 project(rabit VERSION 0.3)
-find_package(OpenMP)
 
 option(RABIT_BUILD_TESTS "Build rabit tests" OFF)
 option(RABIT_BUILD_MPI "Build MPI" OFF)
 option(RABIT_BUILD_DMLC "Include DMLC_CORE in build" ON)
-
-if(OpenMP_CXX_FOUND OR OPENMP_FOUND)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-endif()
 
 add_library(rabit src/allreduce_base.cc src/allreduce_robust.cc src/engine.cc src/c_api.cc)
 add_library(rabit_base src/allreduce_base.cc src/engine_base.cc src/c_api.cc)
