@@ -263,7 +263,6 @@ inline void ReducerAlign_(const void *src_, void *dst_,
                           int len_, const MPI::Datatype &dtype) {
   const DType *psrc = reinterpret_cast<const DType*>(src_);
   DType *pdst = reinterpret_cast<DType*>(dst_);
-  #pragma omp parallel for default(none) shared(psrc, pdst) schedule(guided)
   for (int i = 0; i < len_; ++i) {
     freduce(pdst[i], psrc[i]);
   }
