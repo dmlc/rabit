@@ -14,10 +14,6 @@
 #include "./utils.h"
 #include "../rabit.h"
 
-#ifdef _OPENMP
-#include <omp.h>
-#endif  // _OPENMP
-
 namespace rabit {
 namespace engine {
 namespace mpi {

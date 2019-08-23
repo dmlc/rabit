@@ -16,7 +16,7 @@ env:
     - TASK=doc
     - TASK=build
     - TASK=mpi-build
-    - TASK=cmake-build
+    - TASK=cmake-test
     - TASK=test CXX=g++
 
 # dependent apt packages

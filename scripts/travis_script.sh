@@ -10,6 +10,7 @@ if [ ${TASK} == "doc" ]; then
     (cat log.txt| grep -v ENABLE_PREPROCESSING |grep -v "unsupported tag" |grep warning) && exit -1
 fi
 
+# we should depreciate Makefile based build
 if [ ${TASK} == "build" ]; then
     make all RABIT_BUILD_DMLC=1 || exit -1
 fi
@@ -26,7 +27,8 @@ if [ ${TASK} == "test" ]; then
     ../scripts/travis_runtest.sh || exit -1
 fi
 
-if [ ${TASK} == "cmake-build" ]; then
+#
+if [ ${TASK} == "cmake-test" ]; then
     mkdir build
     cd build
     cmake -DRABIT_BUILD_TESTS=ON -DRABIT_BUILD_DMLC=ON ..

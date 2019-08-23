@@ -43,10 +43,12 @@ endif()
 
 if(RABIT_BUILD_TESTS)
   list(REMOVE_ITEM rabit_libs "rabit_mock_static") # remove here to avoid installing it
-  set(tests speed_test lazy_recover local_recover model_recover)
+  set(tests lazy_recover local_recover model_recover)
+
   foreach(test ${tests})
     add_executable(${test} test/${test}.cc)
     target_link_libraries(${test} rabit_mock_static)
+    set_target_properties(${test}  PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED ON)
     install(TARGETS ${test} DESTINATION test)
   endforeach()
   if(RABIT_BUILD_MPI)
