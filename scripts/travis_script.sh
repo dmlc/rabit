@@ -20,13 +20,6 @@ if [ ${TASK} == "mpi-build" ]; then
     cd test
     make mpi RABIT_BUILD_DMLC=1 && make speed_test.mpi RABIT_BUILD_DMLC=1 || exit -1
 fi
-
-if [ ${TASK} == "test" ]; then
-    cd test
-    make all RABIT_BUILD_DMLC=1 || exit -1
-    ../scripts/travis_runtest.sh || exit -1
-fi
-
 #
 if [ ${TASK} == "cmake-test" ]; then
     mkdir build
@@ -35,4 +28,5 @@ if [ ${TASK} == "cmake-test" ]; then
     make install || exit -1
     cd ../test
     ../scripts/travis_runtest.sh || exit -1
+    rm -rf ../build
 fi
