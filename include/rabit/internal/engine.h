@@ -9,6 +9,40 @@
 #include <string>
 #include "../serializable.h"
 
+// keeps rabit api caller signature
+#ifndef RABIT_API_CALLER_SIGNATURE
+#define RABIT_API_CALLER_SIGNATURE
+
+#ifdef __has_builtin
+
+#if __has_builtin(__builtin_FILE)
+#define _FILE  __builtin_FILE()
+#else
+#define _FILE  "N/A"
+#endif  // __has_builtin(__builtin_FILE)
+
+#if __has_builtin(__builtin_LINE)
+#define _LINE  __builtin_LINE()
+#else
+#define _LINE  -1
+#endif  // __has_builtin(__builtin_LINE)
+
+#if __has_builtin(__builtin_FUNCTION)
+#define _CALLER  __builtin_FUNCTION()
+#else
+#define _CALLER  "N/A"
+#endif  // __has_builtin(__builtin_FUNCTION)
+
+#else
+
+#define _FILE  "N/A"
+#define _LINE  -1
+#define _CALLER  "N/A"
+
+#endif  // __has_builtin
+
+#endif  // RABIT_API_CALLER_SIGNATURE
+
 namespace MPI {
 /*! \brief MPI data type just to be compatible with MPI reduce function*/
 class Datatype;
