@@ -113,7 +113,8 @@ int AllreduceRobust::SetBootstrapCache(const std::string &key, const void *buf,
 int AllreduceRobust::GetBootstrapCache(const std::string &key, void* buf,
   const size_t type_nbytes, const size_t count, const bool byref) {
   // as requester sync with rest of nodes on latest cache content
-  if (!RecoverExec(NULL, 0, ActionSummary::kLoadCache, seq_counter, cur_cache_seq)) return -1;
+  if (!RecoverExec(NULL, 0, ActionSummary::kLoadBootstrapCache,
+    seq_counter, cur_cache_seq)) return -1;
 
   int index = -1;
   for (int i = 0 ; i < cur_cache_seq; i++) {
@@ -345,7 +346,7 @@ int AllreduceRobust::LoadCheckPoint(Serializable *global_model,
     utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck,
       ActionSummary::kSpecialOp, cur_cache_seq), "check ack must return true");
 
-    if (!RecoverExec(NULL, 0, ActionSummary::kLoadCache, seq_counter, cur_cache_seq)) {
+    if (!RecoverExec(NULL, 0, ActionSummary::kLoadBootstrapCache, seq_counter, cur_cache_seq)) {
       utils::Printf("no need to load cache\n");
     }
     double delta = utils::GetTime() - start;
@@ -1069,9 +1070,9 @@ AllreduceRobust::TryGetResult(void *sendrecvbuf, size_t size, int seqno, bool re
  */
 bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno,
                                   int cache_seqno, const char* caller) {
-  // kLoadCache should be treated similar as allreduce
+  // kLoadBootstrapCache should be treated similar as allreduce
   // when loadcheck/check/checkack runs in other nodes
-  if (flag != 0 && flag != ActionSummary::kLoadCache) {
+  if (flag != 0 && flag != ActionSummary::kLoadBootstrapCache) {
     utils::Assert(seqno == ActionSummary::kSpecialOp, "must only set seqno for normal operations");
   }
 

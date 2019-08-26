@@ -13,10 +13,6 @@
 #include <cstring>
 #include "./allreduce_base.h"
 
-#ifdef _OPENMP
-#include <omp.h>
-#endif  // _OPENMP
-
 namespace rabit {
 
 namespace utils {

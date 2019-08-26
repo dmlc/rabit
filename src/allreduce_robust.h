@@ -223,7 +223,7 @@ class AllreduceRobust : public AllreduceBase {
     // action instead of normal execution
     static const int kDiffSeq = 8;
     // there are nodes request load cache
-    static const int kLoadCache = 16;
+    static const int kLoadBootstrapCache = 16;
     // constructor
     ActionSummary(void) {}
     // constructor of action
@@ -246,7 +246,7 @@ class AllreduceRobust : public AllreduceBase {
     // whether the operation set contains a load_cache
     inline bool load_cache(SeqType t = SeqType::kSeq) const {
       int code = t == SeqType::kSeq ? seqcode : maxseqcode;
-      return (code & kLoadCache) != 0;
+      return (code & kLoadBootstrapCache) != 0;
     }
     // whether the operation set contains a check point
     inline bool check_point(SeqType t = SeqType::kSeq) const {
