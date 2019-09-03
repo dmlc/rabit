@@ -8,7 +8,7 @@ endif
 
 MPICXX=../mpich/bin/mpicxx
 export LDFLAGS=  -L../lib -pthread -lm
-export CFLAGS = -Wall -O3 -Wno-unknown-pragmas
+export CFLAGS = -Wall -O3 -fopt-info-loop-optimized=loop.miss -fopenmp -Wno-unknown-pragmas
 
 export CC = gcc
 export CXX = g++

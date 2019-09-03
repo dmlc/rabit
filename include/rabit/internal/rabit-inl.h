@@ -13,6 +13,7 @@
 #include "./io.h"
 #include "./utils.h"
 #include "../rabit.h"
+#include "omp.h"
 
 namespace rabit {
 namespace engine {
@@ -66,6 +67,7 @@ inline DataType GetType<unsigned long long>(void) { // NOLINT(*)
 namespace op {
 struct Max {
   static const engine::mpi::OpType kType = engine::mpi::kMax;
+  #pragma omp declare simd uniform(src)
   template<typename DType>
   inline static void Reduce(DType &dst, const DType &src) { // NOLINT(*)
     if (dst < src) dst = src;
@@ -73,6 +75,7 @@ struct Max {
 };
 struct Min {
   static const engine::mpi::OpType kType = engine::mpi::kMin;
+  #pragma omp declare simd uniform(src)
   template<typename DType>
   inline static void Reduce(DType &dst, const DType &src) { // NOLINT(*)
     if (dst > src) dst = src;
@@ -80,6 +83,7 @@ struct Min {
 };
 struct Sum {
   static const engine::mpi::OpType kType = engine::mpi::kSum;
+  #pragma omp declare simd uniform(src)
   template<typename DType>
   inline static void Reduce(DType &dst, const DType &src) { // NOLINT(*)
     dst += src;
@@ -87,6 +91,7 @@ struct Sum {
 };
 struct BitOR {
   static const engine::mpi::OpType kType = engine::mpi::kBitwiseOR;
+  #pragma omp declare simd uniform(src)
   template<typename DType>
   inline static void Reduce(DType &dst, const DType &src) { // NOLINT(*)
     dst |= src;
@@ -94,10 +99,10 @@ struct BitOR {
 };
 template<typename OP, typename DType>
 inline void Reducer(const void *src_, void *dst_, int len, const MPI::Datatype &dtype) {
-  const DType *src = (const DType*)src_;
-  DType *dst = (DType*)dst_;  // NOLINT(*)
-
-  for (int i = 0; i < len; ++i) {
+  const DType* src = (const DType*)src_;
+  DType* dst = (DType*)dst_;  // NOLINT(*)
+  #pragma omp simd
+  for (int i = 0; i < len; i++) {
     OP::Reduce(dst[i], src[i]);
   }
 }
@@ -244,13 +249,15 @@ inline void ReducerSafe_(const void *src_, void *dst_, int len_, const MPI::Data
   const size_t kUnit = sizeof(DType);
   const char *psrc = reinterpret_cast<const char*>(src_);
   char *pdst = reinterpret_cast<char*>(dst_);
+
+  #pragma omp simd
   for (int i = 0; i < len_; ++i) {
     DType tdst, tsrc;
     // use memcpy to avoid alignment issue
-    std::memcpy(&tdst, pdst + i * kUnit, sizeof(tdst));
-    std::memcpy(&tsrc, psrc + i * kUnit, sizeof(tsrc));
+    std::memcpy(&tdst, pdst + (i * kUnit), sizeof(DType));
+    std::memcpy(&tsrc, psrc + (i * kUnit), sizeof(DType));
     freduce(tdst, tsrc);
-    std::memcpy(pdst + i * kUnit, &tdst, sizeof(tdst));
+    std::memcpy(pdst + i * kUnit, &tdst, sizeof(DType));
   }
 }
 // function to perform reduction for Reducer
@@ -259,6 +266,7 @@ inline void ReducerAlign_(const void *src_, void *dst_,
                           int len_, const MPI::Datatype &dtype) {
   const DType *psrc = reinterpret_cast<const DType*>(src_);
   DType *pdst = reinterpret_cast<DType*>(dst_);
+  #pragma omp simd
   for (int i = 0; i < len_; ++i) {
     freduce(pdst[i], psrc[i]);
   }
@@ -289,6 +297,7 @@ inline void SerializeReducerFunc_(const void *src_, void *dst_,
                                   int len_, const MPI::Datatype &dtype) {
   int nbytes = engine::ReduceHandle::TypeSize(dtype);
   // temp space
+  #pragma omp simd
   for (int i = 0; i < len_; ++i) {
     DType tsrc, tdst;
     utils::MemoryFixSizeBuffer fsrc((char*)(src_) + i * nbytes, nbytes); // NOLINT(*)
@@ -316,6 +325,7 @@ struct SerializeReduceClosure {
   // invoke the closure
   inline void Run(void) {
     if (prepare_fun != NULL) prepare_fun(prepare_arg);
+    #pragma omp simd
     for (size_t i = 0; i < count; ++i) {
       utils::MemoryFixSizeBuffer fs(BeginPtr(*p_buffer) + i * max_nbyte, max_nbyte);
       sendrecvobj[i].Save(fs);
@@ -343,6 +353,7 @@ inline void SerializeReducer<DType>::Allreduce(DType *sendrecvobj,
   handle_.Allreduce(BeginPtr(buffer_), max_nbyte, count,
                     SerializeReduceClosure<DType>::Invoke, &c,
                     is_bootstrap, _file, _line, _caller);
+  #pragma omp simd
   for (size_t i = 0; i < count; ++i) {
     utils::MemoryFixSizeBuffer fs(BeginPtr(buffer_) + i * max_nbyte, max_nbyte);
     sendrecvobj[i].Load(fs);
