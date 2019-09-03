@@ -8,7 +8,7 @@ endif
 
 MPICXX=../mpich/bin/mpicxx
 export LDFLAGS=  -L../lib -pthread -lm
-export CFLAGS = -Wall -O3 -fopt-info-loop-optimized=loop.miss -fopenmp -Wno-unknown-pragmas
+export CFLAGS = -Wall -O3 -Wno-unknown-pragmas
 
 export CC = gcc
 export CXX = g++
@@ -29,6 +29,10 @@ ifndef WITH_FPIC
 endif
 ifeq ($(WITH_FPIC), 1)
 	CFLAGS += -fPIC
+endif
+
+ifeq ($(USE_OPENMP), 1)
+	CFLAGS += -fopenmp
 endif
 
 CFLAGS += -I../include -I $(DMLC)/include -std=c++11

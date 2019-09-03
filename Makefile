@@ -3,7 +3,7 @@ OS := $(shell uname)
 RABIT_BUILD_DMLC = 0
 
 export WARNFLAGS= -Wall -Wextra -Wno-unused-parameter -Wno-unknown-pragmas -std=c++11
-export CFLAGS = -O3 -fopt-info-loop-optimized=loop.miss -fopenmp $(WARNFLAGS)
+export CFLAGS = -O3 $(WARNFLAGS)
 export LDFLAGS =-Llib
 
 #download mpi
@@ -22,6 +22,10 @@ ifneq (,$(filter $(ARCH), armv6l armv7l powerpc64le ppc64le aarch64))
 	CFLAGS += -march=native
 else
 	CFLAGS += -msse2
+endif
+
+ifeq ($(USE_OPENMP), 1)
+	CFLAGS += -fopenmp
 endif
 
 ifndef WITH_FPIC

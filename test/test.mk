@@ -12,10 +12,10 @@ endif
 all: speed_test_tree speed_test_ring model_recover_10_10k  model_recover_10_10k_die_same model_recover_10_10k_die_hard local_recover_10_10k lazy_recover_10_10k_die_hard lazy_recover_10_10k_die_same ringallreduce_10_10k pylocal_recover_10_10k
 
 speed_test_tree:
-	$(DMLC)/tracker/dmlc-submit --cluster local --num-workers=10 speed_test 100000 10
+	$(DMLC)/tracker/dmlc-submit --cluster local --num-workers=10 speed_test 10000 10
 
 speed_test_ring:
-    $(DMLC)/tracker/dmlc-submit --cluster local --num-workers=10 speed_test 100000 10 rabit_reduce_ring_mincount=1
+    $(DMLC)/tracker/dmlc-submit --cluster local --num-workers=10 speed_test 10000 10 rabit_reduce_ring_mincount=1
 
 # this experiment test recovery with actually process exit, use keepalive to keep program alive
 model_recover_10_10k:
