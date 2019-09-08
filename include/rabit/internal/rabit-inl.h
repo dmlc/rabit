@@ -10,6 +10,7 @@
 // use engine for implementation
 #include <vector>
 #include <string>
+#include <memory>
 #include "./io.h"
 #include "./utils.h"
 #include "../rabit.h"
@@ -110,13 +111,14 @@ struct BitOR {
 };
 template<typename OP, typename DType>
 inline void Reducer(const void *src_, void *dst_, int len, const MPI::Datatype &dtype) {
-  const DType*__restrict__ src = (const DType*)src_;
-  DType*__restrict__ dst = (DType*)dst_;  // NOLINT(*)
+  std::vector<DType>& vsrc = reinterpret_cast<std::vector<DType>&>(src_);
+  std::vector<DType>& vdst = reinterpret_cast<std::vector<DType>&>(dst_);
+  int nbytes = sizeof(DType);
 #ifndef _WIN32
-  #pragma omp align(dst src:64) private(src) shared(dst) simd parallel for
+  #pragma omp align(vdst vsrc:nbytes) simd parallel for nowait
 #endif  // _WIN32
   for (int i = 0; i < len; i++) {
-    OP::Reduce(dst[i], src[i]);
+    OP::Reduce(vdst[i], vsrc[i]);
   }
 }
 }  // namespace op
@@ -252,35 +254,16 @@ inline int VersionNumber(void) {
 // Code to handle customized Reduce
 // ---------------------------------
 // function to perform reduction for Reducer
-template<typename DType, void (*freduce)(DType &dst, const DType &src)>
-inline void ReducerSafe_(const void *src_, void *dst_, int len_, const MPI::Datatype &dtype) {
-  const size_t kUnit = sizeof(DType);
-  const char *__restrict__ psrc = reinterpret_cast<const char*>(src_);
-  char *__restrict__ pdst = reinterpret_cast<char*>(dst_);
-
-#ifndef _WIN32
-  #pragma omp align(psrc pdst :kUnit) private(psrc) shared(pdst) simd parallel for
-#endif  // _WIN32
-  for (int i = 0; i < len_; ++i) {
-    DType tdst, tsrc;
-    // use memcpy to avoid alignment issue
-    std::memcpy(&tdst, pdst + (i * kUnit), sizeof(DType));
-    std::memcpy(&tsrc, psrc + (i * kUnit), sizeof(DType));
-    freduce(tdst, tsrc);
-    std::memcpy(pdst + i * kUnit, &tdst, sizeof(DType));
-  }
-}
-// function to perform reduction for Reducer
 template<typename DType, void (*freduce)(DType &dst, const DType &src)> // NOLINT(*)
 inline void ReducerAlign_(const void *src_, void *dst_,
                           int len_, const MPI::Datatype &dtype) {
-  const DType *__restrict__ psrc = reinterpret_cast<const DType*>(src_);
-  DType *__restrict__ pdst = reinterpret_cast<DType*>(dst_);
+  std::vector<DType>& vsrc = reinterpret_cast<std::vector<DType>&>(src_);
+  std::vector<DType>& vdst = reinterpret_cast<std::vector<DType>&>(dst_);
 #ifndef _WIN32
-  #pragma omp align(psrc pdst:64)  private(psrc) shared(pdst) simd parallel for
+  #pragma omp align(psrc vdst:nbytes) simd parallel for nowait // NOLINT(*)
 #endif  // _WIN32
   for (int i = 0; i < len_; ++i) {
-    freduce(pdst[i], psrc[i]);
+    freduce(vdst[i], vsrc[i]);
   }
 }
 template<typename DType, void (*freduce)(DType &dst, const DType &src)>  // NOLINT(*)
@@ -302,22 +285,15 @@ template<typename DType>
 inline void SerializeReducerFunc_(const void *src_, void *dst_,
                                   int len_, const MPI::Datatype &dtype) {
   int nbytes = engine::ReduceHandle::TypeSize(dtype);
-  const DType *__restrict__ psrc = reinterpret_cast<const DType*>(src_);
-  DType *__restrict__ pdst = reinterpret_cast<DType*>(dst_);
-  // temp space
+
+  std::vector<DType>& vsrc = reinterpret_cast<std::vector<DType>&>(src_);
+  std::vector<DType>& vdst = reinterpret_cast<std::vector<DType>&>(dst_);
+
 #ifndef _WIN32
-  #pragma omp align(psrc pdst:64) private(psrc) shared(pdst) simd parallel for
+  #pragma omp align (vdst vsrc:nbytes) simd parallel for nowait // NOLINT(*)
 #endif  // _WIN32
-  for (int i = 0; i < len_; ++i) {
-    DType tsrc, tdst;
-    utils::MemoryFixSizeBuffer fsrc((char*)(psrc) + i * nbytes, nbytes); // NOLINT(*)
-    utils::MemoryFixSizeBuffer fdst((char*)(pdst) + i * nbytes, nbytes); // NOLINT(*)
-    tsrc.Load(fsrc);
-    tdst.Load(fdst);
-    // govern const check
-    tdst.Reduce(static_cast<const DType &>(tsrc), nbytes);
-    fdst.Seek(0);
-    tdst.Save(fdst);
+  for (int i = 0 ; i < len_ ; i++) {
+     vdst[i].Reduce(vsrc[i], nbytes);
   }
 }
 template<typename DType>
@@ -335,13 +311,8 @@ struct SerializeReduceClosure {
   // invoke the closure
   inline void Run(void) {
     if (prepare_fun != NULL) prepare_fun(prepare_arg);
-#ifndef _WIN32
-    #pragma omp align(sendrecvobj p_buffer:64) private(p_buffer) shared(sendrecvobj) simd parallel for // NOLINT(*)
-#endif  // _WIN32
-    for (size_t i = 0; i < count; ++i) {
-      utils::MemoryFixSizeBuffer fs(BeginPtr(*p_buffer) + i * max_nbyte, max_nbyte);
-      sendrecvobj[i].Save(fs);
-    }
+    std::allocator<DType> buf_allocator;
+    sendrecvobj = buf_allocator.allocate(count);
   }
   inline static void Invoke(void *c) {
     static_cast<SerializeReduceClosure<DType>*>(c)->Run();
@@ -364,12 +335,13 @@ inline void SerializeReducer<DType>::Allreduce(DType *sendrecvobj,
   handle_.Allreduce(BeginPtr(buffer_), max_nbyte, count,
                     SerializeReduceClosure<DType>::Invoke, &c,
                     _file, _line, _caller);
+
+  std::vector<DType>& vbuffer = reinterpret_cast<std::vector<DType>&>(buffer_);
 #ifndef _WIN32
-  #pragma omp align(buffer_:64) private(buffer_) simd parallel for
+  #pragma omp align(sendrecvobj vbuffer:max_nbyte) simd parallel for nowait // NOLINT(*)
 #endif  // _WIN32
   for (size_t i = 0; i < count; ++i) {
-    utils::MemoryFixSizeBuffer fs(BeginPtr(buffer_) + i * max_nbyte, max_nbyte);
-    sendrecvobj[i].Load(fs);
+      sendrecvobj[i] = vbuffer[i];
   }
 }
 
