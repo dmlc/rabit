@@ -21,7 +21,7 @@ ARCH := $(shell uname -a)
 ifneq (,$(filter $(ARCH), armv6l armv7l powerpc64le ppc64le aarch64))
 	CFLAGS += -march=native
 else
-	CFLAGS += -msse2
+	CFLAGS += -msse4
 endif
 
 ifndef WITH_FPIC

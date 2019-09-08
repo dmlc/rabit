@@ -14,10 +14,6 @@
 #include "./utils.h"
 #include "../rabit.h"
 
-#ifdef _OPENMP
-#include "omp.h"
-#endif  // _OPENMP
-
 namespace rabit {
 namespace engine {
 namespace mpi {
@@ -70,9 +66,6 @@ inline DataType GetType<unsigned long long>(void) { // NOLINT(*)
 namespace op {
 struct Max {
   static const engine::mpi::OpType kType = engine::mpi::kMax;
-#ifndef _WIN32
-  #pragma omp declare simd uniform(src)
-#endif  // _WIN32
   template<typename DType>
   inline static void Reduce(DType &dst, const DType &src) { // NOLINT(*)
     if (dst < src) dst = src;
@@ -80,9 +73,6 @@ struct Max {
 };
 struct Min {
   static const engine::mpi::OpType kType = engine::mpi::kMin;
-#ifndef _WIN32
-  #pragma omp declare simd uniform(src)
-#endif  // _WIN32
   template<typename DType>
   inline static void Reduce(DType &dst, const DType &src) { // NOLINT(*)
     if (dst > src) dst = src;
@@ -90,9 +80,6 @@ struct Min {
 };
 struct Sum {
   static const engine::mpi::OpType kType = engine::mpi::kSum;
-#ifndef _WIN32
-  #pragma omp declare simd uniform(src)
-#endif  // _WIN32
   template<typename DType>
   inline static void Reduce(DType &dst, const DType &src) { // NOLINT(*)
     dst += src;
@@ -100,9 +87,6 @@ struct Sum {
 };
 struct BitOR {
   static const engine::mpi::OpType kType = engine::mpi::kBitwiseOR;
-#ifndef _WIN32
-  #pragma omp declare simd uniform(src)
-#endif  // _WIN32
   template<typename DType>
   inline static void Reduce(DType &dst, const DType &src) { // NOLINT(*)
     dst |= src;
@@ -112,9 +96,6 @@ template<typename OP, typename DType>
 inline void Reducer(const void *src_, void *dst_, int len, const MPI::Datatype &dtype) {
   const DType* src = (const DType*)src_;
   DType* dst = (DType*)dst_;  // NOLINT(*)
-#ifndef _WIN32
-  #pragma omp simd
-#endif  // _WIN32
   for (int i = 0; i < len; i++) {
     OP::Reduce(dst[i], src[i]);
   }
@@ -258,9 +239,6 @@ inline void ReducerSafe_(const void *src_, void *dst_, int len_, const MPI::Data
   const char *psrc = reinterpret_cast<const char*>(src_);
   char *pdst = reinterpret_cast<char*>(dst_);
 
-#ifndef _WIN32
-  #pragma omp simd
-#endif  // _WIN32
   for (int i = 0; i < len_; ++i) {
     DType tdst, tsrc;
     // use memcpy to avoid alignment issue
@@ -276,9 +254,6 @@ inline void ReducerAlign_(const void *src_, void *dst_,
                           int len_, const MPI::Datatype &dtype) {
   const DType *psrc = reinterpret_cast<const DType*>(src_);
   DType *pdst = reinterpret_cast<DType*>(dst_);
-#ifndef _WIN32
-  #pragma omp simd
-#endif  // _WIN32
   for (int i = 0; i < len_; ++i) {
     freduce(pdst[i], psrc[i]);
   }
@@ -308,9 +283,6 @@ inline void SerializeReducerFunc_(const void *src_, void *dst_,
                                   int len_, const MPI::Datatype &dtype) {
   int nbytes = engine::ReduceHandle::TypeSize(dtype);
   // temp space
-#ifndef _WIN32
-  #pragma omp simd
-#endif  // _WIN32
   for (int i = 0; i < len_; ++i) {
     DType tsrc, tdst;
     utils::MemoryFixSizeBuffer fsrc((char*)(src_) + i * nbytes, nbytes); // NOLINT(*)
@@ -338,9 +310,6 @@ struct SerializeReduceClosure {
   // invoke the closure
   inline void Run(void) {
     if (prepare_fun != NULL) prepare_fun(prepare_arg);
-#ifndef _WIN32
-    #pragma omp simd
-#endif  // _WIN32
     for (size_t i = 0; i < count; ++i) {
       utils::MemoryFixSizeBuffer fs(BeginPtr(*p_buffer) + i * max_nbyte, max_nbyte);
       sendrecvobj[i].Save(fs);
@@ -367,9 +336,6 @@ inline void SerializeReducer<DType>::Allreduce(DType *sendrecvobj,
   handle_.Allreduce(BeginPtr(buffer_), max_nbyte, count,
                     SerializeReduceClosure<DType>::Invoke, &c,
                     _file, _line, _caller);
-#ifndef _WIN32
-  #pragma omp simd
-#endif  // _WIN32
   for (size_t i = 0; i < count; ++i) {
     utils::MemoryFixSizeBuffer fs(BeginPtr(buffer_) + i * max_nbyte, max_nbyte);
     sendrecvobj[i].Load(fs);
