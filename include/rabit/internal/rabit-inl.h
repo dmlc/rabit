@@ -110,10 +110,10 @@ struct BitOR {
 };
 template<typename OP, typename DType>
 inline void Reducer(const void *src_, void *dst_, int len, const MPI::Datatype &dtype) {
-  const DType*__restrict__ src = (const DType*)src_;
-  DType*__restrict__ dst = (DType*)dst_;  // NOLINT(*)
+  const DType* src = (const DType*)src_;
+  DType* dst = (DType*)dst_;  // NOLINT(*)
 #ifndef _WIN32
-  #pragma omp align(dst src:64) private(src) shared(dst) simd parallel for
+  #pragma omp simd
 #endif  // _WIN32
   for (int i = 0; i < len; i++) {
     OP::Reduce(dst[i], src[i]);
@@ -255,11 +255,11 @@ inline int VersionNumber(void) {
 template<typename DType, void (*freduce)(DType &dst, const DType &src)>
 inline void ReducerSafe_(const void *src_, void *dst_, int len_, const MPI::Datatype &dtype) {
   const size_t kUnit = sizeof(DType);
-  const char *__restrict__ psrc = reinterpret_cast<const char*>(src_);
-  char *__restrict__ pdst = reinterpret_cast<char*>(dst_);
+  const char *psrc = reinterpret_cast<const char*>(src_);
+  char *pdst = reinterpret_cast<char*>(dst_);
 
 #ifndef _WIN32
-  #pragma omp align(psrc pdst :kUnit) private(psrc) shared(pdst) simd parallel for
+  #pragma omp simd
 #endif  // _WIN32
   for (int i = 0; i < len_; ++i) {
     DType tdst, tsrc;
@@ -274,10 +274,10 @@ inline void ReducerSafe_(const void *src_, void *dst_, int len_, const MPI::Data
 template<typename DType, void (*freduce)(DType &dst, const DType &src)> // NOLINT(*)
 inline void ReducerAlign_(const void *src_, void *dst_,
                           int len_, const MPI::Datatype &dtype) {
-  const DType *__restrict__ psrc = reinterpret_cast<const DType*>(src_);
-  DType *__restrict__ pdst = reinterpret_cast<DType*>(dst_);
+  const DType *psrc = reinterpret_cast<const DType*>(src_);
+  DType *pdst = reinterpret_cast<DType*>(dst_);
 #ifndef _WIN32
-  #pragma omp align(psrc pdst:64)  private(psrc) shared(pdst) simd parallel for
+  #pragma omp simd
 #endif  // _WIN32
   for (int i = 0; i < len_; ++i) {
     freduce(pdst[i], psrc[i]);
@@ -285,7 +285,12 @@ inline void ReducerAlign_(const void *src_, void *dst_,
 }
 template<typename DType, void (*freduce)(DType &dst, const DType &src)>  // NOLINT(*)
 inline Reducer<DType, freduce>::Reducer(void) {
+  // it is safe to directly use handle for aligned data types
+  if (sizeof(DType) == 8 || sizeof(DType) == 4 || sizeof(DType) == 1) {
     this->handle_.Init(ReducerAlign_<DType, freduce>, sizeof(DType));
+  } else {
+    this->handle_.Init(ReducerSafe_<DType, freduce>, sizeof(DType));
+  }
 }
 template<typename DType, void (*freduce)(DType &dst, const DType &src)> // NOLINT(*)
 inline void Reducer<DType, freduce>::Allreduce(DType *sendrecvbuf, size_t count,
@@ -302,16 +307,14 @@ template<typename DType>
 inline void SerializeReducerFunc_(const void *src_, void *dst_,
                                   int len_, const MPI::Datatype &dtype) {
   int nbytes = engine::ReduceHandle::TypeSize(dtype);
-  const DType *__restrict__ psrc = reinterpret_cast<const DType*>(src_);
-  DType *__restrict__ pdst = reinterpret_cast<DType*>(dst_);
   // temp space
 #ifndef _WIN32
-  #pragma omp align(psrc pdst:64) private(psrc) shared(pdst) simd parallel for
+  #pragma omp simd
 #endif  // _WIN32
   for (int i = 0; i < len_; ++i) {
     DType tsrc, tdst;
-    utils::MemoryFixSizeBuffer fsrc((char*)(psrc) + i * nbytes, nbytes); // NOLINT(*)
-    utils::MemoryFixSizeBuffer fdst((char*)(pdst) + i * nbytes, nbytes); // NOLINT(*)
+    utils::MemoryFixSizeBuffer fsrc((char*)(src_) + i * nbytes, nbytes); // NOLINT(*)
+    utils::MemoryFixSizeBuffer fdst((char*)(dst_) + i * nbytes, nbytes); // NOLINT(*)
     tsrc.Load(fsrc);
     tdst.Load(fdst);
     // govern const check
@@ -336,7 +339,7 @@ struct SerializeReduceClosure {
   inline void Run(void) {
     if (prepare_fun != NULL) prepare_fun(prepare_arg);
 #ifndef _WIN32
-    #pragma omp align(sendrecvobj p_buffer:64) private(p_buffer) shared(sendrecvobj) simd parallel for // NOLINT(*)
+    #pragma omp simd
 #endif  // _WIN32
     for (size_t i = 0; i < count; ++i) {
       utils::MemoryFixSizeBuffer fs(BeginPtr(*p_buffer) + i * max_nbyte, max_nbyte);
@@ -365,7 +368,7 @@ inline void SerializeReducer<DType>::Allreduce(DType *sendrecvobj,
                     SerializeReduceClosure<DType>::Invoke, &c,
                     _file, _line, _caller);
 #ifndef _WIN32
-  #pragma omp align(buffer_:64) private(buffer_) simd parallel for
+  #pragma omp simd
 #endif  // _WIN32
   for (size_t i = 0; i < count; ++i) {
     utils::MemoryFixSizeBuffer fs(BeginPtr(buffer_) + i * max_nbyte, max_nbyte);
