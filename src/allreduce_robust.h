@@ -639,7 +639,7 @@ o   *  the input state must exactly one saved state(local state of current node)
   std::string local_chkpt[2];
   // version of local checkpoint can be 1 or 0
   int local_chkpt_version;
-  // if checkpoint were loaded, used to split results boostrap cache with seqno cache
+  // if checkpoint were loaded, used to distinguish results boostrap cache from seqno cache
   bool checkpoint_loaded;
 };
 }  // namespace engine
