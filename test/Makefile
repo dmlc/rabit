@@ -21,7 +21,7 @@ ARCH := $(shell uname -a)
 ifneq (,$(filter $(ARCH), armv6l armv7l powerpc64le ppc64le aarch64))
 	CFLAGS += -march=native
 else
-	CFLAGS += -msse4
+	CFLAGS += -msse2
 endif
 
 ifndef WITH_FPIC
@@ -29,10 +29,6 @@ ifndef WITH_FPIC
 endif
 ifeq ($(WITH_FPIC), 1)
 	CFLAGS += -fPIC
-endif
-
-ifeq ($(USE_OPENMP), 1)
-	CFLAGS += -fopenmp
 endif
 
 CFLAGS += -I../include -I $(DMLC)/include -std=c++11

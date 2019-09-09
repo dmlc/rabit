@@ -242,10 +242,10 @@ inline void ReducerSafe_(const void *src_, void *dst_, int len_, const MPI::Data
   for (int i = 0; i < len_; ++i) {
     DType tdst, tsrc;
     // use memcpy to avoid alignment issue
-    std::memcpy(&tdst, pdst + (i * kUnit), sizeof(DType));
-    std::memcpy(&tsrc, psrc + (i * kUnit), sizeof(DType));
+    std::memcpy(&tdst, pdst + (i * kUnit), sizeof(tdst));
+    std::memcpy(&tsrc, psrc + (i * kUnit), sizeof(tsrc));
     freduce(tdst, tsrc);
-    std::memcpy(pdst + i * kUnit, &tdst, sizeof(DType));
+    std::memcpy(pdst + i * kUnit, &tdst, sizeof(tdst));
   }
 }
 // function to perform reduction for Reducer

@@ -12,7 +12,7 @@ endif()
 
 option(RABIT_BUILD_TESTS "Build rabit tests" OFF)
 option(RABIT_BUILD_MPI "Build MPI" OFF)
-option(RABIT_BUILD_DMLC "Include DMLC_CORE in build" ON)
+option(RABIT_BUILD_DMLC "Include DMLC_CORE in build" OFF)
 
 # moved from xgboost build
 if(R_LIB OR MINGW OR WIN32)
