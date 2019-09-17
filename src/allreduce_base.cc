@@ -9,8 +9,10 @@
 #define _CRT_SECURE_NO_DEPRECATE
 #define NOMINMAX
 #include <map>
+#include <iostream>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include "./allreduce_base.h"
 
 namespace rabit {
@@ -22,6 +24,7 @@ namespace utils {
 namespace engine {
 // constructor
 AllreduceBase::AllreduceBase(void) {
+  std::srand(std::time(nullptr));
   tracker_uri = "NULL";
   tracker_port = 9000;
   host_uri = "";
@@ -39,7 +42,7 @@ AllreduceBase::AllreduceBase(void) {
   err_link = NULL;
   dmlc_role = "worker";
   this->SetParam("rabit_reduce_buffer", "256MB");
-  // setup possible enviroment variable of intrest
+  // setup possible enviroment variable of interest
   // include dmlc support direct variables
   env_vars.push_back("DMLC_TASK_ID");
   env_vars.push_back("DMLC_ROLE");
@@ -233,11 +236,7 @@ utils::TCPSocket AllreduceBase::ConnectTracker(void) const {
         utils::Socket::Error("Connect");
       } else {
         fprintf(stderr, "retry connect to ip(retry time %d): [%s]\n", retry, tracker_uri.c_str());
-#if defined(_MSC_VER) || defined (__MINGW32__)
-        Sleep(retry << 1);
-#else
-        sleep(retry << 1);
-#endif
+        sleep(std::rand()%30 + 1);
         continue;
       }
     }
