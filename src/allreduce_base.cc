@@ -40,15 +40,7 @@ AllreduceBase::AllreduceBase(void) {
   dmlc_role = "worker";
   this->SetParam("rabit_reduce_buffer", "256MB");
   // setup possible enviroment variable of intrest
-  env_vars.push_back("rabit_task_id");
-  env_vars.push_back("rabit_num_trial");
-  env_vars.push_back("rabit_reduce_buffer");
-  env_vars.push_back("rabit_reduce_ring_mincount");
-  env_vars.push_back("rabit_tracker_uri");
-  env_vars.push_back("rabit_tracker_port");
-  env_vars.push_back("rabit_bootstrap_cache");
-  env_vars.push_back("rabit_debug");
-  // also include dmlc support direct variables
+  // include dmlc support direct variables
   env_vars.push_back("DMLC_TASK_ID");
   env_vars.push_back("DMLC_ROLE");
   env_vars.push_back("DMLC_NUM_ATTEMPT");
