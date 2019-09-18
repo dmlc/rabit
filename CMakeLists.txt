@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 
 project(rabit VERSION 0.3.0)
 
@@ -37,6 +37,16 @@ if(RABIT_BUILD_MPI)
   list(APPEND rabit_libs rabit_mpi)
 endif()
 
+# place binaries and libraries according to GNU standards
+include(GNUInstallDirs)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
+
+# we use this to get code coverage
+if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
+endif()
 
 if(RABIT_BUILD_DMLC)
   foreach(lib ${rabit_libs})
@@ -57,6 +67,7 @@ else()
 endif()
 
 if(RABIT_BUILD_TESTS)
+  # rabit mock based integration tests
   list(REMOVE_ITEM rabit_libs "rabit_mock_static") # remove here to avoid installing it
   set(tests lazy_recover local_recover model_recover)
 
@@ -71,6 +82,17 @@ if(RABIT_BUILD_TESTS)
     target_link_libraries(speed_test_mpi rabit_mpi)
     install(TARGETS speed_test_mpi DESTINATION test)
   endif()
+
+  # googletest based unit tests
+  add_subdirectory(src)
+  include(cmake/googletest.cmake)
+  fetch_googletest(
+          ${PROJECT_SOURCE_DIR}/cmake
+          ${PROJECT_BINARY_DIR}/googletest
+  )
+
+  enable_testing()
+  add_subdirectory(test/cpp)
 endif()
 
 # Installation (https://github.com/forexample/package-example) {
