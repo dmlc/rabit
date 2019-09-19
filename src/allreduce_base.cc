@@ -9,7 +9,6 @@
 #define _CRT_SECURE_NO_DEPRECATE
 #define NOMINMAX
 #include <map>
-#include <cstdlib>
 #include <cstring>
 #include "./allreduce_base.h"
 
@@ -39,16 +38,8 @@ AllreduceBase::AllreduceBase(void) {
   err_link = NULL;
   dmlc_role = "worker";
   this->SetParam("rabit_reduce_buffer", "256MB");
-  // setup possible enviroment variable of intrest
-  env_vars.push_back("rabit_task_id");
-  env_vars.push_back("rabit_num_trial");
-  env_vars.push_back("rabit_reduce_buffer");
-  env_vars.push_back("rabit_reduce_ring_mincount");
-  env_vars.push_back("rabit_tracker_uri");
-  env_vars.push_back("rabit_tracker_port");
-  env_vars.push_back("rabit_bootstrap_cache");
-  env_vars.push_back("rabit_debug");
-  // also include dmlc support direct variables
+  // setup possible enviroment variable of interest
+  // include dmlc support direct variables
   env_vars.push_back("DMLC_TASK_ID");
   env_vars.push_back("DMLC_ROLE");
   env_vars.push_back("DMLC_NUM_ATTEMPT");
@@ -241,11 +232,7 @@ utils::TCPSocket AllreduceBase::ConnectTracker(void) const {
         utils::Socket::Error("Connect");
       } else {
         fprintf(stderr, "retry connect to ip(retry time %d): [%s]\n", retry, tracker_uri.c_str());
-#if defined(_MSC_VER) || defined (__MINGW32__)
-        Sleep(retry << 1);
-#else
-        sleep(retry << 1);
-#endif
+        sleep((1 << retry) + rank%10);
         continue;
       }
     }
