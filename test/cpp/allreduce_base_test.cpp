@@ -1,6 +1,7 @@
+#define RABIT_CXXTESTDEFS_H
+
 #include <string>
 #include <iostream>
-#include "CxxTestDefs.h"
 #include "gtest/gtest.h"
 #include "../../src/allreduce_base.h"
 
