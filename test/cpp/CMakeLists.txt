@@ -1,13 +1,12 @@
 add_executable(
     unit_tests
-        example_add.cpp
-        example_subtract.cpp
+        allreduce_base_test.cpp
     )
 
 target_link_libraries(
     unit_tests
     gtest_main
-    example
+    allreduce_base
     )
 
 add_test(

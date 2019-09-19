@@ -1,15 +1,16 @@
-add_library(example "")
+add_library(allreduce_base "")
 
 target_sources(
-        example
+        allreduce_base
         PRIVATE
-        example.cc
+        allreduce_base.cc
         PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR}/example.h
+        ${CMAKE_CURRENT_LIST_DIR}/allreduce_base.h
 )
 
 target_include_directories(
-        example
+        allreduce_base
         PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR}
+        ${CMAKE_CURRENT_LIST_DIR}/../dmlc-core/include
+        ${CMAKE_CURRENT_LIST_DIR}/../include
 )

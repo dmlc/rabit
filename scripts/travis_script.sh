@@ -25,6 +25,8 @@ if [ ${TASK} == "cmake-test" ]; then
     mkdir build
     cd build
     cmake -DRABIT_BUILD_TESTS=ON -DRABIT_BUILD_DMLC=ON ..
+    #unit tests
+    make test || exit -1
     make install || exit -1
     cd ../test
     ../scripts/travis_runtest.sh || exit -1
