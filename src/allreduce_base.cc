@@ -190,7 +190,8 @@ void AllreduceBase::SetParam(const char *name, const char *val) {
   if (!strcmp(name, "rabit_world_size")) world_size = atoi(val);
   if (!strcmp(name, "rabit_hadoop_mode")) hadoop_mode = atoi(val);
   if (!strcmp(name, "rabit_reduce_ring_mincount")) {
-    reduce_ring_mincount = ParseUnit(name, val);
+    reduce_ring_mincount = atoi(val);
+    utils::Assert(reduce_ring_mincount > 0, "rabit_reduce_ring_mincount should be greater than 0");
   }
   if (!strcmp(name, "rabit_reduce_buffer")) {
     reduce_buffer_size = (ParseUnit(name, val) + 7) >> 3;
