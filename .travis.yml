@@ -51,8 +51,6 @@ before_install:
   - export TRAVIS=dmlc-core/scripts/travis/
   - source ${TRAVIS}/travis_setup_env.sh
   - ${TRAVIS}/travis_osx_install.sh
-
-install:
   - source ./scripts/travis_setup.sh
 
 script: scripts/travis_script.sh
