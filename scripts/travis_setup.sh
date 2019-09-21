@@ -1,9 +1,10 @@
 #!/bin/bash
 
-set -e
-set -x
-
 echo "Testing on: ${TRAVIS_OS_NAME}, Home directory: ${HOME}"
+
+pip3 install cpplint pylint urllib3 numpy
+pip3 install websocket-client kubernetes
+
 
 if [ ${TRAVIS_OS_NAME} == "linux" ]; then
     # Install googletest under home directory
@@ -26,12 +27,9 @@ if [ ${TRAVIS_OS_NAME} == "linux" ]; then
 
     popd
 
-    sudo apt-get install python3-pip
+    sudo apt-get install python3-pip tree
 fi
 
 if [ ${TRAVIS_OS_NAME} == "osx" ]; then
     brew install python3
 fi
-
-pip3 install cpplint pylint urllib3 numpy
-pip3 install websocket-client kubernetes
