@@ -11,6 +11,5 @@ target_sources(
 target_include_directories(
         allreduce_base
         PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR}/../dmlc-core/include
-        ${CMAKE_CURRENT_LIST_DIR}/../include
-)
+	${CMAKE_CURRENT_LIST_DIR}/../../dmlc-core/include
+        ${CMAKE_CURRENT_LIST_DIR}/../include)

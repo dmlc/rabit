@@ -1,8 +1,8 @@
 #define RABIT_CXXTESTDEFS_H
+#include <gtest/gtest.h>
 
 #include <string>
 #include <iostream>
-#include "gtest/gtest.h"
 #include "../../src/allreduce_base.h"
 
 TEST(allreduce_base, init_task)

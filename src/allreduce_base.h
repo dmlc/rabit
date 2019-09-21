@@ -15,8 +15,8 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include "../include/rabit/internal/utils.h"
-#include "../include/rabit/internal/engine.h"
+#include "rabit/internal/utils.h"
+#include "rabit/internal/engine.h"
 #include "./socket.h"
 
 #ifdef RABIT_CXXTESTDEFS_H
