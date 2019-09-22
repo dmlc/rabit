@@ -10,7 +10,7 @@
 #define NOMINMAX
 #include <map>
 #include <cstring>
-#include "./allreduce_base.h"
+#include "allreduce_base.h"
 
 namespace rabit {
 
