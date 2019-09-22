@@ -2,7 +2,7 @@
 
 echo "Testing on: ${TRAVIS_OS_NAME}, Home directory: ${HOME}"
 
-pip3 install cpplint pylint urllib3 numpy
+pip3 install cpplint pylint urllib3 numpy cpplint
 pip3 install websocket-client kubernetes
 
 
