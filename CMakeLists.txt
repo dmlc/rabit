@@ -13,8 +13,12 @@ set(DMLC_ROOT ${CMAKE_CURRENT_LIST_DIR}/../dmlc-core)
 
 # moved from xgboost build
 if(R_LIB OR MINGW OR WIN32)
-  add_library(rabit_base src/allreduce_base.cc src/engine_base.cc src/c_api.cc)
+  add_library(rabit src/engine_empty.cc src/c_api.cc)
   set(rabit_libs rabit)
+  set_target_properties(rabit
+          PROPERTIES CXX_STANDARD 11
+          CXX_STANDARD_REQUIRED ON
+          POSITION_INDEPENDENT_CODE ON)
 else()
   add_library(rabit src/allreduce_base.cc src/allreduce_robust.cc src/engine.cc src/c_api.cc)
   add_library(rabit_base src/allreduce_base.cc src/engine_base.cc src/c_api.cc)
