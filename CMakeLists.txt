@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.3)
 
 project(rabit VERSION 0.3.0 LANGUAGES CXX)
 
