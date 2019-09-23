@@ -1,3 +1,5 @@
+option(DMLC_ROOT "Specify root of external dmlc core.")
+
 add_library(allreduce_base "")
 
 target_sources(
@@ -11,5 +13,5 @@ target_sources(
 target_include_directories(
         allreduce_base
         PUBLIC
-	${CMAKE_CURRENT_LIST_DIR}/../../dmlc-core/include
-        ${CMAKE_CURRENT_LIST_DIR}/../include)
+		${DMLC_ROOT}/include
+        ${CMAKE_CURRENT_LIST_DIR}/../../include)

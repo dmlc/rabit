@@ -8,6 +8,8 @@ option(RABIT_BUILD_DMLC "Include DMLC_CORE in build" OFF)
 option(RABIT_WITH_R_LIB "Fit the strict environment of R" OFF)
 
 option(DMLC_ROOT "Specify root of external dmlc core.")
+# by default point to xgboost/dmlc-core
+set(DMLC_ROOT ${CMAKE_CURRENT_LIST_DIR}/../dmlc-core)
 
 # moved from xgboost build
 if(R_LIB OR MINGW OR WIN32)
@@ -53,19 +55,18 @@ if ((CMAKE_CONFIGURATION_TYPES STREQUAL "Debug") AND (CMAKE_CXX_COMPILER_ID MATC
 endif((CMAKE_CONFIGURATION_TYPES STREQUAL "Debug") AND (CMAKE_CXX_COMPILER_ID MATCHES GNU))
 
 if(RABIT_BUILD_DMLC)
-  foreach(lib ${rabit_libs})
-    target_include_directories(${lib} PUBLIC
-      "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>"
-      "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/dmlc-core/include>"
-      )
-  endforeach()
-else()
-  foreach(lib ${rabit_libs})
-    target_include_directories(${lib} PUBLIC
-      "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>"
-      "$<BUILD_INTERFACE:${DMLC_ROOT}/include>")
-  endforeach()
+  set(DMLC_ROOT ${CMAKE_CURRENT_LIST_DIR}/dmlc-core)
 endif()
+
+if(DMLC_ROOT)
+  message("DMLC_ROOT point to " ${DMLC_ROOT})
+endif(DMLC_ROOT)
+
+foreach(lib ${rabit_libs})
+  target_include_directories(${lib} PUBLIC
+          "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>"
+          "$<BUILD_INTERFACE:${DMLC_ROOT}/include>")
+endforeach()
 
 if (RABIT_BUILD_TESTS)
   enable_testing()
