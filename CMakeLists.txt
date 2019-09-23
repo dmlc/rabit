@@ -100,7 +100,7 @@ endif (RABIT_BUILD_TESTS)
 #   * <prefix>/lib/cmake/<PROJECT-NAME>
 #   * <prefix>/lib/
 #   * <prefix>/include/
-set(CMAKE_INSTALL_PREFIX "../")
+set(CMAKE_INSTALL_PREFIX "${rabit_SOURCE_DIR}")
 set(config_install_dir "lib/cmake/${PROJECT_NAME}")
 set(include_install_dir "include")
 
