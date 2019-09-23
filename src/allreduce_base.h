@@ -17,7 +17,7 @@
 #include <algorithm>
 #include "rabit/internal/utils.h"
 #include "rabit/internal/engine.h"
-#include "./socket.h"
+#include "rabit/internal/socket.h"
 
 #ifdef RABIT_CXXTESTDEFS_H
 #define private   public
