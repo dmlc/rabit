@@ -21,6 +21,10 @@ typedef dmlc::SeekStream SeekStream;
 /*! \brief fixed size memory buffer */
 struct MemoryFixSizeBuffer : public SeekStream {
  public:
+  // similar to SEEK_END in libc
+  static size_t constexpr SeekEnd = std::numeric_limits<size_t>::max();
+
+ public:
   MemoryFixSizeBuffer(void *p_buffer, size_t buffer_size)
       : p_buffer_(reinterpret_cast<char*>(p_buffer)),
         buffer_size_(buffer_size) {
@@ -43,7 +47,11 @@ struct MemoryFixSizeBuffer : public SeekStream {
     curr_ptr_ += size;
   }
   virtual void Seek(size_t pos) {
-    curr_ptr_ = static_cast<size_t>(pos);
+    if (pos == SeekEnd) {
+      curr_ptr_ = buffer_size_;
+    } else {
+      curr_ptr_ = static_cast<size_t>(pos);
+    }
   }
   virtual size_t Tell(void) {
     return curr_ptr_;
