@@ -48,14 +48,20 @@ class AllreduceMock : public AllreduceRobust {
                          size_t count,
                          ReduceFunction reducer,
                          PreprocFunction prepare_fun,
-                         void *prepare_arg) {
+                         void *prepare_arg,
+                         const char* _file = _FILE,
+                         const int _line = _LINE,
+                         const char* _caller = _CALLER) {
     this->Verify(MockKey(rank, version_number, seq_counter, num_trial), "AllReduce");
     double tstart = utils::GetTime();
     AllreduceRobust::Allreduce(sendrecvbuf_, type_nbytes,
                                count, reducer, prepare_fun, prepare_arg);
     tsum_allreduce += utils::GetTime() - tstart;
   }
-  virtual void Broadcast(void *sendrecvbuf_, size_t total_size, int root) {
+  virtual void Broadcast(void *sendrecvbuf_, size_t total_size, int root,
+                         const char* _file = _FILE,
+                         const int _line = _LINE,
+                         const char* _caller = _CALLER) {
     this->Verify(MockKey(rank, version_number, seq_counter, num_trial), "Broadcast");
     AllreduceRobust::Broadcast(sendrecvbuf_, total_size, root);
   }
@@ -158,6 +164,9 @@ class AllreduceMock : public AllreduceRobust {
       if (version != b.version) return version < b.version;
       if (seqno != b.seqno) return seqno < b.seqno;
       return ntrial < b.ntrial;
+    }
+    inline void print() const {
+      utils::Printf("MockKey %d %d %d %d\n", rank, version, seqno, ntrial);
     }
   };
   // number of failure trials
