@@ -136,7 +136,7 @@ int AllreduceRobust::GetBootstrapCache(const std::string &key, void* buf,
   utils::Assert(cur_cache_seq > index, "cur_cache_seq is smaller than lookup cache seq index");
   utils::Assert(siz == type_nbytes*count, "cache size stored expected to be same as requested");
   utils::Assert(siz > 0, "cache size should be greater than 0");
-  std::memcpy(buf, temp, count*type_nbytes);
+  std::memcpy(buf, temp, type_nbytes*count);
   return 0;
 }
 

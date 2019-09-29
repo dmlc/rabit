@@ -3,7 +3,7 @@ OS := $(shell uname)
 RABIT_BUILD_DMLC = 0
 
 export WARNFLAGS= -Wall -Wextra -Wno-unused-parameter -Wno-unknown-pragmas -std=c++11
-export CFLAGS = -g -O3 $(WARNFLAGS)
+export CFLAGS = -O3 $(WARNFLAGS)
 export LDFLAGS =-Llib
 
 #download mpi
