@@ -8,6 +8,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_DEPRECATE
 #define NOMINMAX
+#include <chrono>
+#include <thread>
 #include <limits>
 #include <utility>
 #include "rabit/internal/io.h"
@@ -64,9 +66,7 @@ bool AllreduceRobust::Shutdown(void) {
     // execute check ack step, load happens here
     utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck,
       ActionSummary::kSpecialOp, cur_cache_seq), "Shutdown: check ack must return true");
-#if defined (__APPLE__)
-    sleep(1);
-#endif
+    _mutex.lock(); _exit = true; _mutex.unlock();
     return AllreduceBase::Shutdown();
   } catch (const std::exception& e) {
     fprintf(stderr, "%s\n", e.what());
@@ -600,9 +600,29 @@ AllreduceRobust::ReturnType AllreduceRobust::TryResetLinks(void) {
  * \return true if err_type is kSuccess, false otherwise
  */
 bool AllreduceRobust::CheckAndRecover(ReturnType err_type) {
+  _mutex.lock(); _exit = err_type == kSuccess; _mutex.unlock();
   if (err_type == kSuccess) return true;
+
   utils::Assert(err_link != NULL, "must know the error source");
   recover_counter += 1;
+  // async launch timeout task
+  rabit_timeout_task = std::async(std::launch::async, [=](){
+      _mutex.lock();
+      if (rabit_debug) {
+          utils::Printf("[%d] timeout task thread %d is running,"
+                        "with _exit set to %d\n", rank,
+                        std::this_thread::get_id(), _exit);
+      }
+      _mutex.unlock();
+      int time = 0;
+      // check if rabit recovered every 100ms
+      while (time++ < 10 * rabit_timeout) {
+          std::this_thread::sleep_for(std::chrono::milliseconds(100));
+          _mutex.lock(); bool exit = _exit; _mutex.unlock();
+          if (exit) return;
+      }
+      utils::Error("[%d] exit due to rabit time out %d s\n", rank, rabit_timeout);
+  });
 
   // simple way, shutdown all links
   for (size_t i = 0; i < all_links.size(); ++i) {

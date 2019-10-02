@@ -214,6 +214,10 @@ void AllreduceBase::SetParam(const char *name, const char *val) {
   if (!strcmp(name, "rabit_debug")) {
     rabit_debug = atoi(val);
   }
+  if (!strcmp(name, "rabit_timeout")) {
+    rabit_timeout = atoi(val);
+    utils::Assert(rabit_timeout > 1, "rabit_timeout should be greater than 1 second");
+  }
 }
 /*!
  * \brief initialize connection to the tracker
