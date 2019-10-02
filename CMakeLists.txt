@@ -20,6 +20,7 @@ if(R_LIB OR MINGW OR WIN32)
           CXX_STANDARD_REQUIRED ON
           POSITION_INDEPENDENT_CODE ON)
 else()
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
   add_library(rabit src/allreduce_base.cc src/allreduce_robust.cc src/engine.cc src/c_api.cc)
   add_library(rabit_base src/allreduce_base.cc src/engine_base.cc src/c_api.cc)
   add_library(rabit_empty src/engine_empty.cc src/c_api.cc)
