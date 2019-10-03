@@ -615,10 +615,11 @@ bool AllreduceRobust::CheckAndRecover(ReturnType err_type) {
       }
       _mutex.unlock();
       int time = 0;
+      bool exit = true;
       // check if rabit recovered every 100ms
       while (time++ < 10 * rabit_timeout) {
           std::this_thread::sleep_for(std::chrono::milliseconds(100));
-          _mutex.lock(); bool exit = _exit; _mutex.unlock();
+          _mutex.lock(); exit = _exit; _mutex.unlock();
           if (exit) return;
       }
       utils::Error("[%d] exit due to rabit time out %d s\n", rank, rabit_timeout);

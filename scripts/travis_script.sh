@@ -25,6 +25,7 @@ if [ ${TASK} == "cmake-test" ]; then
     mkdir build
     cd build
     cmake -DRABIT_BUILD_TESTS=ON -DRABIT_BUILD_DMLC=ON -DGTEST_ROOT=${HOME}/.local ..
+    # known osx gtest 1.8 issue
     cp ${HOME}/.local/lib/*.dylib .
     #unit tests
     make
