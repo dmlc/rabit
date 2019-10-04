@@ -11,7 +11,6 @@
 #ifndef RABIT_ALLREDUCE_ROBUST_H_
 #define RABIT_ALLREDUCE_ROBUST_H_
 #include <future>
-#include <mutex>
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -634,10 +633,12 @@ o   *  the input state must exactly one saved state(local state of current node)
   int local_chkpt_version;
   // if checkpoint were loaded, used to distinguish results boostrap cache from seqno cache
   bool checkpoint_loaded;
-  // sidecar executing timeout
-  std::future<void> rabit_timeout_task;
-  std::mutex _mutex;
-  bool _exit;
+  // sidecar executing timeout task
+  std::future<bool> rabit_timeout_task;
+  // flag to shutdown rabit_timeout_task before timeout
+  std::atomic<bool> shutdown_timeout{false};
+  // error handler
+  void (* _error)(const char *fmt, ...) = utils::Error;
 };
 }  // namespace engine
 }  // namespace rabit

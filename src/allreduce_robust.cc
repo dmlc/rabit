@@ -66,7 +66,9 @@ bool AllreduceRobust::Shutdown(void) {
     // execute check ack step, load happens here
     utils::Assert(RecoverExec(NULL, 0, ActionSummary::kCheckAck,
       ActionSummary::kSpecialOp, cur_cache_seq), "Shutdown: check ack must return true");
-    _mutex.lock(); _exit = true; _mutex.unlock();
+    shutdown_timeout = true;
+    if (rabit_timeout_task.valid()) rabit_timeout_task.wait();
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     return AllreduceBase::Shutdown();
   } catch (const std::exception& e) {
     fprintf(stderr, "%s\n", e.what());
@@ -600,35 +602,40 @@ AllreduceRobust::ReturnType AllreduceRobust::TryResetLinks(void) {
  * \return true if err_type is kSuccess, false otherwise
  */
 bool AllreduceRobust::CheckAndRecover(ReturnType err_type) {
-  _mutex.lock(); _exit = err_type == kSuccess; _mutex.unlock();
+  shutdown_timeout = err_type == kSuccess;
   if (err_type == kSuccess) return true;
 
-  utils::Assert(err_link != NULL, "must know the error source");
+  utils::Assert(err_link != NULL, "must know the error link");
   recover_counter += 1;
-  // async launch timeout task
-  rabit_timeout_task = std::async(std::launch::async, [=](){
-      _mutex.lock();
+  // async launch timeout task if enable_rabit_timeout is set
+  if (rabit_timeout != 0) {
+    utils::Printf("[EXPERIMENTAL] rabit timeout thread expires in %d second(s)\n", timeout_sec);
+    rabit_timeout_task = std::async(std::launch::async, [=]() {
       if (rabit_debug) {
-          utils::Printf("[%d] timeout task thread %d is running,"
-                        "with _exit set to %d\n", rank,
-                        std::this_thread::get_id(), _exit);
+        utils::Printf("[%d] rabit timeout thread %ld starts\n", rank,
+                      std::this_thread::get_id());
       }
-      _mutex.unlock();
       int time = 0;
-      bool exit = true;
       // check if rabit recovered every 100ms
-      while (time++ < 10 * rabit_timeout) {
-          std::this_thread::sleep_for(std::chrono::milliseconds(100));
-          _mutex.lock(); exit = _exit; _mutex.unlock();
-          if (exit) return;
+      while (time++ < 10 * timeout_sec) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        if (shutdown_timeout.load()) {
+          if (rabit_debug) {
+            utils::Printf("[%d] rabit timeout task thread %ld exits\n",
+              rank, std::this_thread::get_id());
+          }
+          return true;
+        }
       }
-      utils::Error("[%d] exit due to rabit time out %d s\n", rank, rabit_timeout);
-  });
-
+      _error("[%d] exit due to rabit time out %d s\n", rank, timeout_sec);
+      return false;
+    });
+  }
   // simple way, shutdown all links
   for (size_t i = 0; i < all_links.size(); ++i) {
     if (!all_links[i].sock.BadSocket()) all_links[i].sock.Close();
   }
+  std::this_thread::sleep_for(std::chrono::milliseconds(10*rank));
   ReConnectLinks("recover");
   return false;
 }

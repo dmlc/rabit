@@ -546,8 +546,10 @@ class AllreduceBase : public IEngine {
   int rabit_bootstrap_cache = 0;
   // enable detailed logging
   int rabit_debug = 0;
-  // if rabit worker not recover in half an hour exit
-  int rabit_timeout = 1800;
+  // by default, if rabit worker not recover in half an hour exit
+  int timeout_sec = 1800;
+  // flag to enable rabit_timeout
+  int rabit_timeout = 0;
 };
 }  // namespace engine
 }  // namespace rabit

@@ -216,7 +216,10 @@ void AllreduceBase::SetParam(const char *name, const char *val) {
   }
   if (!strcmp(name, "rabit_timeout")) {
     rabit_timeout = atoi(val);
-    utils::Assert(rabit_timeout > 1, "rabit_timeout should be greater than 1 second");
+  }
+  if (!strcmp(name, "rabit_timeout_sec")) {
+    timeout_sec = atoi(val);
+    utils::Assert(rabit_timeout > 0, "rabit_timeout_sec should be greater than 0 second");
   }
 }
 /*!
