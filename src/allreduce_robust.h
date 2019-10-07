@@ -639,6 +639,8 @@ o   *  the input state must exactly one saved state(local state of current node)
   std::atomic<bool> shutdown_timeout{false};
   // error handler
   void (* _error)(const char *fmt, ...) = utils::Error;
+  // assert handler
+  void (* _assert)(bool exp, const char *fmt, ...) = utils::Assert;
 };
 }  // namespace engine
 }  // namespace rabit
