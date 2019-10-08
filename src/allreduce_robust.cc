@@ -140,6 +140,77 @@ int AllreduceRobust::GetBootstrapCache(const std::string &key, void* buf,
   return 0;
 }
 
+/*!
+ * \brief Allgather function, each node have a segment of data in the ring of sendrecvbuf,
+ *  the data provided by current node k is [slice_begin, slice_end),
+ *  the next node's segment must start with slice_end
+ *  after the call of Allgather, sendrecvbuf_ contains all the contents including all segments
+ *  use a ring based algorithm
+ *
+ * \param sendrecvbuf buffer for both sending and receiving data, it is a ring conceptually
+ * \param total_size total size of data to be gathered
+ * \param slice_begin beginning of the current slice
+ * \param slice_end end of the current slice
+ * \param size_prev_slice size of the previous slice i.e. slice of node (rank - 1) % world_size
+ * \param _file caller file name used to generate unique cache key
+ * \param _line caller line number used to generate unique cache key
+ * \param _caller caller function name used to generate unique cache key 
+ */ 
+void AllreduceRobust::Allgather(void *sendrecvbuf,
+                                    size_t total_size,
+                                    size_t slice_begin,
+                                    size_t slice_end,
+                                    size_t size_prev_slice,
+                                    const char* _file,
+                                    const int _line,
+                                    const char* _caller) {
+  if (world_size == 1 || world_size == -1) return;
+  // genreate unique allgather signature
+  std::string key = std::string(_file) + "::" + std::to_string(_line) + "::"
+    + std::string(_caller) + "#" +std::to_string(total_size);
+
+  // try fetch bootstrap allgather results from cache
+  if (!checkpoint_loaded && rabit_bootstrap_cache &&
+    GetBootstrapCache(key, sendrecvbuf, total_size, 1) != -1) return;
+
+  double start = utils::GetTime();
+  bool recovered = RecoverExec(sendrecvbuf, total_size, 0, seq_counter, cur_cache_seq);
+
+  if (resbuf.LastSeqNo() != -1 &&
+    (result_buffer_round == -1 ||
+      resbuf.LastSeqNo() % result_buffer_round != rank % result_buffer_round)) {
+    resbuf.DropLast();
+  }
+
+  void *temp = resbuf.AllocTemp(total_size, 1);
+  while (true) {
+    if (recovered) {
+      std::memcpy(temp, sendrecvbuf, total_size); break;
+    } else {
+      std::memcpy(temp, sendrecvbuf, total_size);
+      if (CheckAndRecover(TryAllgatherRing(temp, total_size,
+                                           slice_begin, slice_end, size_prev_slice))) {
+        std::memcpy(sendrecvbuf, temp, total_size); break;
+      } else {
+        recovered = RecoverExec(sendrecvbuf, total_size, 0, seq_counter, cur_cache_seq);
+      }
+    }
+  }
+  double delta = utils::GetTime() - start;
+  // log allgather latency
+  if (rabit_debug) {
+    utils::HandleLogInfo("[%d] allgather (%s) finished version %d, seq %d, take %f seconds\n",
+      rank, key.c_str(), version_number, seq_counter, delta);
+  }
+
+  // if bootstrap allgather, store and fetch through cache
+  if (checkpoint_loaded || !rabit_bootstrap_cache) {
+    resbuf.PushTemp(seq_counter, total_size, 1);
+    seq_counter += 1;
+  } else {
+    SetBootstrapCache(key, sendrecvbuf, total_size, 1);
+  }
+}
 
 /*!
  * \brief perform in-place allreduce, on sendrecvbuf
