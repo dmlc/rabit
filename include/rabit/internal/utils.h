@@ -9,6 +9,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <cstdio>
 #include <string>
+#include <string.h>
 #include <cstdlib>
 #include <stdexcept>
 #include <vector>
@@ -65,6 +66,11 @@ const int kPrintBuffer = 1 << 12;
 /*! \brief we may want to keep the process alive when there are multiple workers
  * co-locate in the same process */
 extern bool STOP_PROCESS_ON_ERROR;
+
+/* \brief parse config string too bool*/
+inline bool StringToBool(const char* s) {
+  return strcasecmp(s, "true") == 0 || atoi(s) != 0;
+}
 
 #ifndef RABIT_CUSTOMIZE_MSG_
 /*!

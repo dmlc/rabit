@@ -616,7 +616,7 @@ bool AllreduceRobust::CheckAndRecover(ReturnType err_type) {
   _assert(err_link != NULL, "must know the error link");
   recover_counter += 1;
   // async launch timeout task if enable_rabit_timeout is set
-  if (rabit_timeout != 0 && !rabit_timeout_task.valid()) {
+  if (rabit_timeout && !rabit_timeout_task.valid()) {
     utils::Printf("[EXPERIMENTAL] timeout thread expires in %d second(s)\n", timeout_sec);
     rabit_timeout_task = std::async(std::launch::async, [=]() {
       if (rabit_debug) {

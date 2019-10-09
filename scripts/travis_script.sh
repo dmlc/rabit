@@ -27,10 +27,8 @@ if [ ${TASK} == "cmake-test" ]; then
     cmake -DRABIT_BUILD_TESTS=ON -DRABIT_BUILD_DMLC=ON -DGTEST_ROOT=${HOME}/.local ..
     # known osx gtest 1.8 issue
     cp ${HOME}/.local/lib/*.dylib .
-    #unit tests
-    make -j4
+    make -j$(nproc)
     make test
-    #make test VERBOSE=1 || exit -1
     make install || exit -1
     cd ../test
     ../scripts/travis_runtest.sh || exit -1
