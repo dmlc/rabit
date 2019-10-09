@@ -1,5 +1,5 @@
 /*!
- *  Copyright (c) 2014 by Contributors
+ *  Copyright (c) 2014-2019 by Contributors
  * \file io.h
  * \brief utilities with different serializable implementations
  * \author Tianqi Chen
@@ -32,9 +32,6 @@ struct MemoryFixSizeBuffer : public SeekStream {
   }
   virtual ~MemoryFixSizeBuffer(void) {}
   virtual size_t Read(void *ptr, size_t size) {
-    if (size + curr_ptr_ >= buffer_size_) {
-      size = buffer_size_- curr_ptr_;
-    }
     size_t nread = std::min(buffer_size_ - curr_ptr_, size);
     if (nread != 0) std::memcpy(ptr, p_buffer_ + curr_ptr_, nread);
     curr_ptr_ += nread;
