@@ -7,9 +7,9 @@
 #ifndef RABIT_INTERNAL_UTILS_H_
 #define RABIT_INTERNAL_UTILS_H_
 #define _CRT_SECURE_NO_WARNINGS
+#include <string.h>
 #include <cstdio>
 #include <string>
-#include <string.h>
 #include <cstdlib>
 #include <stdexcept>
 #include <vector>
