@@ -11,6 +11,7 @@
 #include <cstring>
 #include <string>
 #include <algorithm>
+#include <numeric>
 #include "rabit/internal/utils.h"
 #include "rabit/serializable.h"
 
