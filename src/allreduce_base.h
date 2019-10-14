@@ -579,6 +579,8 @@ class AllreduceBase : public IEngine {
   int rabit_bootstrap_cache = 0;
   // enable detailed logging
   int rabit_debug = 0;
+  // Enable TCP node delay
+  bool rabit_enable_tcp_no_delay = false;
 };
 }  // namespace engine
 }  // namespace rabit
