@@ -66,7 +66,7 @@ const int kPrintBuffer = 1 << 12;
 /*! \brief we may want to keep the process alive when there are multiple workers
  * co-locate in the same process */
 extern bool STOP_PROCESS_ON_ERROR;
-  
+
 /* \brief Case-insensitive string comparison */
 inline int CompareStringsCaseInsensitive(const char* s1, const char* s2) {
 #ifdef _MSC_VER
