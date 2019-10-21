@@ -14,6 +14,7 @@ target_link_libraries(
   rabit_base rabit_mock rabit)
 
 target_include_directories(unit_tests PUBLIC
+   ${GTEST_INCLUDE_DIRS}
   "$<BUILD_INTERFACE:${rabit_SOURCE_DIR}/include>"
   "$<BUILD_INTERFACE:${DMLC_ROOT}/include>")
 
