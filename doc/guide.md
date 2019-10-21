@@ -380,4 +380,4 @@ In certain cases, rabit cluster may suffer lack of resources to retry failed wor
 Thanks to fault tolerant assumption with infinite retry, it might cause entire cluster hang infinitely.
 We introduce sidecar thread which runs when rabit fault tolerant runtime observed allreduce/broadcast errors.
 By default, it will wait for 30 mins before all workers program exit. 
-User can opt-in this feature and change treshold by passing rabit_timeout=true and rabit_timeout_sec=x (in seconds).
+User can opt-in this feature and change treshold by passing rabit_timeout to a positive number in seconds
