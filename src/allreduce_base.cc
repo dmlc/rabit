@@ -31,8 +31,8 @@ AllreduceBase::AllreduceBase(void) {
   connect_retry = 5;
   hadoop_mode = 0;
   version_number = 0;
-  // 32 K items
-  reduce_ring_mincount = 32 << 10;
+  // by default use tree based topology
+  ring_reduce = false;
   // tracker URL
   task_id = "NULL";
   err_link = NULL;
@@ -189,9 +189,8 @@ void AllreduceBase::SetParam(const char *name, const char *val) {
   if (!strcmp(name, "DMLC_ROLE")) dmlc_role = val;
   if (!strcmp(name, "rabit_world_size")) world_size = atoi(val);
   if (!strcmp(name, "rabit_hadoop_mode")) hadoop_mode = utils::StringToBool(val);
-  if (!strcmp(name, "rabit_reduce_ring_mincount")) {
-    reduce_ring_mincount = atoi(val);
-    utils::Assert(reduce_ring_mincount > 0, "rabit_reduce_ring_mincount should be greater than 0");
+  if (!strcmp(name, "rabit_ring_reduce")) {
+    ring_reduce = utils::StringToBool(val);
   }
   if (!strcmp(name, "rabit_reduce_buffer")) {
     reduce_buffer_size = (ParseUnit(name, val) + 7) >> 3;
@@ -215,11 +214,8 @@ void AllreduceBase::SetParam(const char *name, const char *val) {
     rabit_debug = utils::StringToBool(val);
   }
   if (!strcmp(name, "rabit_timeout")) {
-    rabit_timeout = utils::StringToBool(val);
-  }
-  if (!strcmp(name, "rabit_timeout_sec")) {
-    timeout_sec = atoi(val);
-    utils::Assert(timeout_sec > 0, "rabit_timeout_sec should be greater than 0 second");
+    rabit_timeout =  atoi(val) > 0;
+    timeout_sec = atoi(val) > 0 ? atoi(val): 1800;
   }
 }
 /*!
@@ -466,11 +462,8 @@ AllreduceBase::TryAllreduce(void *sendrecvbuf_,
                             size_t type_nbytes,
                             size_t count,
                             ReduceFunction reducer) {
-  if (count > reduce_ring_mincount) {
-    return this->TryAllreduceRing(sendrecvbuf_, type_nbytes, count, reducer);
-  } else {
-    return this->TryAllreduceTree(sendrecvbuf_, type_nbytes, count, reducer);
-  }
+  if (ring_reduce) return TryAllreduceRing(sendrecvbuf_, type_nbytes, count, reducer);
+  return TryAllreduceTree(sendrecvbuf_, type_nbytes, count, reducer);
 }
 /*!
  * \brief perform in-place allreduce, on sendrecvbuf,

@@ -42,6 +42,8 @@ bool AllreduceRobust::Init(int argc, char* argv[]) {
     // chenqin: alert user opted in experimental feature.
     if (rabit_bootstrap_cache) utils::HandleLogInfo(
       "[EXPERIMENTAL] bootstrap cache has been enabled\n");
+    if (ring_reduce) utils::HandleLogInfo(
+      "[EXPERIMENTAL] ringbased communication has been enabled\n");
     checkpoint_loaded = false;
     if (num_global_replica == 0) {
       result_buffer_round = -1;

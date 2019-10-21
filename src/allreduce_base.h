@@ -530,8 +530,8 @@ class AllreduceBase : public IEngine {
   size_t reduce_buffer_size;
   // reduction method
   int reduce_method;
-  // mininum count of cells to use ring based method
-  size_t reduce_ring_mincount;
+  // apply ring based communication
+  bool ring_reduce;
   // current rank
   int rank;
   // world size
