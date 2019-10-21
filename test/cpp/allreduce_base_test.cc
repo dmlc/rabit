@@ -54,7 +54,7 @@ TEST(allreduce_base, init_with_ring_reduce)
   std::copy(rabit_task_id.begin(), rabit_task_id.end(), cmd);
   cmd[rabit_task_id.size()] = '\0';
 
-  std::string rabit_reduce_ring = "rabit_reduce_ring=true";
+  std::string rabit_reduce_ring = "rabit_ring_reduce=true";
   char cmd2[rabit_reduce_ring.size()+1];
   std::copy(rabit_reduce_ring.begin(), rabit_reduce_ring.end(), cmd2);
   cmd2[rabit_reduce_ring.size()] = '\0';
