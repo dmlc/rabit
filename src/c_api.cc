@@ -155,8 +155,7 @@ void Allgather(void *sendrecvbuf_,
     break;
   default: utils::Error("unknown data_type");
   }
-  engine::Allgather
-    (sendrecvbuf_, total_size * type_size, beginIndex * type_size,
+  rabit::Allgather(sendrecvbuf_, total_size * type_size, beginIndex * type_size,
     (beginIndex + size_node_slice) * type_size, size_prev_slice * type_size);
 }
 

@@ -26,13 +26,13 @@ class EmptyEngine : public IEngine {
     version_number = 0;
   }
   virtual void Allgather(void *sendrecvbuf_,
-                             size_t total_size,
-                             size_t slice_begin,
-                             size_t slice_end,
-                             size_t size_prev_slice,
-                             const char* _file,
-                             const int _line,
-                             const char* _caller) {
+                         size_t total_size,
+                         size_t slice_begin,
+                         size_t slice_end,
+                         size_t size_prev_slice,
+                         const char* _file,
+                         const int _line,
+                         const char* _caller) {
     utils::Error("EmptyEngine:: Allgather is not supported");
   }
   virtual int GetRingPrevRank(void) const {
