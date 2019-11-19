@@ -257,11 +257,11 @@ inline void Allreduce(DType *sendrecvbuf, size_t count,
 * \param _caller caller function name used to generate unique cache key
 */ 
 template<typename DType>
-inline void Allgather(DType *sendrecvbuf,
-                  size_t totalSize,
-                  size_t beginIndex,
-                  size_t sizeNodeSlice,
-                  size_t sizePrevSlice,
+inline void Allgather(DType *sendrecvbuf_,
+                  size_t total_size,
+                  size_t slice_begin,
+                  size_t slice_end,
+                  size_t size_prev_slice,
                   const char* _file = _FILE,
                   const int _line = _LINE,
                   const char* _caller = _CALLER);
