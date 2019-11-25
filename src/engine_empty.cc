@@ -37,6 +37,7 @@ class EmptyEngine : public IEngine {
   }
   virtual int GetRingPrevRank(void) const {
     utils::Error("EmptyEngine:: GetRingPrevRank is not supported");
+    return -1;
   }
   virtual void Allreduce(void *sendrecvbuf_,
                          size_t type_nbytes,

@@ -207,7 +207,7 @@ inline void Allgather(DType *sendrecvbuf,
                       const char* _file,
                       const int _line,
                       const char* _caller) {
-  engine::Allgather(sendrecvbuf, totalSize * sizeof(DType), beginIndex * sizeof(DType),
+  engine::GetEngine()->Allgather(sendrecvbuf, totalSize * sizeof(DType), beginIndex * sizeof(DType),
                         (beginIndex + sizeNodeSlice) * sizeof(DType),
                         sizePrevSlice * sizeof(DType), _file, _line, _caller);
 }
