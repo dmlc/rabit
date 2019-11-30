@@ -15,9 +15,9 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include "rabit/internal/utils.h"
-#include "rabit/internal/engine.h"
-#include "rabit/internal/socket.h"
+#include "../include/rabit/internal/utils.h"
+#include "../include/rabit/internal/engine.h"
+#include "../include/rabit/internal/socket.h"
 
 #ifdef RABIT_CXXTESTDEFS_H
 #define private   public

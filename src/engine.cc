@@ -11,10 +11,10 @@
 #define NOMINMAX
 
 #include <memory>
-#include "rabit/internal/engine.h"
+#include "../include/rabit/internal/engine.h"
 #include "allreduce_base.h"
 #include "allreduce_robust.h"
-#include "rabit/internal/thread_local.h"
+#include "../include/rabit/internal/thread_local.h"
 
 namespace rabit {
 namespace engine {

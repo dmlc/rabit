@@ -12,11 +12,11 @@
 #include <thread>
 #include <limits>
 #include <utility>
-#include "rabit/internal/io.h"
-#include "rabit/internal/timer.h"
-#include "rabit/internal/utils.h"
-#include "rabit/internal/engine.h"
-#include "rabit/internal/rabit-inl.h"
+#include "../include/rabit/internal/io.h"
+#include "../include/rabit/internal/timer.h"
+#include "../include/rabit/internal/utils.h"
+#include "../include/rabit/internal/engine.h"
+#include "../include/rabit/internal/rabit-inl.h"
 #include "allreduce_robust.h"
 
 namespace rabit {

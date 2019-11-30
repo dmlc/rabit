@@ -14,7 +14,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include "rabit/internal/engine.h"
+#include "../include/rabit/internal/engine.h"
 #include "allreduce_base.h"
 
 namespace rabit {
