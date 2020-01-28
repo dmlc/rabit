@@ -10,7 +10,7 @@
 
 #ifdef __SGX__
 // #include <openenclave/host.h>
-#include "../../build/src/xgboost_u.h"
+#include "../../build/xgboost_u.h"
 #include "../../enclave/enclave.h"
 #endif
 
@@ -178,7 +178,7 @@ void RabitInit(int argc, char *argv[]) {
 
 void RabitFinalize() {
 #ifdef __SGX__
-  enclave_rabitFinalize(enclave);
+  enclave_RabitFinalize(enclave);
 #else
   rabit::Finalize();
 #endif
