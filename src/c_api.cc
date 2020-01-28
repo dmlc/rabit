@@ -8,6 +8,12 @@
 #include "../include/rabit/rabit.h"
 #include "../include/rabit/c_api.h"
 
+#ifdef __SGX__
+// #include <openenclave/host.h>
+#include "../../build/src/xgboost_u.h"
+#include "../../enclave/enclave.h"
+#endif
+
 namespace rabit {
 namespace c_api {
 // helper use to avoid BitOR operator
@@ -163,11 +169,19 @@ struct WriteWrapper : public Serializable {
 }  // namespace rabit
 
 void RabitInit(int argc, char *argv[]) {
+#ifdef __SGX__
+  enclave_RabitInit(enclave, argc, argv);
+#else  
   rabit::Init(argc, argv);
+#endif
 }
 
 void RabitFinalize() {
+#ifdef __SGX__
+  enclave_rabitFinalize(enclave);
+#else
   rabit::Finalize();
+#endif
 }
 
 int RabitGetRank() {
