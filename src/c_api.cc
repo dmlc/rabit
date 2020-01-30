@@ -171,7 +171,7 @@ struct WriteWrapper : public Serializable {
 
 void RabitInit(int argc, char *argv[]) {
 #ifdef __SGX__
-  enclave_RabitInit(Enclave::getInstance()->getEnclave(), argc, argv);
+  enclave_RabitInit(Enclave::getInstance().getEnclave(), argc, argv);
 #else  
   rabit::Init(argc, argv);
 #endif
@@ -179,7 +179,7 @@ void RabitInit(int argc, char *argv[]) {
 
 void RabitFinalize() {
 #ifdef __SGX__
-  enclave_RabitFinalize(Enclave::getInstance()->getEnclave());
+  enclave_RabitFinalize(Enclave::getInstance().getEnclave());
 #else
   rabit::Finalize();
 #endif
@@ -195,8 +195,8 @@ int RabitGetWorldSize() {
 
 int RabitIsDistributed() {
 #ifdef __SGX__
-  enclave_RabitIsDistributed(Enclave::getInstance()->getEnclave(), &Enclave::getInstance()->enclave_ret);
-  return Enclave::getInstance()->enclave_ret;
+  enclave_RabitIsDistributed(Enclave::getInstance().getEnclave(), &Enclave::getInstance().enclave_ret);
+  return Enclave::getInstance().enclave_ret;
 #else
   return rabit::IsDistributed();
 #endif
@@ -205,7 +205,7 @@ int RabitIsDistributed() {
 void RabitTrackerPrint(const char *msg) {
 #ifdef __SGX__
   std::cout << "Calling enclave rabit tracker print\n";
-  enclave_RabitTrackerPrint(Enclave::getInstance()->getEnclave(), msg);
+  enclave_RabitTrackerPrint(Enclave::getInstance().getEnclave(), msg);
 #else
   std::cout << "Calling REGULAR rabit tracker print\n";
   std::string m(msg);
