@@ -193,12 +193,23 @@ int RabitGetWorldSize() {
 }
 
 int RabitIsDistributed() {
+#ifdef __SGX__
+  enclave_RabitIsDistributed(enclave, &enclave_ret);
+  return enclave_ret;
+#else
   return rabit::IsDistributed();
+#endif
 }
 
 void RabitTrackerPrint(const char *msg) {
+#ifdef __SGX__
+  std::cout << "Calling enclave rabit tracker print\n";
+  enclave_RabitTrackerPrint(enclave, msg);
+#else
+  std::cout << "Calling REGULAR rabit tracker print\n";
   std::string m(msg);
   rabit::TrackerPrint(m);
+#endif
 }
 
 void RabitGetProcessorName(char *out_name,
