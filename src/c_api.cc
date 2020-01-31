@@ -204,10 +204,8 @@ int RabitIsDistributed() {
 
 void RabitTrackerPrint(const char *msg) {
 #ifdef __SGX__
-  std::cout << "Calling enclave rabit tracker print\n";
   enclave_RabitTrackerPrint(Enclave::getInstance().getEnclave(), msg);
 #else
-  std::cout << "Calling REGULAR rabit tracker print\n";
   std::string m(msg);
   rabit::TrackerPrint(m);
 #endif
