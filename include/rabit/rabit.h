@@ -456,5 +456,9 @@ class SerializeReducer {
 };
 }  // namespace rabit
 // implementation of template functions
-#include "./internal/rabit-inl.h"
+#ifdef PBDR_SKIP_MPICXX  //WCC Force to skip CXX from "mpi.h"
+  #include "./internal/rabit-inl_mpicc.h"
+#else
+  #include "./internal/rabit-inl.h"
+#endif
 #endif  // RABIT_RABIT_H_ // NOLINT(*)
