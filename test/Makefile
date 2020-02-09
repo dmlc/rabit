@@ -18,9 +18,9 @@ export CXX = g++
 # using MPICC
 # > apt-get install libopenmpi-dev openmpi-bin openmpi-common
 #----------------------------
-MPICC=mpicc
-MPICC_CFLAGS:=$(shell mpicc --showme:compile)
-MPICC_LDFLAGS:=$(shell mpicc --showme:link)
+MPICC=mpicxx
+MPICC_CFLAGS:=$(shell mpicxx --showme:compile)
+MPICC_LDFLAGS:=$(shell mpicxx --showme:link)
 
 
 #----------------------------
@@ -91,7 +91,7 @@ lazy_recover: lazy_recover.o  $(RABIT_OBJ)
 #----------------------------
 # use MPICC
 #----------------------------
-speed_test.mpicc: speed_test_mpicc.o $(MPICC_OBJ)
+speed_test.mpicc: speed_test_mpicc.o mpicc
 
 $(BIN) :
 	$(CXX) $(CFLAGS) -o $@ $(filter %.cpp %.o %.c %.cc, $^) ../lib/librabit_mock.a $(LDFLAGS)
@@ -107,9 +107,9 @@ $(MPIBIN) :
 # use MPICC
 #----------------------------
 $(MPICC_BIN):
-	$(MPICC) $(CFLAGS) $(MPICC_CFLAGS) -shared -o $@ $(filter %.cpp %.o %.c %.cc, $^) \
+	$(MPICC) $(CFLAGS) $(MPICC_CFLAGS) -o $@ $(filter %.cpp %.o %.c %.cc, $^) \
     ../lib/librabit_mpicc.so $(LDFLAGS) $(MPICC_LDFLAGS)
 
 clean:
 	$(RM) $(OBJ) $(BIN) $(MPIBIN) $(MPIOBJ) *~ ../src/*~
-	$(RM) $(MPICC_BIN)  # Remove MPICC products
+	$(RM) $(MPICC_BIN) speed_test_mpicc.o # Remove MPICC products

@@ -96,10 +96,10 @@ struct BitOR {
   }
 };
 template<typename OP, typename DType>
-inline void Reducer(const void *src_, void *dst_, int len, MPI_Datatype dtype) {
+inline void Reducer(void *src_, void *dst_, int *len, MPI_Datatype *dtype) {
   const DType* src = (const DType*)src_;
   DType* dst = (DType*)dst_;  // NOLINT(*)
-  for (int i = 0; i < len; i++) {
+  for (int i = 0; i < *len; i++) {
     OP::Reduce(dst[i], src[i]);
   }
 }
@@ -256,12 +256,12 @@ inline int VersionNumber(void) {
 // ---------------------------------
 // function to perform reduction for Reducer
 template<typename DType, void (*freduce)(DType &dst, const DType &src)>
-inline void ReducerSafe_(const void *src_, void *dst_, int len_, MPI_Datatype dtype) {
+inline void ReducerSafe_(void *src_, void *dst_, int *len_, MPI_Datatype *dtype) {
   const size_t kUnit = sizeof(DType);
   const char *psrc = reinterpret_cast<const char*>(src_);
   char *pdst = reinterpret_cast<char*>(dst_);
 
-  for (int i = 0; i < len_; ++i) {
+  for (int i = 0; i < *len_; ++i) {
     DType tdst, tsrc;
     // use memcpy to avoid alignment issue
     std::memcpy(&tdst, pdst + (i * kUnit), sizeof(tdst));
@@ -272,11 +272,11 @@ inline void ReducerSafe_(const void *src_, void *dst_, int len_, MPI_Datatype dt
 }
 // function to perform reduction for Reducer
 template<typename DType, void (*freduce)(DType &dst, const DType &src)> // NOLINT(*)
-inline void ReducerAlign_(const void *src_, void *dst_,
-                          int len_, MPI_Datatype dtype) {
+inline void ReducerAlign_(void *src_, void *dst_,
+                          int *len_, MPI_Datatype *dtype) {
   const DType *psrc = reinterpret_cast<const DType*>(src_);
   DType *pdst = reinterpret_cast<DType*>(dst_);
-  for (int i = 0; i < len_; ++i) {
+  for (int i = 0; i < *len_; ++i) {
     freduce(pdst[i], psrc[i]);
   }
 }
@@ -301,11 +301,11 @@ inline void Reducer<DType, freduce>::Allreduce(DType *sendrecvbuf, size_t count,
 }
 // function to perform reduction for SerializeReducer
 template<typename DType>
-inline void SerializeReducerFunc_(const void *src_, void *dst_,
-                                  int len_, MPI_Datatype dtype) {
-  int nbytes = engine::ReduceHandle::TypeSize(dtype);
+inline void SerializeReducerFunc_(void *src_, void *dst_,
+                                  int *len_, MPI_Datatype *dtype) {
+  int nbytes = engine::ReduceHandle::TypeSize(*dtype);
   // temp space
-  for (int i = 0; i < len_; ++i) {
+  for (int i = 0; i < *len_; ++i) {
     DType tsrc, tdst;
     utils::MemoryFixSizeBuffer fsrc((char*)(src_) + i * nbytes, nbytes); // NOLINT(*)
     utils::MemoryFixSizeBuffer fdst((char*)(dst_) + i * nbytes, nbytes); // NOLINT(*)

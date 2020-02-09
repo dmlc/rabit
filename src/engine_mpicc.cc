@@ -253,7 +253,8 @@ int ReduceHandle::TypeSize(MPI_Datatype dtype) {
 void ReduceHandle::Init(IEngine::ReduceFunction redfunc, size_t type_nbytes) {
   utils::Assert(handle_ == NULL, "cannot initialize reduce handle twice");
   if (type_nbytes != 0) {
-    MPI_Datatype *pbdr_mpi_dtype = (MPI_Datatype*) malloc(1, sizeof(MPI_Datatype));
+    MPI_Datatype *pbdr_mpi_dtype;
+    pbdr_mpi_dtype = (MPI_Datatype*) malloc(sizeof(MPI_Datatype));
     if (type_nbytes % 8 == 0) {
       MPI_Type_contiguous(type_nbytes / sizeof(long), MPI_LONG, pbdr_mpi_dtype);
     } else if (type_nbytes % 4 == 0) {
@@ -270,7 +271,8 @@ void ReduceHandle::Init(IEngine::ReduceFunction redfunc, size_t type_nbytes) {
       free(htype_);
     }
   }
-  MPI_Op *pbdr_mpi_op = (MPI_Op*) malloc(1, sizeof(MPI_Op));
+  MPI_Op *pbdr_mpi_op;
+  pbdr_mpi_op = (MPI_Op*) malloc(sizeof(MPI_Op));
   MPI_Op_create((MPI_User_function*) redfunc, true, pbdr_mpi_op);
   handle_ = pbdr_mpi_op;
 }
@@ -282,11 +284,13 @@ void ReduceHandle::Allreduce(void *sendrecvbuf,
                              const int _line,
                              const char* _caller) {
   utils::Assert(handle_ != NULL, "must intialize handle to call AllReduce");
-  MPI_Op *pbdr_mpi_op = (MPI_Op*) handle_;
-  MPI_Datatype *pbdr_mpi_dtype = (MPI_Datatype*) htype_;
+  MPI_Datatype *pbdr_mpi_dtype;
+  MPI_Op *pbdr_mpi_op;
+  pbdr_mpi_dtype = (MPI_Datatype*) htype_;
+  pbdr_mpi_op = (MPI_Op*) handle_;
   if (created_type_nbytes_ != type_nbytes || pbdr_mpi_dtype == NULL) {
     if (pbdr_mpi_dtype == NULL) {
-      pbdr_mpi_dtype = (MPI_Datatype*) malloc(1, sizeof(MPI_Datatype));
+      pbdr_mpi_dtype = (MPI_Datatype*) malloc(sizeof(MPI_Datatype));
     } else {
       //WCC Sets it to MPI_DATATYPE_NULL, but not free the struct, reuse it.
       MPI_Type_free(pbdr_mpi_dtype);
@@ -305,7 +309,7 @@ void ReduceHandle::Allreduce(void *sendrecvbuf,
     htype_ = pbdr_mpi_dtype;
   }
   if (prepare_fun != NULL) prepare_fun(prepare_arg);
-  MPI_Allreduce(MPI_IN_PLACE, sendrecvbuf, count, pbdr_mpi_dtype, pbdr_mpi_op, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, sendrecvbuf, count, *pbdr_mpi_dtype, *pbdr_mpi_op, MPI_COMM_WORLD);
 }
 }  // namespace engine
 }  // namespace rabit
