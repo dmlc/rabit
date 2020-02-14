@@ -19,6 +19,8 @@
 #include "rabit/internal/rabit-inl.h"
 #include "allreduce_robust.h"
 
+#undef _assert
+
 namespace rabit {
 namespace engine {
 
@@ -708,9 +710,6 @@ bool AllreduceRobust::CheckAndRecover(ReturnType err_type) {
           return true;
         }
       }
-      // print on tracker to help debuging
-      TrackerPrint("[ERROR] rank " + std::to_string(rank) + "@"+
-          host_uri + ":" +std::to_string(port) + " timeout\n");
       _error("[%d] exit due to time out %d s\n", rank, timeout_sec);
       return false;
     });
