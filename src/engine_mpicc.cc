@@ -285,7 +285,7 @@ void ReduceHandle::Allreduce(void *sendrecvbuf,
                              const char* _file,
                              const int _line,
                              const char* _caller) {
-  utils::Assert(handle_ != NULL, "must intialize handle to call AllReduce");
+  utils::Assert(handle_ != NULL, "must initialize handle to call AllReduce");
   MPI_Datatype *pbdr_mpi_dtype;
   MPI_Op *pbdr_mpi_op;
   pbdr_mpi_dtype = (MPI_Datatype*) htype_;

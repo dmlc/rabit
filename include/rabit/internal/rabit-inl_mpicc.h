@@ -105,7 +105,7 @@ inline void Reducer(void *src_, void *dst_, int *len, MPI_Datatype *dtype) {
 }
 }  // namespace op
 
-// intialize the rabit engine
+// initialize the rabit engine
 inline bool Init(int argc, char *argv[]) {
   return engine::Init(argc, argv);
 }

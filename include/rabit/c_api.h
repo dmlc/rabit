@@ -25,7 +25,7 @@
 typedef unsigned long rbt_ulong;  // NOLINT(*)
 
 /*!
- * \brief intialize the rabit module,
+ * \brief initialize the rabit module,
  *  call this once before using anything
  *  The additional arguments is not necessary.
  *  Usually rabit will detect settings
@@ -131,7 +131,7 @@ RABIT_DLL void RabitAllgather(void *sendrecvbuf,
  * \param enum_dtype the enumeration of data type, see rabit::engine::mpi::DataType in engine.h of rabit include
  * \param enum_op the enumeration of operation type, see rabit::engine::mpi::OpType in engine.h of rabit
  * \param prepare_fun Lazy preprocessing function, if it is not NULL, prepare_fun(prepare_arg)
- *                    will be called by the function before performing Allreduce, to intialize the data in sendrecvbuf_.
+ *                    will be called by the function before performing Allreduce, to initialize the data in sendrecvbuf_.
  *                     If the result of Allreduce can be recovered directly, then prepare_func will NOT be called
    * \param prepare_arg argument used to passed into the lazy preprocessing function
    */

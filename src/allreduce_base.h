@@ -119,7 +119,7 @@ class AllreduceBase : public IEngine {
    * \param count number of elements to be reduced
    * \param reducer reduce function
    * \param prepare_func Lazy preprocessing function, lazy prepare_fun(prepare_arg)
-   *                     will be called by the function before performing Allreduce, to intialize the data in sendrecvbuf_.
+   *                     will be called by the function before performing Allreduce, to initialize the data in sendrecvbuf_.
    *                     If the result of Allreduce can be recovered directly, then prepare_func will NOT be called
    * \param prepare_arg argument used to passed into the lazy preprocessing function
    * \param _file caller file name used to generate unique cache key

@@ -228,7 +228,7 @@ def allreduce(data, op, prepare_fun=None):
         Reduction operators, can be MIN, MAX, SUM, BITOR
     prepare_fun: function
         Lazy preprocessing function, if it is not None, prepare_fun(data)
-        will be called by the function before performing allreduce, to intialize the data
+        will be called by the function before performing allreduce, to initialize the data
         If the result of Allreduce can be recovered directly,
         then prepare_fun will NOT be called
 

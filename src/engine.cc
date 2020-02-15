@@ -136,7 +136,7 @@ void ReduceHandle::Allreduce(void *sendrecvbuf,
                              const char* _file,
                              const int _line,
                              const char* _caller) {
-  utils::Assert(redfunc_ != NULL, "must intialize handle to call AllReduce");
+  utils::Assert(redfunc_ != NULL, "must initialize handle to call AllReduce");
   GetEngine()->Allreduce(sendrecvbuf, type_nbytes, count,
                          redfunc_, prepare_fun, prepare_arg,
                          _file, _line, _caller);
