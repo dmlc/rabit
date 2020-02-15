@@ -17,7 +17,9 @@
  * \brief Get rid of MPI C++ calls/libraries and add supports
  *        for R, pbdMPI, and Windows.
  */
-#define PBDR_SKIP_MPICXX  //WCC Force to skip CXX from "mpi.h".
+#ifndef PBDR_SKIP_MPICXX
+  #define PBDR_SKIP_MPICXX  //WCC Force to skip CXX from "mpi.h".
+#endif
 #ifndef MPICH_SKIP_MPICXX
   #define MPICH_SKIP_MPICXX
 #endif
