@@ -18,7 +18,12 @@ export CXX = g++
 # using MPICC
 # > apt-get install libopenmpi-dev openmpi-bin openmpi-common
 #----------------------------
-MPICC=mpicxx
+MPICXX_EXISTS=$(shell [ -e "${MPICXX}" ] && echo 1 || echo 0)
+ifeq "${MPICXX_EXISTS}" "1"
+  MPICC=${MPICXX}
+else
+  MPICC=mpicxx   ### It is simpler by putting MPI in PATH
+endif
 MPICC_CFLAGS:=$(shell mpicxx --showme:compile)
 MPICC_LDFLAGS:=$(shell mpicxx --showme:link)
 

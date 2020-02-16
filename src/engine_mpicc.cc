@@ -240,11 +240,18 @@ ReduceHandle::~ReduceHandle(void) {
   MPI_Finalized(&flag);
   if (!flag) {
     if (handle_ != NULL) {
-      MPI_Op_free((MPI_Op*) handle_);
+      MPI_Op_free(reinterpret_cast<MPI_Op*>(handle_));
       free(handle_);
     }
     if (htype_ != NULL) {
-      MPI_Type_free((MPI_Datatype*) htype_);
+      MPI_Type_free(reinterpret_cast<MPI_Datatype*>(htype_));
+      free(htype_);
+    }
+  } else {
+    if (handle_ != NULL) {
+      free(handle_);
+    }
+    if (htype_ != NULL) {
       free(htype_);
     }
   }
@@ -258,9 +265,9 @@ void ReduceHandle::Init(IEngine::ReduceFunction redfunc, size_t type_nbytes) {
   utils::Assert(handle_ == NULL, "cannot initialize reduce handle twice");
   if (type_nbytes != 0) {
     MPI_Datatype *pbdr_mpi_dtype;
-    pbdr_mpi_dtype = (MPI_Datatype*) malloc(sizeof(MPI_Datatype));
+    pbdr_mpi_dtype = reinterpret_cast<MPI_Datatype*>(malloc(sizeof(MPI_Datatype)));
     if (type_nbytes % 8 == 0) {
-      MPI_Type_contiguous(type_nbytes / sizeof(long), MPI_LONG, pbdr_mpi_dtype);
+      MPI_Type_contiguous(type_nbytes / sizeof(long), MPI_LONG, pbdr_mpi_dtype);  // NOLINT(*)
     } else if (type_nbytes % 4 == 0) {
       MPI_Type_contiguous(type_nbytes / sizeof(int), MPI_INT, pbdr_mpi_dtype);
     } else {
@@ -271,13 +278,13 @@ void ReduceHandle::Init(IEngine::ReduceFunction redfunc, size_t type_nbytes) {
     htype_ = pbdr_mpi_dtype;
   } else {
     if (htype_ != NULL) {
-      MPI_Type_free((MPI_Datatype*) htype_);
+      MPI_Type_free(reinterpret_cast<MPI_Datatype*>(htype_));
       free(htype_);
     }
   }
   MPI_Op *pbdr_mpi_op;
-  pbdr_mpi_op = (MPI_Op*) malloc(sizeof(MPI_Op));
-  MPI_Op_create((MPI_User_function*) redfunc, true, pbdr_mpi_op);
+  pbdr_mpi_op = reinterpret_cast<MPI_Op*>(malloc(sizeof(MPI_Op)));
+  MPI_Op_create(reinterpret_cast<MPI_User_function*>(redfunc), true, pbdr_mpi_op);
   handle_ = pbdr_mpi_op;
 }
 void ReduceHandle::Allreduce(void *sendrecvbuf,
@@ -290,11 +297,11 @@ void ReduceHandle::Allreduce(void *sendrecvbuf,
   utils::Assert(handle_ != NULL, "must initialize handle to call AllReduce");
   MPI_Datatype *pbdr_mpi_dtype;
   MPI_Op *pbdr_mpi_op;
-  pbdr_mpi_dtype = (MPI_Datatype*) htype_;
-  pbdr_mpi_op = (MPI_Op*) handle_;
+  pbdr_mpi_dtype = reinterpret_cast<MPI_Datatype*>(htype_);
+  pbdr_mpi_op = reinterpret_cast<MPI_Op*>(handle_);
   if (created_type_nbytes_ != type_nbytes || pbdr_mpi_dtype == NULL) {
     if (pbdr_mpi_dtype == NULL) {
-      pbdr_mpi_dtype = (MPI_Datatype*) malloc(sizeof(MPI_Datatype));
+      pbdr_mpi_dtype = reinterpret_cast<MPI_Datatype*>(malloc(sizeof(MPI_Datatype)));
     } else {
       // WCC Sets it to MPI_DATATYPE_NULL, but not free the struct, reuse it.
       MPI_Type_free(pbdr_mpi_dtype);
@@ -302,7 +309,7 @@ void ReduceHandle::Allreduce(void *sendrecvbuf,
     }
 
     if (type_nbytes % 8 == 0) {
-      MPI_Type_contiguous(type_nbytes / sizeof(long), MPI_LONG, pbdr_mpi_dtype);
+      MPI_Type_contiguous(type_nbytes / sizeof(long), MPI_LONG, pbdr_mpi_dtype);  // NOLINT(*)
     } else if (type_nbytes % 4 == 0) {
       MPI_Type_contiguous(type_nbytes / sizeof(int), MPI_INT, pbdr_mpi_dtype);
     } else {
