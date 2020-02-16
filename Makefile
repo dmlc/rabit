@@ -18,7 +18,11 @@ export CXX = g++
 # Using MPICC such as
 # > apt-get install libopenmpi-dev openmpi-bin openmpi-common
 #----------------------------
-MPICC=mpicxx
+ifdef MPICXX
+  MPICC=$(MPICXX)
+else
+  MPICC=mpicxx
+endif
 MPICC_CFLAGS:=$(shell mpicxx --showme:compile)
 MPICC_LDFLAGS:=$(shell mpicxx --showme:link)
 

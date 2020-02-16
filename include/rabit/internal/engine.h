@@ -22,14 +22,14 @@
 #define _CALLER  "N/A"
 #endif  // (defined(__GNUC__) && !defined(__clang__))
 
-#ifdef PBDR_SKIP_MPICXX  //WCC Force to skip CXX from "mpi.h".
+#ifdef PBDR_SKIP_MPICXX  // WCC Force to skip CXX from "mpi.h".
   #ifndef MPICH_SKIP_MPICXX
     #define MPICH_SKIP_MPICXX
   #endif
   #ifndef OMPI_SKIP_MPICXX
     #define OMPI_SKIP_MPICXX
   #endif
-  #ifdef WIN  //WCC For windows, windows MPI, and windows R.
+  #ifdef WIN  // WCC For windows, windows MPI, and windows R.
     #include <_mingw.h>
   #endif
   #ifdef _WIN64
@@ -67,12 +67,12 @@ class IEngine {
    *              the definition of the reduce function should be type aware
    * \param dtype the data type object, to be compatible with MPI reduce
    */
-#ifdef PBDR_SKIP_MPICXX  //WCC Force to skip CXX from "mpi.h".
+#ifdef PBDR_SKIP_MPICXX  // WCC Force to skip CXX from "mpi.h".
   typedef void (ReduceFunction) (void *src,
                                  void *dst, int *count,
                                  MPI_Datatype *dtype);
 #else
-  //WCC Note "mpi/cxx/op_inln.h" may make an incompatible cast below.
+  // WCC Note "mpi/cxx/op_inln.h" may make an incompatible cast below.
   typedef void (ReduceFunction) (const void *src,
                                  void *dst, int count,
                                  const MPI::Datatype &dtype);
@@ -355,7 +355,7 @@ class ReduceHandle {
                  const int _line = _LINE,
                  const char* _caller = _CALLER);
   /*! \return the number of bytes occupied by the type */
-#ifdef PBDR_SKIP_MPICXX  //WCC Force to skip CXX from "mpi.h".
+#ifdef PBDR_SKIP_MPICXX  // WCC Force to skip CXX from "mpi.h".
   static int TypeSize(MPI_Datatype dtype);
 #else
   static int TypeSize(const MPI::Datatype &dtype);

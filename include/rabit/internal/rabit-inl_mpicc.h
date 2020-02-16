@@ -8,8 +8,8 @@
  * \brief MPICXX would not be supported at all.
  * \author Rewrited by WCC in MPICC.
  */
-#ifndef RABIT_INTERNAL_RABIT_INL_H_
-#define RABIT_INTERNAL_RABIT_INL_H_
+#ifndef RABIT_INTERNAL_RABIT_INL_MPICC_H_
+#define RABIT_INTERNAL_RABIT_INL_MPICC_H_
 // use engine for implementation
 #include <vector>
 #include <string>
@@ -386,4 +386,4 @@ inline void SerializeReducer<DType>::Allreduce(DType *sendrecvobj,
 }
 #endif  // DMLC_USE_CXX11
 }  // namespace rabit
-#endif  // RABIT_INTERNAL_RABIT_INL_H_
+#endif  // RABIT_INTERNAL_RABIT_INL_MPICC_H_

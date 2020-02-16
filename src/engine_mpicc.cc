@@ -18,7 +18,7 @@
  *        for R, pbdMPI, and Windows.
  */
 #ifndef PBDR_SKIP_MPICXX
-  #define PBDR_SKIP_MPICXX  //WCC Force to skip CXX from "mpi.h".
+  #define PBDR_SKIP_MPICXX  // WCC Force to skip CXX from "mpi.h".
 #endif
 #ifndef MPICH_SKIP_MPICXX
   #define MPICH_SKIP_MPICXX
@@ -183,7 +183,7 @@ IEngine *GetEngine(void) {
 // transform enum to MPI data type
 inline MPI_Datatype GetType(mpi::DataType dtype) {
   using namespace mpi;
-  //WCC Note MPI_* below are of type "MPI_Datatype" assuming in "C struct".
+  // WCC Note MPI_* below are of type "MPI_Datatype" assuming in "C struct".
   switch (dtype) {
     case kChar: return MPI_CHAR;
     case kUChar: return MPI_BYTE;
@@ -203,7 +203,7 @@ inline MPI_Datatype GetType(mpi::DataType dtype) {
 inline MPI_Op GetOp(mpi::OpType otype) {
   using namespace mpi;
   switch (otype) {
-    //WCC Note MPI_* below are of type "MPI_Op" assuming in "C struct".
+    // WCC Note MPI_* below are of type "MPI_Op" assuming in "C struct".
     case kMax: return MPI_MAX;
     case kMin: return MPI_MIN;
     case kSum: return MPI_SUM;
@@ -224,9 +224,11 @@ void Allreduce_(void *sendrecvbuf,
                 const char* _file,
                 const int _line,
                 const char* _caller) {
-  if (prepare_fun != NULL) prepare_fun(prepare_arg);
-   MPI_Allreduce(MPI_IN_PLACE, sendrecvbuf,
-                 count, GetType(dtype), GetOp(op), MPI_COMM_WORLD);
+  if (prepare_fun != NULL) {
+    prepare_fun(prepare_arg);
+  }
+  MPI_Allreduce(MPI_IN_PLACE, sendrecvbuf,
+                count, GetType(dtype), GetOp(op), MPI_COMM_WORLD);
 }
 
 // code for reduce handle
@@ -294,7 +296,7 @@ void ReduceHandle::Allreduce(void *sendrecvbuf,
     if (pbdr_mpi_dtype == NULL) {
       pbdr_mpi_dtype = (MPI_Datatype*) malloc(sizeof(MPI_Datatype));
     } else {
-      //WCC Sets it to MPI_DATATYPE_NULL, but not free the struct, reuse it.
+      // WCC Sets it to MPI_DATATYPE_NULL, but not free the struct, reuse it.
       MPI_Type_free(pbdr_mpi_dtype);
       // free(htype_);
     }
