@@ -19,6 +19,7 @@ env:
     # - TASK=build
     - TASK=mpi-build
     - TASK=cmake-test
+    - TASK=mpicc-build 
 
 matrix:
   exclude:
@@ -30,6 +31,8 @@ matrix:
       env: TASK=doc
     - os: osx
       env: TASK=build
+    - os: osx
+      env: TASK=mpicc-build
 
 # dependent apt packages
 addons:

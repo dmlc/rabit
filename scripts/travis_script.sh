@@ -21,6 +21,12 @@ if [ ${TASK} == "mpi-build" ]; then
     make mpi RABIT_BUILD_DMLC=1 && make speed_test.mpi RABIT_BUILD_DMLC=1 || exit -1
 fi
 #
+if [ ${TASK} == "mpicc-build" ]; then
+    ./scripts/mpicc_build.sh
+    cd test
+    make mpicc RABIT_BUILD_DMLC=1 && make speed_test.mpicc RABIT_BUILD_DMLC=1 || exit -1
+fi
+#
 if [ ${TASK} == "cmake-test" ]; then
     mkdir build
     cd build
