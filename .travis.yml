@@ -31,8 +31,6 @@ matrix:
       env: TASK=doc
     - os: osx
       env: TASK=build
-    - os: osx
-      env: TASK=mpicc-build
 
 # dependent apt packages
 addons:
