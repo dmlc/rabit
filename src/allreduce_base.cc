@@ -567,9 +567,12 @@ AllreduceBase::TryAllreduceTree(void *sendrecvbuf_,
     // read data from childs
     for (int i = 0; i < nlink; ++i) {
       if (i != parent_index && watcher.CheckRead(links[i].sock)) {
-        ReturnType ret = links[i].ReadToRingBuffer(size_up_out, total_size);
-        if (ret != kSuccess) {
-          return ReportError(&links[i], ret);
+        // make sure to receive minimal reducer size since each child reduce and sends the minimal reducer size
+        while (links[i].size_read < total_size && links[i].size_read - size_up_reduce < eachreduce) {
+          ReturnType ret = links[i].ReadToRingBuffer(size_up_out, total_size);
+          if (ret != kSuccess) {
+            return ReportError(&links[i], ret);
+          }
         }
       }
     }
@@ -589,6 +592,12 @@ AllreduceBase::TryAllreduceTree(void *sendrecvbuf_,
       utils::Assert(buffer_size != 0, "must assign buffer_size");
       // round to type_n4bytes
       max_reduce = (max_reduce / type_nbytes * type_nbytes);
+      
+      // if max reduce is less than total size, we reduce multiple times of
+      // eachreduce size
+      if (max_reduce < total_size)
+          max_reduce = max_reduce - max_reduce % eachreduce;
+
       // peform reduce, can be at most two rounds
       while (size_up_reduce < max_reduce) {
         // start position
@@ -596,11 +605,6 @@ AllreduceBase::TryAllreduceTree(void *sendrecvbuf_,
         // peform read till end of buffer
         size_t nread = std::min(buffer_size - start,
                                 max_reduce - size_up_reduce);
-        if (nread<eachreduce && (size_up_reduce+nread)<total_size)
-        {
-            break;
-        }
-        nread = std::min(eachreduce,total_size-size_up_reduce);
         utils::Assert(nread % type_nbytes == 0, "Allreduce: size check");
         for (int i = 0; i < nlink; ++i) {
           if (i != parent_index) {
@@ -617,7 +621,7 @@ AllreduceBase::TryAllreduceTree(void *sendrecvbuf_,
       // pass message up to parent, can pass data that are already been reduced
       if (size_up_out < size_up_reduce) {
         ssize_t len = links[parent_index].sock.
-            Send(sendrecvbuf + size_up_out, size_up_reduce - size_up_out);
+        Send(sendrecvbuf + size_up_out, size_up_reduce - size_up_out);
         if (len != -1) {
           size_up_out += static_cast<size_t>(len);
         } else {
@@ -630,13 +634,13 @@ AllreduceBase::TryAllreduceTree(void *sendrecvbuf_,
       // read data from parent
       if (watcher.CheckRead(links[parent_index].sock) &&
           total_size > size_down_in) {
-		size_t left_size=total_size-size_down_in;
+        size_t left_size=total_size-size_down_in;
         size_t reduce_size_min=std::min(left_size, eachreduce);
         size_t recved=0;
         while (recved<reduce_size_min)
         {
           ssize_t len = links[parent_index].sock.
-              Recv(sendrecvbuf + size_down_in, total_size - size_down_in);
+          Recv(sendrecvbuf + size_down_in, total_size - size_down_in);
 
           if (len == 0) {
             links[parent_index].sock.Close();
@@ -648,12 +652,11 @@ AllreduceBase::TryAllreduceTree(void *sendrecvbuf_,
                           "Allreduce: boundary error");
             recved+=len;
 
-			//if it receives more data than each reduce, it means the next block is sent.
-			//we double the reduce_size_min or add to left_size
-			while (recved>reduce_size_min)
-			{
-				reduce_size_min+=std::min(left_size-reduce_size_min, eachreduce);
-		    }
+            //if it receives more data than each reduce, it means the next block is sent.
+            //we double the reduce_size_min or add to left_size
+            while (recved>reduce_size_min) {
+           	  reduce_size_min+=std::min(left_size-reduce_size_min, eachreduce);
+            }
           } else {
             ReturnType ret = Errno2Return();
             if (ret != kSuccess) {
