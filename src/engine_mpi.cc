@@ -13,8 +13,8 @@
 #define _CRT_SECURE_NO_DEPRECATE
 #endif  // _CRT_SECURE_NO_DEPRECATE
 #define NOMINMAX
-#include <mpi.h>
 #include <cstdio>
+#include <mpi.h>
 #include "rabit/internal/engine.h"
 #include "rabit/internal/utils.h"
 
