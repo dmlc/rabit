@@ -8,10 +8,10 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_DEPRECATE
 #define NOMINMAX
+#include "allreduce_base.h"
 #include <netinet/tcp.h>
 #include <cstring>
 #include <map>
-#include "allreduce_base.h"
 
 namespace rabit {
 
