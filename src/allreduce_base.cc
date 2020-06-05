@@ -567,8 +567,10 @@ AllreduceBase::TryAllreduceTree(void *sendrecvbuf_,
     // read data from childs
     for (int i = 0; i < nlink; ++i) {
       if (i != parent_index && watcher.CheckRead(links[i].sock)) {
-        // make sure to receive minimal reducer size since each child reduce and sends the minimal reducer size
-        while (links[i].size_read < total_size && links[i].size_read - size_up_reduce < eachreduce) {
+        // make sure to receive minimal reducer size
+        // since each child reduce and sends the minimal reducer size
+        while (links[i].size_read < total_size
+                && links[i].size_read - size_up_reduce < eachreduce) {
           ReturnType ret = links[i].ReadToRingBuffer(size_up_out, total_size);
           if (ret != kSuccess) {
             return ReportError(&links[i], ret);
@@ -592,7 +594,7 @@ AllreduceBase::TryAllreduceTree(void *sendrecvbuf_,
       utils::Assert(buffer_size != 0, "must assign buffer_size");
       // round to type_n4bytes
       max_reduce = (max_reduce / type_nbytes * type_nbytes);
-      
+
       // if max reduce is less than total size, we reduce multiple times of
       // eachreduce size
       if (max_reduce < total_size)
@@ -634,11 +636,10 @@ AllreduceBase::TryAllreduceTree(void *sendrecvbuf_,
       // read data from parent
       if (watcher.CheckRead(links[parent_index].sock) &&
           total_size > size_down_in) {
-        size_t left_size=total_size-size_down_in;
-        size_t reduce_size_min=std::min(left_size, eachreduce);
-        size_t recved=0;
-        while (recved<reduce_size_min)
-        {
+        size_t left_size = total_size-size_down_in;
+        size_t reduce_size_min = std::min(left_size, eachreduce);
+        size_t recved = 0;
+        while (recved < reduce_size_min) {
           ssize_t len = links[parent_index].sock.
           Recv(sendrecvbuf + size_down_in, total_size - size_down_in);
 
@@ -652,10 +653,10 @@ AllreduceBase::TryAllreduceTree(void *sendrecvbuf_,
                           "Allreduce: boundary error");
             recved+=len;
 
-            //if it receives more data than each reduce, it means the next block is sent.
-            //we double the reduce_size_min or add to left_size
-            while (recved>reduce_size_min) {
-           	  reduce_size_min+=std::min(left_size-reduce_size_min, eachreduce);
+            // if it receives more data than each reduce, it means the next block is sent.
+            // we double the reduce_size_min or add to left_size
+            while (recved > reduce_size_min) {
+              reduce_size_min += std::min(left_size-reduce_size_min, eachreduce);
             }
           } else {
             ReturnType ret = Errno2Return();
