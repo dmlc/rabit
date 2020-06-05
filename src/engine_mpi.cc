@@ -9,8 +9,10 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_DEPRECATE
 #define NOMINMAX
-#include <cstdio>
 #include <mpi.h>
+
+#include <cstdio>
+#include <string>
 #include "rabit/internal/engine.h"
 #include "rabit/internal/utils.h"
 
