@@ -6,14 +6,7 @@
  *
  * \author Tianqi Chen, Ignacio Cano, Tianyi Zhou
  */
-#ifndef _CRT_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS
-#endif  // _CRT_SECURE_NO_WARNINGS
-#ifndef _CRT_SECURE_NO_DEPRECATE
-#define _CRT_SECURE_NO_DEPRECATE
-#endif  // _CRT_SECURE_NO_DEPRECATE
-#define NOMINMAX
-
+#include <rabit/base.h>
 #include <memory>
 #include "rabit/internal/engine.h"
 #include "allreduce_base.h"

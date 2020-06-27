@@ -6,13 +6,8 @@
  * \author Tianqi Chen
  */
 // define use MOCK, os we will use mock Manager
-#ifndef _CRT_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS
-#endif  // _CRT_SECURE_NO_WARNINGS
-#ifndef _CRT_SECURE_NO_DEPRECATE
-#define _CRT_SECURE_NO_DEPRECATE
-#endif  // _CRT_SECURE_NO_DEPRECATE
 #define NOMINMAX
+#include <rabit/base.h>
 // switch engine to AllreduceMock
 #define RABIT_USE_BASE
 #include "engine.cc"

@@ -6,14 +6,9 @@
  *  This is usually NOT needed, use engine_mpi or engine for real distributed version
  * \author Tianqi Chen
  */
-#ifndef _CRT_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS
-#endif  // _CRT_SECURE_NO_WARNINGS
-#ifndef _CRT_SECURE_NO_DEPRECATE
-#define _CRT_SECURE_NO_DEPRECATE
-#endif  // _CRT_SECURE_NO_DEPRECATE
 #define NOMINMAX
 
+#include <rabit/base.h>
 #include "rabit/internal/engine.h"
 
 namespace rabit {

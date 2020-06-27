@@ -7,10 +7,7 @@
 #ifndef RABIT_INTERNAL_UTILS_H_
 #define RABIT_INTERNAL_UTILS_H_
 
-#ifndef _CRT_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS
-#endif  // _CRT_SECURE_NO_WARNINGS
-
+#include <rabit/base.h>
 #include <string.h>
 #include <cstdio>
 #include <string>
