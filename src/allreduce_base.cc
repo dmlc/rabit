@@ -5,10 +5,9 @@
  *
  * \author Tianqi Chen, Ignacio Cano, Tianyi Zhou
  */
-#define _CRT_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_DEPRECATE
 #define NOMINMAX
 #include "allreduce_base.h"
+#include <rabit/base.h>
 #include <netinet/tcp.h>
 #include <cstring>
 #include <map>

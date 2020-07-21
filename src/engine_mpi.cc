@@ -6,11 +6,9 @@
  *
  * \author Tianqi Chen
  */
-#define _CRT_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_DEPRECATE
 #define NOMINMAX
 #include <mpi.h>
-
+#include <rabit/base.h>
 #include <cstdio>
 #include <string>
 #include "rabit/internal/engine.h"
