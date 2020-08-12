@@ -568,30 +568,30 @@ AllreduceRobust::ReturnType AllreduceRobust::TryResetLinks(void) {
   // number of links
   const int nlink = static_cast<int>(all_links.size());
   for (int i = 0; i < nlink; ++i) {
-    all_links[i].InitBuffer(sizeof(int), 1 << 10, reduce_buffer_size);
-    all_links[i].ResetSize();
+    all_links[i]->InitBuffer(sizeof(int), 1 << 10, reduce_buffer_size);
+    all_links[i]->ResetSize();
   }
   // read and discard data from all channels until pass mark
   while (true) {
     for (int i = 0; i < nlink; ++i) {
-      if (all_links[i].sock.BadSocket()) continue;
-      if (all_links[i].size_write == 0) {
+      if (all_links[i]->sock.BadSocket()) continue;
+      if (all_links[i]->size_write == 0) {
         char sig = kOOBReset;
-        ssize_t len = all_links[i].sock.Send(&sig, sizeof(sig), MSG_OOB);
+        ssize_t len = all_links[i]->sock.Send(&sig, sizeof(sig), MSG_OOB);
         // error will be filtered in next loop
-        if (len == sizeof(sig)) all_links[i].size_write = 1;
+        if (len == sizeof(sig)) all_links[i]->size_write = 1;
       }
-      if (all_links[i].size_write == 1) {
+      if (all_links[i]->size_write == 1) {
         char sig = kResetMark;
-        ssize_t len = all_links[i].sock.Send(&sig, sizeof(sig));
-        if (len == sizeof(sig)) all_links[i].size_write = 2;
+        ssize_t len = all_links[i]->sock.Send(&sig, sizeof(sig));
+        if (len == sizeof(sig)) all_links[i]->size_write = 2;
       }
     }
     utils::PollHelper rsel;
     bool finished = true;
     for (int i = 0; i < nlink; ++i) {
-      if (all_links[i].size_write != 2 && !all_links[i].sock.BadSocket()) {
-        rsel.WatchWrite(all_links[i].sock); finished = false;
+      if (all_links[i]->size_write != 2 && !all_links[i]->sock.BadSocket()) {
+        rsel.WatchWrite(all_links[i]->sock); finished = false;
       }
     }
     if (finished) break;
@@ -599,56 +599,56 @@ AllreduceRobust::ReturnType AllreduceRobust::TryResetLinks(void) {
     rsel.Poll();
   }
   for (int i = 0; i < nlink; ++i) {
-    if (!all_links[i].sock.BadSocket()) {
-      utils::PollHelper::WaitExcept(all_links[i].sock);
+    if (!all_links[i]->sock.BadSocket()) {
+      utils::PollHelper::WaitExcept(all_links[i]->sock);
     }
   }
   while (true) {
     utils::PollHelper rsel;
     bool finished = true;
     for (int i = 0; i < nlink; ++i) {
-      if (all_links[i].size_read == 0 && !all_links[i].sock.BadSocket()) {
-        rsel.WatchRead(all_links[i].sock); finished = false;
+      if (all_links[i]->size_read == 0 && !all_links[i]->sock.BadSocket()) {
+        rsel.WatchRead(all_links[i]->sock); finished = false;
       }
     }
     if (finished) break;
     rsel.Poll();
     for (int i = 0; i < nlink; ++i) {
-      if (all_links[i].sock.BadSocket()) continue;
-      if (all_links[i].size_read == 0) {
-        int atmark = all_links[i].sock.AtMark();
+      if (all_links[i]->sock.BadSocket()) continue;
+      if (all_links[i]->size_read == 0) {
+        int atmark = all_links[i]->sock.AtMark();
         if (atmark < 0) {
-          _assert(all_links[i].sock.BadSocket(), "must already gone bad");
+          _assert(all_links[i]->sock.BadSocket(), "must already gone bad");
         } else if (atmark > 0) {
-          all_links[i].size_read = 1;
+          all_links[i]->size_read = 1;
         } else {
           // no at mark, read and discard data
-          ssize_t len = all_links[i].sock.Recv(all_links[i].buffer_head, all_links[i].buffer_size);
-          if (all_links[i].sock.AtMark()) all_links[i].size_read = 1;
+          ssize_t len = all_links[i]->sock.Recv(all_links[i]->buffer_head, all_links[i]->buffer_size);
+          if (all_links[i]->sock.AtMark()) all_links[i]->size_read = 1;
           // zero length, remote closed the connection, close socket
-          if (len == 0) all_links[i].sock.Close();
+          if (len == 0) all_links[i]->sock.Close();
         }
       }
     }
   }
   // start synchronization, use blocking I/O to avoid select
   for (int i = 0; i < nlink; ++i) {
-    if (!all_links[i].sock.BadSocket()) {
+    if (!all_links[i]->sock.BadSocket()) {
       char oob_mark;
-      all_links[i].sock.SetNonBlock(false);
-      ssize_t len = all_links[i].sock.Recv(&oob_mark, sizeof(oob_mark), MSG_WAITALL);
+      all_links[i]->sock.SetNonBlock(false);
+      ssize_t len = all_links[i]->sock.Recv(&oob_mark, sizeof(oob_mark), MSG_WAITALL);
       if (len == 0) {
-        all_links[i].sock.Close(); continue;
+        all_links[i]->sock.Close(); continue;
       } else if (len > 0) {
         _assert(oob_mark == kResetMark, "wrong oob msg");
-        _assert(all_links[i].sock.AtMark() != 1, "should already read past mark");
+        _assert(all_links[i]->sock.AtMark() != 1, "should already read past mark");
       } else {
         _assert(errno != EAGAIN|| errno != EWOULDBLOCK, "BUG");
       }
       // send out ack
       char ack = kResetAck;
       while (true) {
-        len = all_links[i].sock.Send(&ack, sizeof(ack));
+        len = all_links[i]->sock.Send(&ack, sizeof(ack));
         if (len == sizeof(ack)) break;
         if (len == -1) {
           if (errno != EAGAIN && errno != EWOULDBLOCK) break;
@@ -658,22 +658,22 @@ AllreduceRobust::ReturnType AllreduceRobust::TryResetLinks(void) {
   }
   // wait all ack
   for (int i = 0; i < nlink; ++i) {
-    if (!all_links[i].sock.BadSocket()) {
+    if (!all_links[i]->sock.BadSocket()) {
       char ack;
-      ssize_t len = all_links[i].sock.Recv(&ack, sizeof(ack), MSG_WAITALL);
+      ssize_t len = all_links[i]->sock.Recv(&ack, sizeof(ack), MSG_WAITALL);
       if (len == 0) {
-        all_links[i].sock.Close(); continue;
+        all_links[i]->sock.Close(); continue;
       } else if (len > 0) {
         _assert(ack == kResetAck, "wrong Ack MSG");
       } else {
         _assert(errno != EAGAIN|| errno != EWOULDBLOCK, "BUG");
       }
       // set back to nonblock mode
-      all_links[i].sock.SetNonBlock(true);
+      all_links[i]->sock.SetNonBlock(true);
     }
   }
   for (int i = 0; i < nlink; ++i) {
-    if (all_links[i].sock.BadSocket()) return kSockError;
+    if (all_links[i]->sock.BadSocket()) return kSockError;
   }
   return kSuccess;
 }
@@ -716,7 +716,7 @@ bool AllreduceRobust::CheckAndRecover(ReturnType err_type) {
   }
   // simple way, shutdown all links
   for (size_t i = 0; i < all_links.size(); ++i) {
-    if (!all_links[i].sock.BadSocket()) all_links[i].sock.Close();
+    if (!all_links[i]->sock.BadSocket()) all_links[i]->sock.Close();
   }
   // smooth out traffic to tracker
   std::this_thread::sleep_for(std::chrono::milliseconds(10*rank));
@@ -1067,12 +1067,12 @@ AllreduceRobust::ReturnType AllreduceRobust::TryLoadCheckPoint(bool requester) {
                  "LoadCheckPoint: too many nodes fails, cannot recover local state");
   }
   // do call save model if the checkpoint was lazy
-  if (role == kHaveData && global_lazycheck != NULL) {
+  if (role == kHaveData && global_lazycheck != nullptr) {
     global_checkpoint.resize(0);
     utils::MemoryBufferStream fs(&global_checkpoint);
     fs.Write(&version_number, sizeof(version_number));
     global_lazycheck->Save(&fs);
-    global_lazycheck = NULL;
+    global_lazycheck = nullptr;
   }
   // recover global checkpoint
   size_t size = this->global_checkpoint.length();
@@ -1119,7 +1119,7 @@ AllreduceRobust::TryGetResult(void *sendrecvbuf, size_t size, int seqno, bool re
   RecoverType role;
   if (!requester) {
     sendrecvbuf = resbuf.Query(seqno, &size);
-    role = sendrecvbuf != NULL ? kHaveData : kPassData;
+    role = sendrecvbuf != nullptr ? kHaveData : kPassData;
   } else {
     role = kRequestData;
   }
@@ -1226,7 +1226,7 @@ bool AllreduceRobust::RecoverExec(void *buf, size_t size, int flag, int seqno,
               if (!requester) {
                 _assert(req.check_point(), "checkpoint node should be KHaveData role");
                 buf = resbuf.Query(act.seqno(), &size);
-                _assert(buf != NULL, "buf should have data from resbuf");
+                _assert(buf != nullptr, "buf should have data from resbuf");
                 _assert(size > 0, "buf size should be greater than 0");
               }
               if (!CheckAndRecover(TryGetResult(buf, size, act.seqno(), requester))) continue;
@@ -1348,14 +1348,14 @@ AllreduceRobust::TryRecoverLocalState(std::vector<size_t> *p_local_rptr,
     succ = RingPassing(BeginPtr(msg_back),
                        1 * sizeof(int), (n+1) * sizeof(int),
                        0 * sizeof(int), n * sizeof(int),
-                       ring_next, ring_prev);
+                       ring_next.get(), ring_prev.get());
     if (succ != kSuccess) return succ;
     int msg_forward[2];
     msg_forward[0] = nlocal;
     succ = RingPassing(msg_forward,
                        1 * sizeof(int), 2 * sizeof(int),
                        0 * sizeof(int), 1 * sizeof(int),
-                       ring_prev, ring_next);
+                       ring_prev.get(), ring_next.get());
     if (succ != kSuccess) return succ;
     // calculate the number of things we can read from next link
     int nread_end = nlocal;
@@ -1375,7 +1375,7 @@ AllreduceRobust::TryRecoverLocalState(std::vector<size_t> *p_local_rptr,
                        nread_end * sizeof(size_t),
                        nwrite_start * sizeof(size_t),
                        nread_end * sizeof(size_t),
-                       ring_next, ring_prev);
+                       ring_next.get(), ring_prev.get());
     if (succ != kSuccess) return succ;
     // update rptr
     rptr.resize(nread_end + 1);
@@ -1386,7 +1386,7 @@ AllreduceRobust::TryRecoverLocalState(std::vector<size_t> *p_local_rptr,
     // pass data through the link
     succ = RingPassing(BeginPtr(chkpt), rptr[nlocal], rptr[nread_end],
                        rptr[nwrite_start], rptr[nread_end],
-                       ring_next, ring_prev);
+                       ring_next.get(), ring_prev.get());
     if (succ != kSuccess) {
       rptr.resize(nlocal + 1); chkpt.resize(rptr.back()); return succ;
     }
@@ -1402,14 +1402,14 @@ AllreduceRobust::TryRecoverLocalState(std::vector<size_t> *p_local_rptr,
     succ = RingPassing(BeginPtr(msg_forward),
                        1 * sizeof(int), (n+1) * sizeof(int),
                        0 * sizeof(int), n * sizeof(int),
-                       ring_prev, ring_next);
+                       ring_prev.get(), ring_next.get());
     if (succ != kSuccess) return succ;
     int msg_back[2];
     msg_back[0] = nlocal;
     succ = RingPassing(msg_back,
                        1 * sizeof(int), 2 * sizeof(int),
                        0 * sizeof(int), 1 * sizeof(int),
-                       ring_next, ring_prev);
+                       ring_next.get(), ring_prev.get());
     if (succ != kSuccess) return succ;
     // calculate the number of things we can read from next link
     int nread_end = nlocal, nwrite_end = 1;
@@ -1439,7 +1439,7 @@ AllreduceRobust::TryRecoverLocalState(std::vector<size_t> *p_local_rptr,
                        nread_end * sizeof(size_t),
                        nwrite_start * sizeof(size_t),
                        nwrite_end * sizeof(size_t),
-                       ring_prev, ring_next);
+                       ring_prev.get(), ring_next.get());
     if (succ != kSuccess) return succ;
     // update rptr
     rptr.resize(nread_end + 1);
@@ -1450,7 +1450,7 @@ AllreduceRobust::TryRecoverLocalState(std::vector<size_t> *p_local_rptr,
     // pass data through the link
     succ = RingPassing(BeginPtr(chkpt), rptr[nlocal], rptr[nread_end],
                        rptr[nwrite_start], rptr[nwrite_end],
-                       ring_prev, ring_next);
+                       ring_prev.get(), ring_next.get());
     if (succ != kSuccess) {
       rptr.resize(nlocal + 1); chkpt.resize(rptr.back()); return succ;
     }
@@ -1491,7 +1491,7 @@ AllreduceRobust::TryCheckinLocalState(std::vector<size_t> *p_local_rptr,
                      (n + 1) * sizeof(size_t),
                      0 * sizeof(size_t),
                      n * sizeof(size_t),
-                     ring_prev, ring_next);
+                     ring_prev.get(), ring_next.get());
   if (succ != kSuccess) return succ;
   // update rptr
   rptr.resize(n + 2);
@@ -1503,7 +1503,7 @@ AllreduceRobust::TryCheckinLocalState(std::vector<size_t> *p_local_rptr,
   succ = RingPassing(BeginPtr(chkpt),
                      rptr[1], rptr[n + 1],
                      rptr[0], rptr[n],
-                     ring_prev, ring_next);
+                     ring_prev.get(), ring_next.get());
   if (succ != kSuccess) {
     rptr.resize(2); chkpt.resize(rptr.back()); return succ;
   }
@@ -1534,7 +1534,7 @@ AllreduceRobust::RingPassing(void *sendrecvbuf_,
                              size_t write_end,
                              LinkRecord *read_link,
                              LinkRecord *write_link) {
-  if (read_link == NULL || write_link == NULL || read_end == 0) return kSuccess;
+  if (read_link == nullptr || write_link == nullptr || read_end == 0) return kSuccess;
   _assert(write_end <= read_end,
                 "RingPassing: boundary check1");
   _assert(read_ptr <= read_end, "RingPassing: boundary check2");

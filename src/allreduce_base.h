@@ -401,11 +401,11 @@ class AllreduceBase : public IEngine {
    *  but takes reference instead of space
    */
   struct RefLinkVector {
-    std::vector<LinkRecord*> plinks;
+    std::vector<std::shared_ptr<LinkRecord>> plinks;
     inline LinkRecord &operator[](size_t i) {
       return *plinks[i];
     }
-    inline size_t size(void) const {
+    inline size_t size() const {
       return plinks.size();
     }
   };
@@ -536,13 +536,13 @@ class AllreduceBase : public IEngine {
   // rank of parent node, can be -1
   int parent_rank;
   // sockets of all links this connects to
-  std::vector<LinkRecord> all_links;
+  std::vector<std::shared_ptr<LinkRecord>> all_links;
   // used to record the link where things goes wrong
   LinkRecord *err_link;
   // all the links in the reduction tree connection
   RefLinkVector tree_links;
   // pointer to links in the ring
-  LinkRecord *ring_prev, *ring_next;
+  std::shared_ptr<LinkRecord> ring_prev, ring_next;
   //----- meta information-----
   // list of enviroment variables that are of possible interest
   std::vector<std::string> env_vars;
