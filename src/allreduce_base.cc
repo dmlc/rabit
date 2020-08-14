@@ -7,9 +7,11 @@
  */
 #define NOMINMAX
 #include "allreduce_base.h"
+
 #include <rabit/base.h>
 #include <netinet/tcp.h>
 #include <cstring>
+#include <memory>
 #include <map>
 
 namespace rabit {

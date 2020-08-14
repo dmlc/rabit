@@ -623,7 +623,8 @@ AllreduceRobust::ReturnType AllreduceRobust::TryResetLinks(void) {
           all_links[i]->size_read = 1;
         } else {
           // no at mark, read and discard data
-          ssize_t len = all_links[i]->sock.Recv(all_links[i]->buffer_head, all_links[i]->buffer_size);
+          ssize_t len = all_links[i]->sock.Recv(all_links[i]->buffer_head,
+                                                all_links[i]->buffer_size);
           if (all_links[i]->sock.AtMark()) all_links[i]->size_read = 1;
           // zero length, remote closed the connection, close socket
           if (len == 0) all_links[i]->sock.Close();
