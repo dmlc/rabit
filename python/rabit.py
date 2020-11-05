@@ -43,7 +43,6 @@ def _find_lib_path(dll_name):
             'List of candidates:\n' + ('\n'.join(dll_path)))
     return lib_path
 
-# load in xgboost library
 def _loadlib(lib='standard', lib_dll=None):
     """Load rabit library."""
     global _LIB
