@@ -142,7 +142,7 @@ Rabit is a reliable and portable library for distributed machine learning progra
 Use Rabit API
 -------------
 This section introduces topics about how to use rabit API.
-You can always refer to [API Documentation](http://homes.cs.washington.edu/~tqchen/rabit/doc) for definition of each functions.
+You can always refer to [API Documentation](./cpp_api.html) for definition of each functions.
 This section trys to gives examples of different aspectes of rabit API.
 
 #### Structure of a Rabit Program
@@ -231,7 +231,7 @@ int main(int argc, char *argv[]) {
 }
 ```
 Here we use features of C++11 because the lambda function makes things much shorter.
-There is also C++ compatible callback interface provided in the [API](http://homes.cs.washington.edu/~tqchen/rabit/doc).
+There is also C++ compatible callback interface provided in the API.
 You can compile the program by typing ```make lazy_allreduce.mock```. We link against the mock library so that we can see
 the effect when a process goes down. You can run the program using the following command
 ```bash
@@ -269,7 +269,7 @@ User is encouraged to use ```global_model``` only when is sufficient for better 
 To enable a model class to be checked pointed, user can implement a [serialization interface](../include/rabit_serialization.h). The serialization interface already
 provide serialization functions of STL vector and string. For python API, user can checkpoint any python object that can be pickled.
 
-There is a special Checkpoint function called [LazyCheckpoint](http://homes.cs.washington.edu/~tqchen/rabit/doc/namespacerabit.html#a99f74c357afa5fba2c80cc0363e4e459),
+There is a special Checkpoint function called [LazyCheckpoint](https://rabit.readthedocs.io/en/latest/cpp_api.html#_CPPv2N5rabit14LazyCheckPointEPK12Serializable),
 which can be used for ```global_model``` only cases under certain condition.
 When LazyCheckpoint is called, no action is taken and the rabit engine only remembers the pointer to the model.
 The serialization will only happen when another node fails and the recovery starts. So user basically pays no extra cost calling LazyCheckpoint.
@@ -340,7 +340,7 @@ Fault Tolerance
 This section introduces how fault tolerance works in rabit.
 The following figure shows how rabit deals with failures.
 
-![](http://homes.cs.washington.edu/~tqchen/rabit/fig/fault-tol.png)
+![](./_static/fault-tol.png)
 
 The scenario is as follows:
 * Node 1 fails between the first and second call of Allreduce after the second checkpoint

@@ -5,7 +5,7 @@
 rabit is a light weight library that provides a fault tolerant interface of Allreduce and Broadcast. It is designed to support easy implementations of distributed machine learning programs, many of which fall naturally under the Allreduce abstraction. The goal of rabit is to support ***portable*** , ***scalable*** and ***reliable*** distributed machine learning programs.
 
 * [Tutorial](guide)
-* [API Documentation](http://homes.cs.washington.edu/~tqchen/rabit/doc)
+* [API Documentation](https://rabit.readthedocs.io/en/latest/)
 * You can also directly read the [interface header](include/rabit.h)
 * [XGBoost](https://github.com/dmlc/xgboost)
   - Rabit is one of the backbone library to support distributed XGBoost
